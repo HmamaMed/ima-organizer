@@ -1,0 +1,18 @@
+<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="heartClipLockup">
+      <path d="M100 172
+               C 44 128, 14 90, 14 58
+               C 14 26, 38 8, 64 8
+               C 82 8, 94 18, 100 32
+               C 106 18, 118 8, 136 8
+               C 162 8, 186 26, 186 58
+               C 186 90, 156 128, 100 172 Z"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(140,10) scale(0.6)">
+    <rect x="0" y="0" width="100" height="200" fill="#E14F73" clip-path="url(#heartClipLockup)"/>
+    <rect x="100" y="0" width="100" height="200" fill="#EAA857" clip-path="url(#heartClipLockup)"/>
+  </g>
+  <text x="200" y="178" text-anchor="middle" font-family="Fraunces, ui-serif, Georgia, serif" font-size="34" font-weight="500" fill="#3B1224">Life Organizer</text>
+</svg>

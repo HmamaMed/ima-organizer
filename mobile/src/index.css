@@ -1,0 +1,35 @@
+/* Design tokens — from DESIGN.md */
+:root {
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  --color-bg: #FDF4F6;
+  --color-surface: #FFFFFF;
+  --color-line: #F3DFE3;
+  --color-ink: #3B1224;
+  --color-ink-muted: #9C7B86;
+  --color-rose: #E14F73;
+  --color-gold: #EAA857;
+  --color-emerald: #1E7F63;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Display serif — used sparingly for the logo wordmark and screen titles only */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+}

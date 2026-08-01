@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: life-organizer-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/lifeorganizer}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+
+app:
+  jwt:
+    # Base64-encoded secret for signing JWTs. Override via JWT_SECRET in production.
+    secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWtleS1jaGFuZ2UtbWUtcGxlYXNlLWluLXByb2R1Y3Rpb24tMTIzNDU2Nzg5MA==}
+    expiration-ms: ${JWT_EXPIRATION_MS:604800000}
+  seed:
+    owner-username: ${SEED_OWNER_USERNAME:owner}
+    owner-password: ${SEED_OWNER_PASSWORD:owner-password}
+    recipient-username: ${SEED_RECIPIENT_USERNAME:recipient}
+    recipient-password: ${SEED_RECIPIENT_PASSWORD:recipient-password}
+
+firebase:
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH:./firebase-service-account.json}

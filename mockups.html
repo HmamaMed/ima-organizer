@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FDF4F6; --surface:#FFFFFF; --line:#F3DFE3;
+    --ink:#3B1224; --ink-muted:#9C7B86;
+    --rose:#E14F73; --gold:#EAA857; --emerald:#1E7F63;
+    --rose-tint:#FCE8ED; --gold-tint:#FCF0DE; --emerald-tint:#E1F0EA; --lock-tint:#F1EDEA;
+    --font-display:'Fraunces', ui-serif, Georgia, serif;
+    --font-ui:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  .lo-wrap{font-family:var(--font-ui);background:#F1ECE8;padding:36px 28px;border-radius:20px;}
+  .lo-heading{font-family:var(--font-display);font-size:20px;font-weight:500;color:#2A2420;margin-bottom:4px;}
+  .lo-sub{font-size:13px;color:#8a8175;margin-bottom:22px;}
+  .lo-swatches{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:36px;}
+  .lo-sw{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .lo-sw-chip{width:40px;height:40px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);}
+  .lo-sw span{font-size:10.5px;color:#8a8175;}
+  .lo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:32px;}
+  .lo-phone{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .lo-bezel{width:100%;max-width:250px;aspect-ratio:9/19.5;background:#241820;border-radius:34px;padding:8px;box-shadow:0 24px 40px -18px rgba(59,18,36,0.3);}
+  .lo-screen{width:100%;height:100%;background:var(--bg);color:var(--ink);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  .lo-statusbar{display:flex;justify-content:space-between;padding:12px 18px 2px;font-size:10.5px;color:var(--ink-muted);}
+  .lo-header{display:flex;align-items:center;gap:10px;padding:14px 16px 2px;}
+  .lo-header svg{width:18px;height:18px;color:var(--ink-muted);flex-shrink:0;}
+  .lo-header h2{font-family:var(--font-display);font-size:17px;font-weight:500;}
+  .lo-content{padding:10px 16px 16px;flex:1;overflow:hidden;}
+  figcaption{font-size:12px;color:#8a8175;}
+
+  /* splash */
+  .lo-splash{background:var(--rose);height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+  .lo-splash svg{width:76px;height:76px;}
+  .lo-splash p{font-family:var(--font-display);font-size:19px;font-weight:500;color:#FFFFFF;}
+
+  /* home */
+  .lo-brandrow{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .lo-brandrow svg{width:22px;height:22px;flex-shrink:0;}
+  .lo-eyebrow{font-size:11px;color:var(--ink-muted);margin-bottom:1px;}
+  .lo-title{font-family:var(--font-display);font-size:19px;font-weight:500;}
+  .lo-modgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .lo-mod{border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:18px;background:var(--tint);color:var(--accent);}
+  .lo-mod svg{width:20px;height:20px;}
+  .lo-mod span{color:var(--ink);font-size:12.5px;font-weight:500;display:block;}
+  .lo-locked{color:#B7ACA6;background:var(--lock-tint);}
+  .lo-locked span{color:#9c9088;}
+  .lo-locked small{display:block;font-size:9.5px;margin-top:2px;font-weight:400;}
+
+  /* notes */
+  .lo-note{display:flex;gap:8px;padding:11px 0;border-bottom:1px solid var(--line);}
+  .lo-note-dot{width:6px;height:6px;border-radius:50%;background:var(--rose);margin-top:6px;flex-shrink:0;}
+  .lo-note-text{font-size:12.5px;line-height:1.5;margin-bottom:3px;}
+  .lo-note-time{font-size:10px;color:var(--ink-muted);}
+
+  /* memories */
+  .lo-polaroid{background:var(--surface);border-radius:10px;padding:9px 9px 12px;margin-bottom:16px;box-shadow:0 6px 16px -10px rgba(59,18,36,0.35);}
+  .lo-photo{aspect-ratio:4/3;background:var(--gold-tint);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--gold);margin-bottom:9px;}
+  .lo-photo svg{width:24px;height:24px;}
+  .lo-cap{font-family:var(--font-display);font-style:italic;font-size:12.5px;margin-bottom:4px;}
+  .lo-mic{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--ink-muted);}
+  .lo-mic svg{width:11px;height:11px;}
+
+  /* gym */
+  .lo-daylabel{font-family:var(--font-display);font-size:14px;margin:10px 0 12px;}
+  .lo-streak{display:flex;gap:5px;margin-bottom:16px;}
+  .lo-streak i{width:14px;height:14px;border-radius:50%;background:var(--line);display:block;}
+  .lo-streak i.on{background:var(--emerald);}
+  .lo-exercise{display:flex;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);color:var(--ink-muted);}
+  .lo-exercise svg{width:18px;height:18px;flex-shrink:0;}
+  .lo-ex-name{font-size:12.5px;color:var(--ink);margin-bottom:2px;}
+  .lo-ex-meta{font-size:10px;color:var(--ink-muted);}
+  .lo-ex-done{color:var(--emerald);}
+</style>
+</head>
+<body>
+<div class="lo-wrap">
+
+  <p class="lo-heading">Life Organizer — UI concept, v2</p>
+  <p class="lo-sub">Light &amp; warm · one accent per module · Fraunces for the logo, Plus Jakarta Sans for UI</p>
+
+  <div class="lo-swatches">
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#FDF4F6"></div><span>bg</span></div>
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#FFFFFF"></div><span>surface</span></div>
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#3B1224"></div><span>ink</span></div>
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#9C7B86"></div><span>ink-muted</span></div>
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#E14F73"></div><span>rose</span></div>
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#EAA857"></div><span>gold</span></div>
+    <div class="lo-sw"><div class="lo-sw-chip" style="background:#1E7F63"></div><span>emerald</span></div>
+  </div>
+
+  <div class="lo-grid">
+
+    <figure class="lo-phone">
+      <div class="lo-bezel"><div class="lo-screen">
+        <div class="lo-splash">
+          <svg viewBox="0 0 200 200">
+            <defs><clipPath id="heartSplash"><path d="M100 172 C 44 128, 14 90, 14 58 C 14 26, 38 8, 64 8 C 82 8, 94 18, 100 32 C 106 18, 118 8, 136 8 C 162 8, 186 26, 186 58 C 186 90, 156 128, 100 172 Z"/></clipPath></defs>
+            <rect x="0" y="0" width="100" height="200" fill="#FDF4F6" clip-path="url(#heartSplash)"/>
+            <rect x="100" y="0" width="100" height="200" fill="#EAA857" clip-path="url(#heartSplash)"/>
+          </svg>
+          <p>Life Organizer</p>
+        </div>
+      </div></div>
+      <figcaption>Splash screen</figcaption>
+    </figure>
+
+    <figure class="lo-phone">
+      <div class="lo-bezel"><div class="lo-screen">
+        <div class="lo-statusbar"><span>21:42</span><span>••••</span></div>
+        <div class="lo-content">
+          <div class="lo-brandrow">
+            <svg viewBox="0 0 200 200">
+              <defs><clipPath id="heartHome"><path d="M100 172 C 44 128, 14 90, 14 58 C 14 26, 38 8, 64 8 C 82 8, 94 18, 100 32 C 106 18, 118 8, 136 8 C 162 8, 186 26, 186 58 C 186 90, 156 128, 100 172 Z"/></clipPath></defs>
+              <rect x="0" y="0" width="200" height="200" rx="44" fill="#E14F73"/>
+              <rect x="0" y="0" width="100" height="200" fill="#FDF4F6" clip-path="url(#heartHome)"/>
+              <rect x="100" y="0" width="100" height="200" fill="#EAA857" clip-path="url(#heartHome)"/>
+            </svg>
+            <div><p class="lo-eyebrow">Good evening</p><p class="lo-title">Life Organizer</p></div>
+          </div>
+          <div class="lo-modgrid">
+            <div class="lo-mod" style="--accent:var(--rose);--tint:var(--rose-tint)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+              <span>Notes</span>
+            </div>
+            <div class="lo-mod" style="--accent:var(--gold);--tint:var(--gold-tint)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M3 17l5-5 4 4 3-3 6 6"></path></svg>
+              <span>Memories</span>
+            </div>
+            <div class="lo-mod" style="--accent:var(--emerald);--tint:var(--emerald-tint)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="9" width="3" height="6" rx="1"></rect><rect x="19" y="9" width="3" height="6" rx="1"></rect><rect x="6.2" y="7" width="2.4" height="10" rx="1"></rect><rect x="15.4" y="7" width="2.4" height="10" rx="1"></rect><line x1="8.6" y1="12" x2="15.4" y2="12"></line></svg>
+              <span>Gym coach</span>
+            </div>
+            <div class="lo-mod lo-locked">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg>
+              <span>Shopping list<small>Coming soon</small></span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption>Home — module picker</figcaption>
+    </figure>
+
+    <figure class="lo-phone">
+      <div class="lo-bezel"><div class="lo-screen">
+        <div class="lo-statusbar"><span>21:42</span><span>••••</span></div>
+        <div class="lo-header" style="color:var(--rose)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <h2 style="color:var(--rose)">Notes</h2>
+        </div>
+        <div class="lo-content">
+          <div class="lo-note"><div class="lo-note-dot"></div><div><p class="lo-note-text">hey pretty, thinking of you today</p><span class="lo-note-time">Just now</span></div></div>
+          <div class="lo-note"><div class="lo-note-dot" style="background:transparent"></div><div><p class="lo-note-text">proud of you for today's workout</p><span class="lo-note-time">Yesterday, 20:10</span></div></div>
+          <div class="lo-note"><div class="lo-note-dot" style="background:transparent"></div><div><p class="lo-note-text">good morning — don't forget your umbrella</p><span class="lo-note-time">Monday, 08:02</span></div></div>
+          <div class="lo-note"><div class="lo-note-dot" style="background:transparent"></div><div><p class="lo-note-text">saw this and thought of you</p><span class="lo-note-time">Sunday, 23:41</span></div></div>
+        </div>
+      </div></div>
+      <figcaption>Notes — her feed</figcaption>
+    </figure>
+
+    <figure class="lo-phone">
+      <div class="lo-bezel"><div class="lo-screen">
+        <div class="lo-statusbar"><span>21:42</span><span>••••</span></div>
+        <div class="lo-header" style="color:var(--gold)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <h2 style="color:var(--gold)">Memories</h2>
+        </div>
+        <div class="lo-content">
+          <div class="lo-polaroid" style="transform:rotate(-2deg)">
+            <div class="lo-photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M3 17l5-5 4 4 3-3 6 6"></path></svg></div>
+            <p class="lo-cap">the beach, that Sunday</p>
+            <span class="lo-mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0014 0"></path><line x1="12" y1="18" x2="12" y2="21"></line></svg>0:14</span>
+          </div>
+          <div class="lo-polaroid" style="transform:rotate(1.5deg)">
+            <div class="lo-photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="1.6"></circle><path d="M3 17l5-5 4 4 3-3 6 6"></path></svg></div>
+            <p class="lo-cap">your first ramen bowl</p>
+          </div>
+        </div>
+      </div></div>
+      <figcaption>Memories — timeline</figcaption>
+    </figure>
+
+    <figure class="lo-phone">
+      <div class="lo-bezel"><div class="lo-screen">
+        <div class="lo-statusbar"><span>21:42</span><span>••••</span></div>
+        <div class="lo-header" style="color:var(--emerald)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <h2 style="color:var(--emerald)">Today's workout</h2>
+        </div>
+        <div class="lo-content">
+          <p class="lo-daylabel">Day 2 — upper body</p>
+          <div class="lo-streak"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="lo-exercise">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"></circle></svg>
+            <div><p class="lo-ex-name">Incline push-ups</p><span class="lo-ex-meta">3 × 12</span></div>
+          </div>
+          <div class="lo-exercise">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"></circle></svg>
+            <div><p class="lo-ex-name">Resistance band rows</p><span class="lo-ex-meta">3 × 15</span></div>
+          </div>
+          <div class="lo-exercise lo-ex-done">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><polyline points="8 12 11 15 16 9"></polyline></svg>
+            <div><p class="lo-ex-name">Plank hold</p><span class="lo-ex-meta">3 × 40 sec</span></div>
+          </div>
+        </div>
+      </div></div>
+      <figcaption>Gym coach — today</figcaption>
+    </figure>
+
+  </div>
+</div>
+</body>
+</html>

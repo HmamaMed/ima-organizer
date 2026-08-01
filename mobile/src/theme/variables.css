@@ -1,0 +1,35 @@
+/* Ionic theme variables — from DESIGN.md */
+:root {
+  --ion-color-primary: #E14F73;
+  --ion-color-primary-rgb: 225, 79, 115;
+  --ion-color-primary-contrast: #FFFFFF;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #c6465f;
+  --ion-color-primary-tint: #e56185;
+
+  --ion-color-secondary: #EAA857;
+  --ion-color-secondary-rgb: 234, 168, 87;
+  --ion-color-secondary-contrast: #3B1224;
+  --ion-color-secondary-contrast-rgb: 59, 18, 36;
+  --ion-color-secondary-shade: #ce944c;
+  --ion-color-secondary-tint: #ecb167;
+
+  --ion-color-tertiary: #1E7F63;
+  --ion-color-tertiary-rgb: 30, 127, 99;
+  --ion-color-tertiary-contrast: #FFFFFF;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #1a7057;
+  --ion-color-tertiary-tint: #348c72;
+
+  --ion-background-color: #FDF4F6;
+  --ion-background-color-rgb: 253, 244, 246;
+  --ion-text-color: #3B1224;
+  --ion-text-color-rgb: 59, 18, 36;
+
+  --ion-card-background: #FFFFFF;
+  --ion-item-background: #FFFFFF;
+  --ion-border-color: #F3DFE3;
+  --ion-toolbar-background: #FDF4F6;
+
+  --ion-font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
