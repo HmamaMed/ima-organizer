@@ -33,8 +33,9 @@ build/
 .vscode/
 
 ### Firebase ###
-# Service account JSON — never commit Firebase credentials
+# Service account JSON / app config — never commit Firebase credentials
 firebase-service-account.json
+google-services.json
 
 ### Environment ###
 # Never commit secrets / DB credentials
