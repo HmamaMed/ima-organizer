@@ -13,9 +13,11 @@ spring:
 
 app:
   jwt:
-    # Base64-encoded secret for signing JWTs. Override via JWT_SECRET in production.
-    secret: ${JWT_SECRET:ZGV2LW9ubHktc2VjcmV0LWtleS1jaGFuZ2UtbWUtcGxlYXNlLWluLXByb2R1Y3Rpb24tMTIzNDU2Nzg5MA==}
+    # Secret for signing JWTs (raw string, must be >= 32 chars / 256 bits).
+    # Override via JWT_SECRET in production.
+    secret: ${JWT_SECRET:dev-only-secret-key-change-me-in-production-please-1234567890}
     expiration-ms: ${JWT_EXPIRATION_MS:604800000}
+
   seed:
     owner-username: ${SEED_OWNER_USERNAME:owner}
     owner-password: ${SEED_OWNER_PASSWORD:owner-password}

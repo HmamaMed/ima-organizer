@@ -2,12 +2,12 @@ package com.lifeorganizer.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.Function;
@@ -15,6 +15,9 @@ import java.util.function.Function;
 /**
  * Issues and validates JWTs. The secret is loaded from configuration
  * (environment variable in production, default in application.yml for dev).
+ *
+ * The secret is used as a raw string (UTF-8 bytes) for HMAC signing, so any
+ * sufficiently long value works — no base64 encoding required.
  */
 @Service
 public class JwtService {
@@ -25,9 +28,10 @@ public class JwtService {
     public JwtService(
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.expiration-ms}") long expirationMs) {
-        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationMs;
     }
+
 
     public String generateToken(User user) {
         Date now = new Date();
