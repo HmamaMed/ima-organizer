@@ -27,7 +27,7 @@ public class GymService {
     /** Full plan — all days with their exercises. */
     @Transactional(readOnly = true)
     public List<WorkoutDayResponse> getPlan() {
-        return workoutDayRepository.findAllByOrderByIdAsc()
+        return workoutDayRepository.findAllByOrderBySortOrderAsc()
                 .stream()
                 .map(WorkoutDayResponse::from)
                 .toList();

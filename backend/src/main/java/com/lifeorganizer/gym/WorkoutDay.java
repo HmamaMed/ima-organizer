@@ -30,17 +30,22 @@ public class WorkoutDay {
     @Column
     private String notes;
 
+    /** Display position in the plan — the id is a random UUID, not usable for ordering. */
+    @Column(nullable = false)
+    private int sortOrder;
+
     @OneToMany(mappedBy = "workoutDay", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("id ASC")
+    @OrderBy("sortOrder ASC")
     private List<Exercise> exercises = new ArrayList<>();
 
     protected WorkoutDay() {
         // for JPA
     }
 
-    public WorkoutDay(String dayLabel, String notes) {
+    public WorkoutDay(String dayLabel, String notes, int sortOrder) {
         this.dayLabel = dayLabel;
         this.notes = notes;
+        this.sortOrder = sortOrder;
     }
 
     public UUID getId() {
@@ -63,12 +68,17 @@ public class WorkoutDay {
         this.notes = notes;
     }
 
+    public int getSortOrder() {
+        return sortOrder;
+    }
+
     public List<Exercise> getExercises() {
         return exercises;
     }
 
     public void addExercise(Exercise exercise) {
-        exercises.add(exercise);
+        exercise.setSortOrder(exercises.size());
         exercise.setWorkoutDay(this);
+        exercises.add(exercise);
     }
 }

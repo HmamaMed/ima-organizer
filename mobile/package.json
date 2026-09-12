@@ -8,19 +8,19 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "assets": "capacitor-assets generate --iconBackgroundColor '#E14F73' --splashBackgroundColor '#FDF4F6'"
+    "assets": "capacitor-assets generate --iconBackgroundColor '#C65D7B' --splashBackgroundColor '#FBF4EE'"
   },
-
   "dependencies": {
     "@capacitor/android": "^8.5.0",
     "@capacitor/camera": "^8.2.2",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/keyboard": "^8.0.5",
     "@capacitor/push-notifications": "^8.1.2",
     "@ionic/react": "^8.8.16",
     "@ionic/react-router": "^8.8.16",
+    "@supabase/supabase-js": "^2.49.0",
     "capacitor-voice-recorder": "^7.0.6",
-    "firebase": "^12.17.0",
     "ionicons": "^8.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

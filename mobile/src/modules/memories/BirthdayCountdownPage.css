@@ -1,0 +1,132 @@
+.lock-screen {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px;
+  overflow: hidden;
+  background:
+    radial-gradient(160px 160px at 50% 30%, rgba(198, 93, 123, 0.35), transparent 70%),
+    radial-gradient(220px 220px at 80% 85%, rgba(184, 147, 90, 0.18), transparent 70%),
+    var(--color-plum-dark);
+}
+
+.lock-screen__sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lock-screen__spark {
+  position: absolute;
+  bottom: -10%;
+  color: rgba(255, 255, 255, 0.18);
+  font-size: 18px;
+  animation: lock-float 9s ease-in infinite;
+}
+
+.lock-screen__spark--0 { left: 8%;  font-size: 14px; animation-delay: 0s;   }
+.lock-screen__spark--1 { left: 22%; font-size: 22px; animation-delay: 1.4s; }
+.lock-screen__spark--2 { left: 38%; font-size: 12px; animation-delay: 2.8s; }
+.lock-screen__spark--3 { left: 55%; font-size: 18px; animation-delay: 0.6s; }
+.lock-screen__spark--4 { left: 68%; font-size: 15px; animation-delay: 3.6s; }
+.lock-screen__spark--5 { left: 82%; font-size: 20px; animation-delay: 2s;   }
+.lock-screen__spark--6 { left: 92%; font-size: 13px; animation-delay: 4.4s; }
+
+@keyframes lock-float {
+  0%   { transform: translateY(0) scale(0.9);   opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 0.6; }
+  100% { transform: translateY(-115vh) scale(1.1); opacity: 0; }
+}
+
+.lock-screen__mark {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+  animation: lock-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes lock-breathe {
+  0%, 100% { transform: scale(1);    opacity: 0.9; }
+  50%      { transform: scale(1.08); opacity: 1;   }
+}
+
+.lock-screen__eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #E8B9C4;
+}
+
+.lock-screen__title {
+  margin: 0 0 28px;
+  font-size: 26px;
+  color: #FFFFFF;
+  max-width: 280px;
+}
+
+.lock-screen__countdown {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+
+.lock-screen__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 46px;
+}
+
+.lock-screen__num {
+  font-size: 32px;
+  color: #FFFFFF;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.lock-screen__label {
+  margin-top: 4px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #C9A6C2;
+}
+
+.lock-screen__colon {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-8px);
+}
+
+.lock-screen__sub {
+  margin: 0 0 40px;
+  font-size: 13px;
+  color: #D8B7CE;
+  max-width: 260px;
+}
+
+.lock-screen__testing-link {
+  position: absolute;
+  bottom: 18px;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lock-screen__mark,
+  .lock-screen__spark {
+    animation: none;
+  }
+}

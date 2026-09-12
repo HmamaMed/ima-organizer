@@ -7,6 +7,6 @@ import java.util.UUID;
 
 public interface WorkoutDayRepository extends JpaRepository<WorkoutDay, UUID> {
 
-    /** Plan ordered by insertion order. */
-    List<WorkoutDay> findAllByOrderByIdAsc();
+    /** Plan in display order. */
+    List<WorkoutDay> findAllByOrderBySortOrderAsc();
 }

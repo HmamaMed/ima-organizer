@@ -1,61 +1,53 @@
 # Design — Life Organizer
 
-## Direction (v2 — revised after feedback)
+## Direction (v3 — "Kept" concept, see app-design.html)
 
-First pass went dark/moody and it read wrong — that's a "mysterious" register, not a
-"romantic and joyful" one. Rebuilt around a light, warm palette instead: bright
-enough to feel like something you'd actually enjoy opening every day, warm enough
-to feel romantic, and kept out of pastel/cartoon territory by using confident,
-saturated jewel tones rather than soft candy colors, plus a deep wine-toned ink
-for text instead of flat black or gray.
+Superseding the v2 rose/gold/emerald palette below with the deeper, more
+intentional palette drafted in `app-design.html` and `implementation-guide.md`
+at the repo root. Same warm, light, romantic-not-cartoonish brief as v2, but
+built around a plum/rose/gold trio instead of rose/gold/emerald, with Inter
+replacing Plus Jakarta Sans for UI text (Fraunces stays for display/headings,
+now used in both upright and italic weights — italic for greetings, captions,
+and other "personal moment" text; upright for section titles and labels).
 
-Still avoiding the generic AI-design default (cream background + terracotta accent
-+ high-contrast serif) — the background here leans blush-white rather than
-yellow-cream, the primary accent is a raspberry-rose rather than orange-terracotta,
-and the serif is used sparingly (logo and headings only) rather than carrying the
-whole UI.
-
-**Signature element**: a two-tone geometric heart mark — split down the middle,
-rose on one half, gold on the other. Flat, precise, no outline or cartoon
-detailing, so it reads as a modern mark rather than a literal cartoon heart.
-It's the logo, and a miniature version anchors the home screen header.
+**Signature element**: unchanged — the two-tone geometric heart mark (rose /
+gold split), still the logo and the mini-mark on the splash and home screens.
 
 ## Palette
 
 | Token | Hex | Role |
 |---|---|---|
-| `bg` | `#FDF4F6` | Primary background — warm blush-white |
+| `bg` / `paper` | `#FBF4EE` | Primary background — warm blush-white |
 | `surface` | `#FFFFFF` | Card / raised surface |
-| `line` | `#F3DFE3` | Hairline dividers, borders |
-| `ink` | `#3B1224` | Primary text — deep wine-plum, not flat black |
-| `ink-muted` | `#9C7B86` | Secondary text — timestamps, captions, hints |
-| `rose` | `#E14F73` | Accent 1 — **Notes** module, logo, primary actions |
-| `gold` | `#EAA857` | Accent 2 — **Memories** module |
-| `emerald` | `#1E7F63` | Accent 3 — **Gym Coach** module |
+| `mist` | `#F1E4E6` | Tinted surfaces — glance strips, tag pills |
+| `line` | `rgba(43,30,36,.12)` | Hairline dividers, borders |
+| `ink` | `#2B1E24` | Primary text |
+| `ink-muted` (plum-soft) | `#8A6483` | Secondary text — timestamps, captions, hints |
+| `rose` | `#C65D7B` | Accent 1 — **Notes** module, logo, primary actions |
+| `plum` | `#4A1942` | Accent 2 — **Memories** module, headings |
+| `gold` | `#B8935A` | Accent 3 — **Gym Coach** module |
+| `plum-dark` | `#34102E` | Splash screen backdrop only |
 
 Each module keeps its own accent so the three feel distinct while the shared
-light, warm base keeps everything cohesive. Module tiles on the home screen use
-a soft tint of their accent (roughly 10% strength) as a fill, with the full
-accent color reserved for icons and text — that's what keeps the palette feeling
-joyful rather than loud.
+light, warm base keeps everything cohesive.
 
 ## Typography
 
 | Role | Face | Use |
 |---|---|---|
-| Display | **Fraunces** (soft-contrast serif) | Logo wordmark, screen greetings/titles only — used sparingly, so it stays special |
-| UI / body | **Plus Jakarta Sans** | Everything else — a rounded, modern geometric sans that carries most of the "joyful/contemporary" feeling |
+| Display | **Fraunces** (soft-contrast serif) | Logo wordmark, screen titles, greetings/captions (italic) — used sparingly, so it stays special |
+| UI / body | **Inter** | Everything else |
 
 Google Fonts import:
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 ```
 
 ```css
 --font-display: 'Fraunces', ui-serif, Georgia, serif;
---font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+--font-ui: 'Inter', system-ui, -apple-system, sans-serif;
 ```
 
 ## Logo
@@ -92,45 +84,46 @@ Drop into `mobile/src/theme/variables.css`, replacing Ionic's default `:root`:
 
 ```css
 :root {
-  --ion-color-primary: #E14F73;
-  --ion-color-primary-rgb: 225, 79, 115;
+  --ion-color-primary: #C65D7B;
+  --ion-color-primary-rgb: 198, 93, 123;
   --ion-color-primary-contrast: #FFFFFF;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #c6465f;
-  --ion-color-primary-tint: #e56185;
+  --ion-color-primary-shade: #ae5169;
+  --ion-color-primary-tint: #cb7086;
 
-  --ion-color-secondary: #EAA857;
-  --ion-color-secondary-rgb: 234, 168, 87;
-  --ion-color-secondary-contrast: #3B1224;
-  --ion-color-secondary-contrast-rgb: 59, 18, 36;
-  --ion-color-secondary-shade: #ce944c;
-  --ion-color-secondary-tint: #ecb167;
+  --ion-color-secondary: #B8935A;
+  --ion-color-secondary-rgb: 184, 147, 90;
+  --ion-color-secondary-contrast: #2B1E24;
+  --ion-color-secondary-contrast-rgb: 43, 30, 36;
+  --ion-color-secondary-shade: #a1814f;
+  --ion-color-secondary-tint: #bf9d6b;
 
-  --ion-color-tertiary: #1E7F63;
-  --ion-color-tertiary-rgb: 30, 127, 99;
+  --ion-color-tertiary: #4A1942;
+  --ion-color-tertiary-rgb: 74, 25, 66;
   --ion-color-tertiary-contrast: #FFFFFF;
   --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-  --ion-color-tertiary-shade: #1a7057;
-  --ion-color-tertiary-tint: #348c72;
+  --ion-color-tertiary-shade: #41163a;
+  --ion-color-tertiary-tint: #5c3055;
 
-  --ion-background-color: #FDF4F6;
-  --ion-background-color-rgb: 253, 244, 246;
-  --ion-text-color: #3B1224;
-  --ion-text-color-rgb: 59, 18, 36;
+  --ion-background-color: #FBF4EE;
+  --ion-background-color-rgb: 251, 244, 238;
+  --ion-text-color: #2B1E24;
+  --ion-text-color-rgb: 43, 30, 36;
 
   --ion-card-background: #FFFFFF;
   --ion-item-background: #FFFFFF;
-  --ion-border-color: #F3DFE3;
-  --ion-toolbar-background: #FDF4F6;
+  --ion-border-color: rgba(43, 30, 36, 0.12);
+  --ion-toolbar-background: #FBF4EE;
 
-  --ion-font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --ion-font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 ```
 
 `<IonButton color="primary">` → rose, `color="secondary"` → gold, `color="tertiary"`
-→ emerald — matches the module colors with no per-component overrides.
+→ plum — matches the module colors with no per-component overrides.
 
 ## Screens mocked up
 
-See `mockups.html` — Splash, Home (module picker), Notes feed, Memory Timeline,
-and today's Gym Coach view, all built from the tokens above.
+See `app-design.html` — Splash, Login, Home, Notes feed, Compose note, Memory
+Timeline, Gym Coach, and Profile, all built from the tokens above. The older
+`mockups.html` reflects the superseded v2 palette.

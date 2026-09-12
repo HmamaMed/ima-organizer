@@ -1,6 +1,6 @@
 import { apiRequest } from '../../shared/api/client';
 
-export type NoteStatus = 'DRAFT' | 'SCHEDULED' | 'SENT';
+export type NoteStatus = 'DRAFT' | 'SCHEDULED' | 'SENT' | 'CANCELLED';
 
 export interface Note {
   id: string;
@@ -18,6 +18,11 @@ export interface CreateNoteInput {
   scheduledFor?: string | null;
 }
 
+/**
+ * The feed the server returns depends on the caller's role: the owner gets
+ * their scheduled + sent notes, the recipient only ever gets delivered
+ * (sent) notes — that filtering happens server-side, not here.
+ */
 export function fetchNotes(token: string, page = 0, size = 50): Promise<Note[]> {
   return apiRequest<Note[]>(`/api/notes?page=${page}&size=${size}`, { token });
 }
@@ -30,15 +35,8 @@ export function createNote(token: string, input: CreateNoteInput): Promise<Note>
   });
 }
 
-export function updateNote(token: string, id: string, input: CreateNoteInput): Promise<Note> {
-  return apiRequest<Note>(`/api/notes/${id}`, {
-    method: 'PATCH',
-    token,
-    body: input,
-  });
-}
-
-export function deleteNote(token: string, id: string): Promise<void> {
+/** Cancels a scheduled note before it's delivered. A sent note can never be cancelled. */
+export function cancelNote(token: string, id: string): Promise<void> {
   return apiRequest<void>(`/api/notes/${id}`, {
     method: 'DELETE',
     token,

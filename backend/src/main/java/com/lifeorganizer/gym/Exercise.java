@@ -42,6 +42,10 @@ public class Exercise {
     @Column
     private String videoUrl;
 
+    /** Position within the workout day — set by {@link WorkoutDay#addExercise}. */
+    @Column(nullable = false)
+    private int sortOrder;
+
     protected Exercise() {
         // for JPA
     }
@@ -104,5 +108,13 @@ public class Exercise {
 
     public void setVideoUrl(String videoUrl) {
         this.videoUrl = videoUrl;
+    }
+
+    public int getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
     }
 }

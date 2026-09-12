@@ -1,0 +1,8 @@
+target
+.git
+.idea
+.env
+.env.*
+*.iml
+firebase-service-account.json
+google-services.json

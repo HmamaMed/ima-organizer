@@ -1,57 +1,37 @@
 package com.lifeorganizer.notes;
 
-import com.lifeorganizer.auth.Role;
-import com.lifeorganizer.auth.UserRepository;
-import com.lifeorganizer.push.PushService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Polls every 60 seconds for SCHEDULED notes whose {@code scheduledFor} has
- * arrived, flips them to SENT, and fires the push to the recipient.
+ * Runs once per hour, at minute 0. V1 deliberately allows at most one
+ * scheduled note per hour slot, so at most one note is due per run — the
+ * worker claims and delivers exactly one, atomically, per the notes module
+ * spec. It does not require an exact timestamp match ({@code scheduledFor <=
+ * now}), so a delayed run still delivers an overdue note rather than losing it.
  */
 @Component
 public class NoteScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(NoteScheduler.class);
 
-    private final NoteRepository noteRepository;
-    private final UserRepository userRepository;
-    private final PushService pushService;
+    private final NoteService noteService;
 
-    public NoteScheduler(NoteRepository noteRepository,
-                         UserRepository userRepository,
-                         PushService pushService) {
-        this.noteRepository = noteRepository;
-        this.userRepository = userRepository;
-        this.pushService = pushService;
+    public NoteScheduler(NoteService noteService) {
+        this.noteService = noteService;
     }
 
-    @Scheduled(fixedDelay = 60_000)
-    @Transactional
-    public void sendDueNotes() {
-        List<Note> due = noteRepository.findByStatusAndScheduledForLessThanEqual(
-                NoteStatus.SCHEDULED, Instant.now());
-
-        if (due.isEmpty()) {
+    @Scheduled(cron = "0 0 * * * *")
+    public void deliverDueNote() {
+        Optional<UUID> claimed = noteService.claimNextDueNote();
+        if (claimed.isEmpty()) {
             return;
         }
-
-        for (Note note : due) {
-            note.setStatus(NoteStatus.SENT);
-            note.setSentAt(Instant.now());
-            noteRepository.save(note);
-
-            userRepository.findByRole(Role.RECIPIENT).ifPresent(recipient ->
-                    pushService.sendToUser(recipient, "A note for you 💌", note.getContent()));
-
-            log.info("Sent scheduled note {}", note.getId());
-        }
+        noteService.deliverClaimedNote(claimed.get());
     }
 }

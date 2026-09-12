@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kept — design concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2B1E24;
+    --plum:#4A1942;
+    --plum-dark:#34102E;
+    --plum-soft:#8A6483;
+    --rose:#C65D7B;
+    --rose-soft:#E8B9C4;
+    --gold:#B8935A;
+    --paper:#FBF4EE;
+    --mist:#F1E4E6;
+    --line: rgba(43,30,36,0.12);
+    --serif: 'Fraunces', serif;
+    --sans: 'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#EFE6E9;
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .harness{
+    max-width:960px;
+    margin:0 auto;
+    padding:36px 20px 64px;
+  }
+  .kicker{
+    font-size:13px;
+    color:var(--plum-soft);
+    letter-spacing:.01em;
+    margin:0 0 6px;
+  }
+  h1.brand{
+    font-family:var(--serif);
+    font-style:italic;
+    font-weight:500;
+    font-size:44px;
+    color:var(--plum-dark);
+    margin:0 0 8px;
+  }
+  .brand-sub{
+    font-size:15.5px;
+    color:var(--ink);
+    opacity:.72;
+    max-width:46ch;
+    line-height:1.5;
+    margin:0 0 28px;
+  }
+
+  .styleguide{
+    display:flex;
+    gap:36px;
+    flex-wrap:wrap;
+    padding:22px 0 30px;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    margin-bottom:28px;
+  }
+  .sg-block h2{
+    font-size:11.5px;
+    font-weight:600;
+    text-transform:none;
+    color:var(--plum-soft);
+    margin:0 0 12px;
+  }
+  .swatches{display:flex; gap:10px; flex-wrap:wrap;}
+  .swatch{width:74px;}
+  .swatch .chip{
+    height:44px; border-radius:8px;
+    border:1px solid var(--line);
+    margin-bottom:6px;
+  }
+  .swatch span{display:block; font-size:11px; color:var(--ink); opacity:.65; line-height:1.3;}
+  .type-sample .t1{
+    font-family:var(--serif); font-style:italic; font-weight:500;
+    font-size:21px; color:var(--plum-dark); margin:0 0 4px;
+  }
+  .type-sample .t2{
+    font-family:var(--sans); font-weight:500; font-size:14.5px; color:var(--ink); margin:0 0 10px;
+  }
+  .type-sample .t3{font-size:11px; color:var(--ink); opacity:.55;}
+
+  .tabs{
+    display:flex; gap:6px; flex-wrap:wrap;
+    margin-bottom:30px;
+  }
+  .tab-btn{
+    font-family:var(--sans); font-size:13px; font-weight:500;
+    padding:8px 14px; border-radius:20px;
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    cursor:pointer; opacity:.6;
+  }
+  .tab-btn.active{
+    background:var(--plum-dark); border-color:var(--plum-dark); color:#fff; opacity:1;
+  }
+
+  .stage{
+    display:flex; justify-content:center;
+  }
+
+  /* ---- device chrome ---- */
+  .device{
+    width:320px; height:664px;
+    background:var(--plum-dark);
+    border-radius:44px;
+    padding:12px;
+    position:relative;
+    box-shadow:0 30px 60px -20px rgba(52,16,46,.45);
+  }
+  .device .status{
+    height:26px; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:12px; font-weight:600; letter-spacing:.02em;
+  }
+  .device .notch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    width:84px; height:22px; background:#000; border-radius:12px;
+  }
+  .viewport{
+    position:relative;
+    width:100%; height:598px;
+    background:var(--paper);
+    border-radius:30px;
+    overflow:hidden;
+  }
+  .home-indicator{
+    position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+    width:110px; height:4px; border-radius:3px; background:rgba(255,255,255,.55);
+  }
+
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transition:opacity .22s ease;
+  }
+  .screen.active{opacity:1; pointer-events:auto;}
+
+  /* scroll areas */
+  .scroll{
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .scroll::-webkit-scrollbar{display:none;}
+  .scroll{scrollbar-width:none;}
+
+  /* ---- shared header ---- */
+  .app-header{
+    padding:18px 20px 14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .app-header h2{
+    font-family:var(--serif); font-weight:500; font-size:20px; color:var(--plum-dark); margin:0;
+  }
+  .icon-btn{
+    background:none; border:none; color:var(--plum-dark); padding:4px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---- bottom nav ---- */
+  .bottom-nav{
+    display:flex; border-top:1px solid var(--line); background:#fff;
+  }
+  .bottom-nav button{
+    flex:1; background:none; border:none; padding:10px 0 12px;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--plum-soft); font-family:var(--sans); font-size:11px; cursor:pointer;
+  }
+  .bottom-nav button.active{color:var(--rose);}
+
+  /* ================= SPLASH ================= */
+  #screen-splash{
+    align-items:center; justify-content:center; text-align:center;
+    background:radial-gradient(120px 120px at 50% 42%, rgba(198,93,123,.35), transparent 70%), var(--plum-dark);
+    cursor:pointer;
+  }
+  .splash-mark{
+    width:52px; height:52px; margin:0 auto 18px;
+    border:1.4px solid var(--rose-soft); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    animation:breathe 2.6s ease-in-out infinite;
+  }
+  @keyframes breathe{
+    0%,100%{ transform:scale(1); opacity:.75;}
+    50%{ transform:scale(1.08); opacity:1;}
+  }
+  #screen-splash .word{
+    font-family:var(--serif); font-style:italic; font-weight:500;
+    font-size:38px; color:#fff; margin:0 0 8px;
+    opacity:0; animation:rise .9s ease .15s forwards;
+  }
+  #screen-splash .tag{
+    font-size:13px; color:var(--rose-soft); margin:0;
+    opacity:0; animation:rise .9s ease .35s forwards;
+  }
+  @keyframes rise{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  #screen-splash .hint{
+    position:absolute; bottom:34px; left:0; right:0; text-align:center;
+    font-size:11px; color:rgba(255,255,255,.5);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .splash-mark, #screen-splash .word, #screen-splash .tag{ animation:none; opacity:1; }
+  }
+
+  /* ================= LOGIN ================= */
+  #screen-login{ background:var(--paper); justify-content:center; padding:28px 26px; }
+  #screen-login h2{
+    font-family:var(--serif); font-style:italic; font-weight:500; font-size:26px;
+    color:var(--plum-dark); margin:0 0 6px;
+  }
+  #screen-login .sub{ font-size:13px; color:var(--ink); opacity:.65; margin:0 0 26px; line-height:1.5;}
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; color:var(--plum-soft); margin-bottom:5px; }
+  .field input{
+    width:100%; padding:12px 13px; border-radius:10px; border:1px solid var(--line);
+    background:#fff; font-family:var(--sans); font-size:14px; color:var(--ink);
+  }
+  .field input:focus{ outline:none; border-color:var(--rose); }
+  .btn-primary{
+    width:100%; padding:13px; border-radius:10px; border:none;
+    background:var(--rose); color:#fff; font-family:var(--sans); font-weight:600; font-size:14.5px;
+    cursor:pointer; margin-top:6px;
+  }
+  .btn-primary:active{ background:#B14C68; }
+  .link-muted{
+    display:block; text-align:center; font-size:12.5px; color:var(--plum-soft);
+    margin-top:16px; cursor:default;
+  }
+  .login-note{
+    margin-top:34px; padding-top:16px; border-top:1px solid var(--line);
+    font-size:11.5px; color:var(--ink); opacity:.5; text-align:center; line-height:1.5;
+  }
+
+  /* ================= HOME ================= */
+  .greeting{ padding:20px 20px 4px; }
+  .greeting .hi{ font-family:var(--serif); font-style:italic; font-weight:500; font-size:24px; color:var(--plum-dark); margin:0 0 2px;}
+  .greeting .date{ font-size:12.5px; color:var(--ink); opacity:.55; margin:0; }
+  .glance{
+    margin:14px 20px 6px; padding:12px 14px; border-radius:12px;
+    background:var(--mist); display:flex; align-items:center; justify-content:space-between;
+  }
+  .glance .t{ font-size:12.5px; color:var(--ink); }
+  .glance .t b{ color:var(--plum-dark); }
+  .glance .badge{
+    font-size:11px; color:var(--gold); border:1px solid var(--gold); border-radius:20px; padding:3px 9px;
+  }
+  .modules{ padding:14px 20px 6px; display:flex; flex-direction:column; gap:12px; }
+  .mod-row{
+    display:flex; align-items:center; gap:13px; padding:14px; border-radius:16px;
+    background:#fff; border:1px solid var(--line); cursor:pointer; text-align:left;
+  }
+  .mod-row:active{ transform:scale(.99); }
+  .mod-icon{
+    width:42px; height:42px; border-radius:12px; flex:none;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+  }
+  .mod-icon.notes{ background:var(--rose); }
+  .mod-icon.memory{ background:var(--plum); }
+  .mod-icon.gym{ background:var(--gold); }
+  .mod-row .title{ font-family:var(--serif); font-weight:500; font-size:15.5px; color:var(--plum-dark); margin:0 0 2px;}
+  .mod-row .sub{ font-size:12px; color:var(--ink); opacity:.6; margin:0; }
+  .mod-row .unread{ width:7px; height:7px; border-radius:50%; background:var(--rose); margin-left:auto; flex:none; }
+
+  .mod-row.soon{
+    background:transparent; border:1px dashed var(--line); cursor:default; opacity:.75;
+  }
+  .mod-icon.soon{ background:var(--mist); color:var(--plum-soft); }
+  .tag-soon{
+    font-size:10.5px; color:var(--plum-soft); border:1px solid var(--line); border-radius:20px;
+    padding:2px 8px; margin-left:auto;
+  }
+  .modules-foot{
+    text-align:center; font-size:11.5px; color:var(--ink); opacity:.45; padding:10px 30px 6px;
+  }
+
+  /* ================= NOTES FEED ================= */
+  .note-card{ margin:0 20px 14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .note-card .meta{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--plum-soft); margin-bottom:6px; }
+  .note-card p{ font-family:var(--serif); font-style:italic; font-size:15px; line-height:1.55; color:var(--ink); margin:0; }
+  .note-card.locked{ opacity:.6; }
+  .note-card.locked p{ font-style:normal; font-family:var(--sans); font-size:13px; }
+  .fab{
+    position:absolute; right:18px; bottom:18px;
+    width:48px; height:48px; border-radius:50%; background:var(--rose); color:#fff;
+    border:none; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 10px 18px -6px rgba(198,93,123,.6);
+  }
+
+  /* ================= COMPOSE ================= */
+  .compose-header{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .compose-header .label{ font-family:var(--sans); font-weight:600; font-size:13px; color:var(--plum-soft); }
+  .compose-body{ padding:18px; }
+  .compose-body textarea{
+    width:100%; min-height:150px; border:none; resize:none; font-family:var(--serif); font-style:italic;
+    font-size:16px; line-height:1.6; color:var(--ink); background:transparent;
+  }
+  .compose-body textarea:focus{ outline:none; }
+  .send-mode{ display:flex; gap:8px; margin:8px 0 14px; }
+  .chip-toggle{
+    font-size:12.5px; padding:7px 13px; border-radius:20px; border:1px solid var(--line);
+    background:#fff; color:var(--ink); cursor:pointer;
+  }
+  .chip-toggle.active{ background:var(--plum-dark); border-color:var(--plum-dark); color:#fff; }
+  .schedule-row{
+    display:flex; align-items:center; gap:8px; font-size:13px; color:var(--plum-dark);
+    background:var(--mist); border-radius:10px; padding:11px 13px; margin-bottom:14px;
+  }
+
+  /* ================= MEMORY ================= */
+  .month-label{ padding:14px 20px 8px; font-size:12px; color:var(--plum-soft); font-weight:600; }
+  .memory-entry{ padding:0 20px 18px; display:flex; gap:12px; }
+  .rail{ width:2px; background:var(--line); position:relative; flex:none; }
+  .rail::before{
+    content:''; position:absolute; top:2px; left:50%; transform:translateX(-50%);
+    width:7px; height:7px; border-radius:50%; background:var(--rose);
+  }
+  .mem-body{ flex:1; }
+  .photo-ph{
+    height:150px; border-radius:14px; margin-bottom:8px;
+    background:linear-gradient(135deg, var(--mist), #E4CBD3);
+    display:flex; align-items:center; justify-content:center; color:var(--plum-soft); opacity:.7;
+  }
+  .mem-caption{ font-family:var(--serif); font-style:italic; font-size:13.5px; color:var(--ink); margin:0 0 6px; line-height:1.5; }
+  .audio-pill{
+    display:inline-flex; align-items:center; gap:7px; background:var(--mist); border-radius:20px;
+    padding:6px 12px; font-size:11.5px; color:var(--plum-dark); border:none; cursor:pointer;
+  }
+  .audio-pill .icon-pause{ display:none; }
+  .audio-pill.is-playing .icon-play{ display:none; }
+  .audio-pill.is-playing .icon-pause{ display:inline; }
+
+  /* ================= GYM ================= */
+  .gym-tag-row{ padding:14px 20px 8px; display:flex; align-items:center; justify-content:space-between; }
+  .gym-tag{
+    font-size:11.5px; color:var(--gold); border:1px solid var(--gold); border-radius:20px; padding:3px 10px;
+  }
+  .gym-progress{ font-size:12px; color:var(--ink); opacity:.6; }
+  .days-strip{ display:flex; gap:7px; padding:6px 20px 14px; }
+  .day-pip{
+    width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--plum-soft); border:1px solid var(--line);
+  }
+  .day-pip.today{ background:var(--rose); color:#fff; border-color:var(--rose); font-weight:600; }
+  .exercise{
+    margin:0 20px 12px; padding:13px 14px; border-radius:14px; border:1px solid var(--line);
+    display:flex; gap:12px; align-items:flex-start; cursor:pointer; background:#fff;
+  }
+  .exercise.done{ background:var(--mist); border-color:transparent; }
+  .checkbox{
+    width:22px; height:22px; border-radius:6px; border:1.6px solid var(--plum-soft); flex:none;
+    display:flex; align-items:center; justify-content:center; color:#fff; margin-top:1px;
+  }
+  .exercise.done .checkbox{ background:var(--rose); border-color:var(--rose); }
+  .exercise .name{ font-family:var(--serif); font-weight:500; font-size:14.5px; color:var(--plum-dark); margin:0 0 2px; }
+  .exercise.done .name{ text-decoration:line-through; opacity:.6; }
+  .exercise .sets{ font-size:12px; color:var(--plum-soft); margin:0 0 4px; }
+  .exercise .instr{ font-size:11.5px; color:var(--ink); opacity:.6; margin:0; line-height:1.4; }
+
+  /* ================= PROFILE ================= */
+  .profile-top{ padding:22px 20px 10px; text-align:center; }
+  .avatar{
+    width:72px; height:72px; border-radius:50%; margin:0 auto 12px;
+    background:var(--mist); color:var(--plum-soft);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .profile-top .name{ font-family:var(--serif); font-style:italic; font-weight:500; font-size:20px; color:var(--plum-dark); margin:0 0 2px;}
+  .profile-top .since{ font-size:12px; color:var(--ink); opacity:.55; }
+  .stat-row{ display:flex; justify-content:center; gap:22px; padding:16px 20px; }
+  .stat-row .stat{ text-align:center; }
+  .stat b{ display:block; font-family:var(--serif); font-size:17px; color:var(--plum-dark); }
+  .stat span{ font-size:10.5px; color:var(--ink); opacity:.55; }
+  .settings-list{ padding:6px 20px; display:flex; flex-direction:column; }
+  .settings-row{
+    display:flex; align-items:center; gap:12px; padding:13px 2px; border-bottom:1px solid var(--line);
+    color:var(--ink); font-size:13.5px; cursor:pointer; background:none; border-left:none; border-right:none; border-top:none; text-align:left;
+  }
+  .settings-row svg{ color:var(--plum-soft); flex:none; }
+  .settings-row.logout{ margin-top:10px; border-bottom:none; color:var(--plum-dark); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="harness">
+
+  <p class="kicker">Design concept · mobile app</p>
+  <h1 class="brand">Kept</h1>
+  <p class="brand-sub">A private, modular app built as a birthday gift — three chapters at launch (Notes, Memory Timeline, Gym Coach), with room to add more later without touching what already exists. "Kept" is a placeholder name — swap in whatever fits.</p>
+
+  <div class="styleguide">
+    <div class="sg-block">
+      <h2>Palette</h2>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#2B1E24"></div><span>Ink<br>#2B1E24</span></div>
+        <div class="swatch"><div class="chip" style="background:#4A1942"></div><span>Plum<br>#4A1942</span></div>
+        <div class="swatch"><div class="chip" style="background:#C65D7B"></div><span>Rose<br>#C65D7B</span></div>
+        <div class="swatch"><div class="chip" style="background:#B8935A"></div><span>Gold<br>#B8935A</span></div>
+        <div class="swatch"><div class="chip" style="background:#FBF4EE"></div><span>Paper<br>#FBF4EE</span></div>
+        <div class="swatch"><div class="chip" style="background:#F1E4E6"></div><span>Mist<br>#F1E4E6</span></div>
+      </div>
+    </div>
+    <div class="sg-block type-sample">
+      <h2>Type</h2>
+      <p class="t1">Good evening, love</p>
+      <p class="t2">14 notes waiting for you</p>
+      <p class="t3">Fraunces (italic, headlines &amp; personal moments) + Inter (UI &amp; body)</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-target="splash" onclick="showScreen('splash')">Splash</button>
+    <button class="tab-btn" data-target="login" onclick="showScreen('login')">Login</button>
+    <button class="tab-btn" data-target="home" onclick="showScreen('home')">Home</button>
+    <button class="tab-btn" data-target="notes-feed" onclick="showScreen('notes-feed')">Notes feed</button>
+    <button class="tab-btn" data-target="notes-compose" onclick="showScreen('notes-compose')">Compose note</button>
+    <button class="tab-btn" data-target="memory" onclick="showScreen('memory')">Memory timeline</button>
+    <button class="tab-btn" data-target="gym" onclick="showScreen('gym')">Gym coach</button>
+    <button class="tab-btn" data-target="profile" onclick="showScreen('profile')">Profile</button>
+  </div>
+
+  <div class="stage">
+    <div class="device">
+      <div class="notch"></div>
+      <div class="status">9:41</div>
+      <div class="viewport">
+
+        <!-- SPLASH -->
+        <section class="screen active" id="screen-splash" onclick="showScreen('login')">
+          <div class="splash-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#E8B9C4" stroke-width="1.4" width="20" height="20"><path d="M12 20s-7-4.6-9.3-9A5 5 0 0 1 12 6a5 5 0 0 1 9.3 5c-2.3 4.4-9.3 9-9.3 9z"/></svg>
+          </div>
+          <p class="word">Kept</p>
+          <p class="tag">made just for you</p>
+          <p class="hint">tap to continue</p>
+        </section>
+
+        <!-- LOGIN -->
+        <section class="screen" id="screen-login">
+          <h2>Welcome back, love</h2>
+          <p class="sub">Everything in here is just for you.</p>
+          <div class="field"><label>Email</label><input type="text" placeholder="you@email.com"></div>
+          <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+          <button class="btn-primary" onclick="showScreen('home')">Log in</button>
+          <span class="link-muted">Forgot password?</span>
+          <p class="login-note">This app was written for one person only.</p>
+        </section>
+
+        <!-- HOME -->
+        <section class="screen" id="screen-home">
+          <div class="greeting">
+            <p class="hi">Good evening, love</p>
+            <p class="date">Thursday, 9:40 PM</p>
+          </div>
+          <div class="glance">
+            <span class="t">Today: <b>Legs &amp; Glutes</b> · 2 of 5 done</span>
+            <span class="badge">12-day streak</span>
+          </div>
+          <div class="scroll">
+            <div class="modules">
+              <button class="mod-row" onclick="showScreen('notes-feed')">
+                <div class="mod-icon notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="20" height="20"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 6.5l8 6.5 8-6.5"/></svg></div>
+                <div><p class="title">Notes</p><p class="sub">1 note waiting for you</p></div>
+                <div class="unread"></div>
+              </button>
+              <button class="mod-row" onclick="showScreen('memory')">
+                <div class="mod-icon memory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="20" height="20"><rect x="3.5" y="4.5" width="13" height="13" rx="2" transform="translate(2 2)"/><rect x="2.5" y="3.5" width="13" height="13" rx="2"/></svg></div>
+                <div><p class="title">Memory Timeline</p><p class="sub">212 memories · take a slow walk</p></div>
+              </button>
+              <button class="mod-row" onclick="showScreen('gym')">
+                <div class="mod-icon gym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="20" height="20"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="M8 9h8M8 13h5"/><path d="M8.5 16.5l1.5 1.5 3-3"/></svg></div>
+                <div><p class="title">Gym Coach</p><p class="sub">Today: Legs &amp; Glutes</p></div>
+              </button>
+              <div class="mod-row soon">
+                <div class="mod-icon soon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="20" height="20"><path d="M4 5h2l1.5 9.5a2 2 0 0 0 2 1.7h7a2 2 0 0 0 2-1.6L20 8H6.2"/><circle cx="10" cy="19" r="1.2"/><circle cx="17" cy="19" r="1.2"/></svg></div>
+                <div><p class="title">Shopping list</p><p class="sub">Coming soon</p></div>
+                <span class="tag-soon">Soon</span>
+              </div>
+            </div>
+            <p class="modules-foot">This is chapter three. More get added here as they're written.</p>
+          </div>
+          <div class="bottom-nav">
+            <button class="active" data-target="home" onclick="showScreen('home')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>
+              Home
+            </button>
+            <button data-target="notes-feed" onclick="showScreen('notes-feed')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 6.5l8 6.5 8-6.5"/></svg>
+              Notes
+            </button>
+            <button data-target="profile" onclick="showScreen('profile')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+              Profile
+            </button>
+          </div>
+        </section>
+
+        <!-- NOTES FEED -->
+        <section class="screen" id="screen-notes-feed" style="position:relative;">
+          <div class="app-header"><h2>Notes</h2></div>
+          <div class="scroll">
+            <div class="note-card locked">
+              <div class="meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg> Arrives at midnight, her birthday</div>
+              <p>A note is waiting for the right moment.</p>
+            </div>
+            <div class="note-card">
+              <div class="meta">Today · 9:41 PM</div>
+              <p>I was thinking about the little café we found in the old medina, and how you laughed for five minutes straight over nothing. I miss that laugh already.</p>
+            </div>
+            <div class="note-card">
+              <div class="meta">Yesterday · 8:15 AM</div>
+              <p>Good morning. Drink some water, eat something proper, and don't let today's chaos steal your smile. I've got you tonight.</p>
+            </div>
+            <div class="note-card">
+              <div class="meta">Sunday · 6:50 PM</div>
+              <p>Three years ago today, I asked you a very nervous question in a very loud restaurant. Best yes I ever heard.</p>
+            </div>
+          </div>
+          <button class="fab" onclick="showScreen('notes-compose')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <div class="bottom-nav">
+            <button data-target="home" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>Home</button>
+            <button class="active" data-target="notes-feed" onclick="showScreen('notes-feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 6.5l8 6.5 8-6.5"/></svg>Notes</button>
+            <button data-target="profile" onclick="showScreen('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>Profile</button>
+          </div>
+        </section>
+
+        <!-- NOTES COMPOSE -->
+        <section class="screen" id="screen-notes-compose">
+          <div class="compose-header">
+            <button class="icon-btn" onclick="showScreen('notes-feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+            <span class="label">Write to her</span>
+            <button class="icon-btn" style="color:var(--rose); font-weight:700; font-size:13px;" onclick="showScreen('notes-feed')">Send</button>
+          </div>
+          <div class="compose-body">
+            <div class="send-mode">
+              <button class="chip-toggle active" onclick="setSendMode(this,false)">Send now</button>
+              <button class="chip-toggle" onclick="setSendMode(this,true)">Schedule</button>
+            </div>
+            <div class="schedule-row" id="schedule-row" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+              Her birthday · 12:00 AM
+            </div>
+            <textarea placeholder="What do you want her to find?"></textarea>
+          </div>
+        </section>
+
+        <!-- MEMORY TIMELINE -->
+        <section class="screen" id="screen-memory">
+          <div class="app-header">
+            <button class="icon-btn" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <h2>Memory Timeline</h2>
+          </div>
+          <div class="scroll">
+            <p class="month-label">March 2024</p>
+            <div class="memory-entry">
+              <div class="rail"></div>
+              <div class="mem-body">
+                <div class="photo-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="26" height="26"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
+                <p class="mem-caption">The hike where you refused to admit we were lost.</p>
+                <button class="audio-pill" onclick="this.classList.toggle('is-playing')">
+                  <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M8 5v14l11-7z"/></svg>
+                  <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+                  0:14
+                </button>
+              </div>
+            </div>
+            <div class="memory-entry">
+              <div class="rail"></div>
+              <div class="mem-body">
+                <div class="photo-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="26" height="26"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
+              </div>
+            </div>
+            <p class="month-label">February 2024</p>
+            <div class="memory-entry">
+              <div class="rail"></div>
+              <div class="mem-body">
+                <div class="photo-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" width="26" height="26"><path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><circle cx="12" cy="12.5" r="3.5"/></svg></div>
+                <p class="mem-caption">You, in your natural habitat: ignoring me for the cat.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- GYM COACH -->
+        <section class="screen" id="screen-gym">
+          <div class="app-header">
+            <button class="icon-btn" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <h2>Today's workout</h2>
+          </div>
+          <div class="gym-tag-row">
+            <span class="gym-tag">Legs &amp; Glutes</span>
+            <span class="gym-progress" id="gym-progress-text">2 of 5 done</span>
+          </div>
+          <div class="days-strip">
+            <div class="day-pip">M</div><div class="day-pip">T</div><div class="day-pip today">W</div>
+            <div class="day-pip">T</div><div class="day-pip">F</div><div class="day-pip">S</div><div class="day-pip">S</div>
+          </div>
+          <div class="scroll" id="gym-list">
+            <div class="exercise done" onclick="toggleExercise(this)">
+              <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+              <div><p class="name">Bodyweight squats</p><p class="sets">3 sets × 15 reps</p><p class="instr">Keep your chest up, knees tracking over toes.</p></div>
+            </div>
+            <div class="exercise done" onclick="toggleExercise(this)">
+              <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+              <div><p class="name">Glute bridges</p><p class="sets">3 sets × 15 reps</p><p class="instr">Squeeze at the top for one second.</p></div>
+            </div>
+            <div class="exercise" onclick="toggleExercise(this)">
+              <div class="checkbox"></div>
+              <div><p class="name">Walking lunges</p><p class="sets">3 sets × 12 reps / leg</p><p class="instr">Step long, keep your torso upright.</p></div>
+            </div>
+            <div class="exercise" onclick="toggleExercise(this)">
+              <div class="checkbox"></div>
+              <div><p class="name">Wall sit</p><p class="sets">3 sets × 30 sec</p><p class="instr">Back flat on the wall, thighs parallel to the floor.</p></div>
+            </div>
+            <div class="exercise" onclick="toggleExercise(this)">
+              <div class="checkbox"></div>
+              <div><p class="name">Standing calf raises</p><p class="sets">3 sets × 20 reps</p><p class="instr">Slow and controlled, pause at the top.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section class="screen" id="screen-profile">
+          <div class="profile-top">
+            <div class="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="26" height="26"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg></div>
+            <p class="name">Her name</p>
+            <p class="since">Yours since Sept 2026</p>
+          </div>
+          <div class="stat-row">
+            <div class="stat"><b>128</b><span>notes</span></div>
+            <div class="stat"><b>212</b><span>memories</span></div>
+            <div class="stat"><b>34</b><span>workouts</span></div>
+          </div>
+          <div class="scroll">
+            <div class="settings-list">
+              <button class="settings-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg> Edit profile</button>
+              <button class="settings-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18"><path d="M6 16v-4.5a6 6 0 0 1 12 0V16l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg> Notifications</button>
+              <button class="settings-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/></svg> About this app</button>
+              <button class="settings-row logout" onclick="showScreen('login')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="18" height="18"><path d="M9 4H6a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 6 20h3"/><path d="M14 15l4-3-4-3"/><path d="M18 12H9.5"/></svg> Log out</button>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <button data-target="home" onclick="showScreen('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>Home</button>
+            <button data-target="notes-feed" onclick="showScreen('notes-feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 6.5l8 6.5 8-6.5"/></svg>Notes</button>
+            <button class="active" data-target="profile" onclick="showScreen('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="19" height="19"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>Profile</button>
+          </div>
+        </section>
+
+      </div>
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){
+    s.classList.toggle('active', s.id === 'screen-' + id);
+  });
+  document.querySelectorAll('[data-target]').forEach(function(el){
+    el.classList.toggle('active', el.dataset.target === id);
+  });
+}
+function toggleExercise(el){
+  el.classList.toggle('done');
+  var list = document.getElementById('gym-list');
+  var done = list.querySelectorAll('.exercise.done').length;
+  var total = list.querySelectorAll('.exercise').length;
+  document.getElementById('gym-progress-text').textContent = done + ' of ' + total + ' done';
+}
+function setSendMode(btn, scheduled){
+  document.querySelectorAll('.send-mode .chip-toggle').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('schedule-row').style.display = scheduled ? 'flex' : 'none';
+}
+</script>
+</body>
+</html>

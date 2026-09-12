@@ -13,8 +13,8 @@ import java.util.UUID;
 
 /**
  * A note from the OWNER to the RECIPIENT. Sent immediately on creation if no
- * {@code scheduledFor} is set, otherwise held as SCHEDULED until the scheduler
- * fires.
+ * {@code scheduledFor} is set, otherwise held as SCHEDULED until the hourly
+ * worker delivers it.
  */
 @Entity
 @Table(name = "notes")
@@ -44,6 +44,14 @@ public class Note {
     @Column(nullable = false)
     private Instant createdAt;
 
+    /** Tracked separately from {@link #status} — a push failure must never affect note delivery. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationStatus notificationStatus = NotificationStatus.PENDING;
+
+    @Column
+    private Instant notificationSentAt;
+
     protected Note() {
         // for JPA
     }
@@ -64,16 +72,8 @@ public class Note {
         return content;
     }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
-
     public String getAudioUrl() {
         return audioUrl;
-    }
-
-    public void setAudioUrl(String audioUrl) {
-        this.audioUrl = audioUrl;
     }
 
     public NoteStatus getStatus() {
@@ -88,10 +88,6 @@ public class Note {
         return scheduledFor;
     }
 
-    public void setScheduledFor(Instant scheduledFor) {
-        this.scheduledFor = scheduledFor;
-    }
-
     public Instant getSentAt() {
         return sentAt;
     }
@@ -102,5 +98,21 @@ public class Note {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public NotificationStatus getNotificationStatus() {
+        return notificationStatus;
+    }
+
+    public void setNotificationStatus(NotificationStatus notificationStatus) {
+        this.notificationStatus = notificationStatus;
+    }
+
+    public Instant getNotificationSentAt() {
+        return notificationSentAt;
+    }
+
+    public void setNotificationSentAt(Instant notificationSentAt) {
+        this.notificationSentAt = notificationSentAt;
     }
 }

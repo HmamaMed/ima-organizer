@@ -1,16 +1,18 @@
-/* Design tokens — from DESIGN.md */
+/* Design tokens — from DESIGN.md ("Kept" direction, see app-design.html) */
 :root {
   --font-display: 'Fraunces', ui-serif, Georgia, serif;
-  --font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --color-bg: #FDF4F6;
+  --color-bg: #FBF4EE;
   --color-surface: #FFFFFF;
-  --color-line: #F3DFE3;
-  --color-ink: #3B1224;
-  --color-ink-muted: #9C7B86;
-  --color-rose: #E14F73;
-  --color-gold: #EAA857;
-  --color-emerald: #1E7F63;
+  --color-mist: #F1E4E6;
+  --color-line: rgba(43, 30, 36, 0.12);
+  --color-ink: #2B1E24;
+  --color-ink-muted: #8A6483;
+  --color-rose: #C65D7B;
+  --color-gold: #B8935A;
+  --color-plum: #4A1942;
+  --color-plum-dark: #34102E;
 }
 
 html,
@@ -32,4 +34,11 @@ body {
 .font-display {
   font-family: var(--font-display);
   font-weight: 500;
+}
+
+/* Italic variant — greetings, captions, and other "personal moment" text */
+.font-display-italic {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-style: italic;
 }

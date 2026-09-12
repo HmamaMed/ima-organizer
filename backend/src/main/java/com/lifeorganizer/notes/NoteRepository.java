@@ -9,9 +9,12 @@ import java.util.UUID;
 
 public interface NoteRepository extends JpaRepository<Note, UUID> {
 
-    /** Feed, newest first. */
-    List<Note> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    /** Recipient feed — delivered notes only, newest delivered first. Never exposes scheduled/draft/cancelled notes. */
+    List<Note> findByStatusOrderBySentAtDesc(NoteStatus status, Pageable pageable);
 
-    /** Notes due to be sent by the scheduler. */
-    List<Note> findByStatusAndScheduledForLessThanEqual(NoteStatus status, Instant now);
+    /** Owner's workspace view — everything except cancelled notes, which the admin screen has no use for. */
+    List<Note> findByStatusInOrderByCreatedAtDesc(List<NoteStatus> statuses, Pageable pageable);
+
+    /** True if another active scheduled note already occupies this hour slot. */
+    boolean existsByStatusAndScheduledFor(NoteStatus status, Instant scheduledFor);
 }
