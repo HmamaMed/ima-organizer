@@ -37,3 +37,4 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Voice notes in Memories -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+</manifest>
