@@ -14,6 +14,7 @@ import BirthdayCountdownPage from './modules/memories/BirthdayCountdownPage';
 import GymPage from './modules/gym/GymPage';
 import ProfilePage from './modules/profile/ProfilePage';
 import ComingSoonPage from './modules/coming-soon/ComingSoonPage';
+import BackButtonHandler from './shared/navigation/BackButtonHandler';
 import './App.css';
 
 const SPLASH_DURATION_MS = 900;
@@ -22,6 +23,7 @@ const SPLASH_DURATION_MS = 900;
 function AuthenticatedTabs() {
   return (
     <IonTabs>
+      <BackButtonHandler />
       <IonRouterOutlet>
         <Route exact path="/home">
           <HomePage />

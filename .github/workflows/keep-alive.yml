@@ -1,0 +1,18 @@
+name: Keep backend alive
+
+on:
+  schedule:
+    # Every 10 minutes — stays under Render free tier's 15-minute idle
+    # spin-down. GitHub can delay scheduled runs by a few minutes under
+    # load, so 10 min (not 14) leaves buffer.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render backend
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://ima-organizer.onrender.com/)
+          echo "Backend responded with HTTP $STATUS"

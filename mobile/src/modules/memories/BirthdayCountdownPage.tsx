@@ -4,8 +4,17 @@ import { useHistory } from 'react-router-dom';
 import HeartMark from '../../shared/ui/HeartMark';
 import './BirthdayCountdownPage.css';
 
-/** Placeholder unlock date — swap for the real birthday before wiring this in as an actual gate. */
-export const MEMORIES_UNLOCK_DATE = new Date('2026-12-25T00:00:00');
+/**
+ * Birthday unlock date: October 3rd, midnight Morocco time.
+ * Morocco toggles between UTC+1 and standard UTC+0 around Ramadan; per the
+ * tz database it's on UTC+0 from Sep 20, 2026 through the next transition
+ * (well past Oct 3), so that's the offset hardcoded here. Re-verify the
+ * offset against the current tz rules if this date ever moves to a different
+ * year, since Morocco's schedule isn't fixed. The offset is hardcoded rather
+ * than left timezone-less so `new Date(...)` doesn't parse it in the
+ * device's local timezone instead of Morocco's.
+ */
+export const MEMORIES_UNLOCK_DATE = new Date('2026-10-03T00:00:00+00:00');
 
 function formatUnlockDate(date: Date): string {
   return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
