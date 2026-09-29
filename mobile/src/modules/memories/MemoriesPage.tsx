@@ -55,9 +55,9 @@ function formatDate(iso: string): string {
   });
 }
 
-/** Groups memories by calendar month, newest month first, entries within a month newest first. */
+/** Groups memories by calendar month, oldest month first, entries within a month oldest first — a story walked chronologically, newest memory landing at the bottom. */
 function groupByMonth(memories: Memory[]): { label: string; entries: Memory[] }[] {
-  const sorted = [...memories].sort((a, b) => new Date(b.memoryDate).getTime() - new Date(a.memoryDate).getTime());
+  const sorted = [...memories].sort((a, b) => new Date(a.memoryDate).getTime() - new Date(b.memoryDate).getTime());
   const groups: { label: string; entries: Memory[] }[] = [];
   for (const memory of sorted) {
     const label = monthLabel(memory.memoryDate);
