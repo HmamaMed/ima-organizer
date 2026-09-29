@@ -128,7 +128,7 @@ export default function ExerciseLibraryPage() {
 
   return (
     <IonPage>
-      <BrandHeader icon={libraryOutline} title="Exercises" accent="gold" showBack />
+      <BrandHeader icon={libraryOutline} title="Exercises" accent="gold" showBack backTo="/gym" />
 
       <IonContent className="ion-padding">
         {loading ? (

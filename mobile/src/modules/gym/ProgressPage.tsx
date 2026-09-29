@@ -89,7 +89,7 @@ export default function ProgressPage() {
 
   return (
     <IonPage>
-      <BrandHeader icon={trendingUpOutline} title="Progress" accent="gold" showBack />
+      <BrandHeader icon={trendingUpOutline} title="Progress" accent="gold" showBack backTo="/gym" />
 
       <IonContent className="ion-padding">
         {loading ? (

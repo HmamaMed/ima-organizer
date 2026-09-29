@@ -119,7 +119,7 @@ export default function SessionPage() {
 
   return (
     <IonPage>
-      <BrandHeader icon={barbellOutline} title={day?.label ?? 'Session'} accent="gold" showBack />
+      <BrandHeader icon={barbellOutline} title={day?.label ?? 'Session'} accent="gold" showBack backTo="/gym" />
 
       <IonContent className="ion-padding">
         {loading ? (

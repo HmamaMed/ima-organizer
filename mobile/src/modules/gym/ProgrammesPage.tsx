@@ -98,7 +98,7 @@ export default function ProgrammesPage() {
 
   return (
     <IonPage>
-      <BrandHeader icon={listOutline} title="Programmes" accent="gold" showBack />
+      <BrandHeader icon={listOutline} title="Programmes" accent="gold" showBack backTo="/gym" />
 
       <IonContent className="ion-padding">
         {loading ? (

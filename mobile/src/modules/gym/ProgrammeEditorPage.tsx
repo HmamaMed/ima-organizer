@@ -226,7 +226,7 @@ export default function ProgrammeEditorPage() {
 
   return (
     <IonPage>
-      <BrandHeader icon={barbellOutline} title={programme?.name ?? 'Programme'} accent="gold" showBack />
+      <BrandHeader icon={barbellOutline} title={programme?.name ?? 'Programme'} accent="gold" showBack backTo="/gym/programmes" />
 
       <IonContent className="ion-padding">
         {loading ? (
