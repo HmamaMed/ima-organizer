@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { apiRequest } from '../api/client';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { apiRequest, setUnauthorizedHandler } from '../api/client';
 
 export type Role = 'OWNER' | 'RECIPIENT';
 
@@ -63,6 +63,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
   }, []);
+
+  // A token can go stale without the app doing anything wrong — it expires,
+  // or the backend's JWT secret rotates on redeploy. Without this, a stale
+  // token sits in localStorage looking valid client-side (isAuthenticated
+  // only checks presence, not validity) until whichever screen happens to
+  // make the first API call gets a 401. Bounce to the login screen the
+  // moment that happens, from any request, anywhere in the app.
+  useEffect(() => {
+    setUnauthorizedHandler(logout);
+    return () => setUnauthorizedHandler(null);
+  }, [logout]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

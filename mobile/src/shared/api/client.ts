@@ -6,6 +6,18 @@
  */
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
 
+/**
+ * Called whenever any request comes back 401 (no/invalid/expired token).
+ * AuthContext registers its own `logout` here so a stale token stored on the
+ * device can't leave the UI looking authenticated when the backend has
+ * already rejected it.
+ */
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler;
+}
+
 export class ApiError extends Error {
   status: number;
 
@@ -47,6 +59,9 @@ export async function apiRequest<T>(
       }
     } catch {
       // ignore non-JSON error bodies
+    }
+    if (response.status === 401) {
+      onUnauthorized?.();
     }
     throw new ApiError(response.status, message);
   }

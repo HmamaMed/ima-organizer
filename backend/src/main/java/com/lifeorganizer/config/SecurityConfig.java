@@ -12,7 +12,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -45,6 +47,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Without this, Spring Security's default fallback returns 403 for both
+                // "no/invalid token" and "valid token, wrong role" — the client can't
+                // tell "log in again" apart from "you're not allowed to do this".
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(unauthorizedEntryPoint())
+                        .accessDeniedHandler(forbiddenHandler()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/api/**").authenticated()
@@ -52,6 +60,14 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private AuthenticationEntryPoint unauthorizedEntryPoint() {
+        return (request, response, authException) -> response.sendError(401, "Unauthorized");
+    }
+
+    private AccessDeniedHandler forbiddenHandler() {
+        return (request, response, accessDeniedException) -> response.sendError(403, "Forbidden");
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
