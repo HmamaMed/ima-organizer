@@ -1,18 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
+import { IonContent, IonIcon, IonPage, IonSpinner, IonText } from '@ionic/react';
+import { useHistory } from 'react-router-dom';
 import {
-  IonButton,
-  IonContent,
-  IonIcon,
-  IonPage,
-  IonSpinner,
-  IonText,
-  IonToast,
-} from '@ionic/react';
-import { barbellOutline, checkmarkCircleOutline, ellipseOutline, playCircleOutline } from 'ionicons/icons';
+  addCircleOutline,
+  barbellOutline,
+  checkmarkCircle,
+  chevronForwardOutline,
+  libraryOutline,
+  listOutline,
+  trendingUpOutline,
+} from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
 import BrandHeader from '../../shared/ui/BrandHeader';
-import { isSameLocalDay, buildWeekdayStrip } from '../../shared/utils/date';
-import { fetchLogs, fetchPlan, logCompletion, type WorkoutDay, type WorkoutLog } from './gymApi';
+import { buildWeekdayStrip, computeStreak, isSameLocalDay, localDateKey } from '../../shared/utils/date';
+import {
+  fetchActiveProgramme,
+  fetchLogs,
+  fetchTicks,
+  type ExerciseTick,
+  type Programme,
+  type WorkoutLog,
+} from './gymApi';
+import './gym.css';
 
 function WeekStrip({ logs }: { logs: WorkoutLog[] }) {
   const days = buildWeekdayStrip(logs.map((l) => l.completedAt));
@@ -30,45 +39,36 @@ function WeekStrip({ logs }: { logs: WorkoutLog[] }) {
   );
 }
 
-function ExerciseRow({ exercise, done }: { exercise: WorkoutDay['exercises'][number]; done: boolean }) {
-  return (
-    <div className={`exercise-row ${done ? 'exercise-row--done' : ''}`}>
-      <IonIcon icon={done ? checkmarkCircleOutline : ellipseOutline} className="exercise-row__marker" />
-      <div className="exercise-row__body">
-        <div className="exercise-row__head">
-          <span className="exercise-row__name">{exercise.name}</span>
-          <span className="exercise-row__sets">{exercise.sets} × {exercise.reps}</span>
-        </div>
-        <p className="exercise-row__instructions">{exercise.instructions}</p>
-        {exercise.videoUrl && (
-          <a className="exercise-row__video" href={exercise.videoUrl} target="_blank" rel="noreferrer">
-            <IonIcon icon={playCircleOutline} /> Watch demo
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}
-
+/**
+ * Gym hub. Both roles see the active programme's sessions; the owner also gets
+ * the two authoring entry points (library + programmes).
+ */
 export default function GymPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const history = useHistory();
+  const isOwner = user?.role === 'OWNER';
 
-  const [plan, setPlan] = useState<WorkoutDay[]>([]);
+  const [programme, setProgramme] = useState<Programme | null>(null);
   const [logs, setLogs] = useState<WorkoutLog[]>([]);
+  const [ticks, setTicks] = useState<ExerciseTick[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const [planData, logData] = await Promise.all([fetchPlan(token), fetchLogs(token)]);
-      setPlan(planData);
+      const [activeProgramme, logData, tickData] = await Promise.all([
+        fetchActiveProgramme(token),
+        fetchLogs(token),
+        fetchTicks(token, 2),
+      ]);
+      setProgramme(activeProgramme);
       setLogs(logData);
+      setTicks(tickData);
       setError(null);
     } catch {
-      setError('Could not load the workout plan.');
+      setError('Could not load the plan.');
     } finally {
       setLoading(false);
     }
@@ -78,29 +78,22 @@ export default function GymPage() {
     load();
   }, [load]);
 
-  const today = new Date().toISOString();
-  const doneTodayIds = new Set(
-    logs.filter((log) => isSameLocalDay(log.completedAt, today)).map((log) => log.workoutDayId),
+  const streak = computeStreak(logs.map((l) => l.completedAt));
+  const today = localDateKey();
+  const todayTickIds = new Set(ticks.filter((t) => t.tickDate === today).map((t) => t.dayExerciseId));
+  const nowIso = new Date().toISOString();
+
+  const doneTodayDayIds = new Set(
+    logs.filter((log) => isSameLocalDay(log.completedAt, nowIso)).map((log) => log.programmeDayId),
   );
 
-  const lastCompletedFor = (dayId: string): string | null => {
-    const dayLogs = logs.filter((log) => log.workoutDayId === dayId);
-    if (dayLogs.length === 0) return null;
-    const mostRecent = dayLogs.reduce((latest, log) =>
-      new Date(log.completedAt) > new Date(latest.completedAt) ? log : latest,
+  const lastDoneFor = (dayId: string): string | null => {
+    const forDay = logs.filter((log) => log.programmeDayId === dayId);
+    if (forDay.length === 0) return null;
+    const latest = forDay.reduce((best, log) =>
+      new Date(log.completedAt) > new Date(best.completedAt) ? log : best,
     );
-    return new Date(mostRecent.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  };
-
-  const handleComplete = async (dayId: string) => {
-    if (!token) return;
-    try {
-      await logCompletion(token, dayId);
-      setToast('Day marked complete. Nice work!');
-      await load();
-    } catch {
-      setToast('Could not save completion.');
-    }
+    return new Date(latest.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -112,50 +105,108 @@ export default function GymPage() {
           <div className="centered"><IonSpinner /></div>
         ) : error ? (
           <IonText color="danger"><p>{error}</p></IonText>
-        ) : plan.length === 0 ? (
-          <IonText className="empty-state"><p>No workout plan yet.</p></IonText>
         ) : (
-          <div className="gym-plan">
-            <div className="gym-streak-wrap">
-              <span className="gym-streak-label">This week</span>
+          <div className="gym">
+            <div className="gym-hero">
+              <button type="button" className="gym-hero__streak" onClick={() => history.push('/gym/progress')}>
+                <span className="gym-hero__flame">{streak > 0 ? '🔥' : '🌱'}</span>
+                <span className="gym-hero__streak-text">
+                  <span className="gym-hero__streak-num font-display">{streak}</span>
+                  <span className="gym-hero__streak-label">day streak</span>
+                </span>
+                <IonIcon icon={chevronForwardOutline} className="gym-hero__chevron" />
+              </button>
               <WeekStrip logs={logs} />
             </div>
-            {plan.map((day) => {
-              const done = doneTodayIds.has(day.id);
-              const lastCompleted = lastCompletedFor(day.id);
-              return (
-                <div key={day.id} className={`gym-day ${done ? 'gym-day--done' : ''}`}>
-                  <div className="gym-day__head">
-                    <h3 className="gym-day__label">{day.dayLabel}</h3>
-                    {done && <IonIcon icon={checkmarkCircleOutline} className="gym-day__check" />}
-                  </div>
-                  {day.notes && <p className="gym-day__notes">{day.notes}</p>}
-                  {lastCompleted && !done && (
-                    <p className="gym-day__last">Last done {lastCompleted}</p>
-                  )}
-                  <div className="gym-day__exercises">
-                    {day.exercises.map((exercise) => (
-                      <ExerciseRow key={exercise.id} exercise={exercise} done={done} />
-                    ))}
-                  </div>
-                  {!done && (
-                    <IonButton expand="block" fill="outline" color="secondary" onClick={() => handleComplete(day.id)}>
-                      Mark complete
-                    </IonButton>
+
+            {isOwner && (
+              <div className="coach-bar">
+                <button type="button" className="coach-btn" onClick={() => history.push('/gym/exercises')}>
+                  <IonIcon icon={libraryOutline} />
+                  <span>Exercises</span>
+                </button>
+                <button type="button" className="coach-btn" onClick={() => history.push('/gym/programmes')}>
+                  <IonIcon icon={listOutline} />
+                  <span>Programmes</span>
+                </button>
+              </div>
+            )}
+
+            {programme ? (
+              <>
+                <div className="gym-programme">
+                  <p className="gym-programme__name font-display">{programme.name}</p>
+                  {programme.description && (
+                    <p className="gym-programme__desc">{programme.description}</p>
                   )}
                 </div>
-              );
-            })}
+
+                {programme.days.length === 0 ? (
+                  <p className="empty-state">
+                    {isOwner
+                      ? 'This programme has no sessions yet — open Programmes to add some.'
+                      : 'No sessions in this plan yet.'}
+                  </p>
+                ) : (
+                  <div className="day-cards">
+                    {programme.days.map((day) => {
+                      const done = doneTodayDayIds.has(day.id);
+                      const ticked = day.exercises.filter((e) => todayTickIds.has(e.id)).length;
+                      const inProgress = !done && ticked > 0;
+                      const lastDone = lastDoneFor(day.id);
+
+                      return (
+                        <button
+                          key={day.id}
+                          type="button"
+                          className={`day-card ${done ? 'day-card--done' : ''}`}
+                          onClick={() => history.push(`/gym/day/${day.id}`)}
+                        >
+                          <div className="day-card__main">
+                            <span className="day-card__label font-display">{day.label}</span>
+                            <span className="day-card__meta">
+                              {day.exercises.length} exercise{day.exercises.length === 1 ? '' : 's'}
+                              {inProgress && ` · ${ticked} done`}
+                              {!inProgress && !done && lastDone && ` · last ${lastDone}`}
+                            </span>
+                          </div>
+                          {done ? (
+                            <IonIcon icon={checkmarkCircle} className="day-card__done-icon" />
+                          ) : (
+                            <IonIcon icon={chevronForwardOutline} className="day-card__chevron" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="gym-empty">
+                <p className="gym-empty__text">
+                  {isOwner
+                    ? 'No programme yet. Build the first one — pick from your exercise library.'
+                    : 'Your plan is being written. Check back soon ♥'}
+                </p>
+                {isOwner && (
+                  <button
+                    type="button"
+                    className="gym-empty__cta"
+                    onClick={() => history.push('/gym/programmes')}
+                  >
+                    <IonIcon icon={addCircleOutline} /> Create a programme
+                  </button>
+                )}
+              </div>
+            )}
+
+            <button type="button" className="gym-progress-link" onClick={() => history.push('/gym/progress')}>
+              <IonIcon icon={trendingUpOutline} />
+              {isOwner ? 'See her progress' : 'See my progress'}
+            </button>
           </div>
         )}
       </IonContent>
-
-      <IonToast
-        isOpen={!!toast}
-        message={toast ?? ''}
-        duration={2500}
-        onDidDismiss={() => setToast(null)}
-      />
     </IonPage>
   );
 }

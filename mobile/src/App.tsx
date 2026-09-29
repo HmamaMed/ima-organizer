@@ -12,6 +12,11 @@ import ComposeNotePage from './modules/notes/ComposeNotePage';
 import MemoriesPage from './modules/memories/MemoriesPage';
 import BirthdayCountdownPage from './modules/memories/BirthdayCountdownPage';
 import GymPage from './modules/gym/GymPage';
+import SessionPage from './modules/gym/SessionPage';
+import ExerciseLibraryPage from './modules/gym/ExerciseLibraryPage';
+import ProgrammesPage from './modules/gym/ProgrammesPage';
+import ProgrammeEditorPage from './modules/gym/ProgrammeEditorPage';
+import ProgressPage from './modules/gym/ProgressPage';
 import ProfilePage from './modules/profile/ProfilePage';
 import ComingSoonPage from './modules/coming-soon/ComingSoonPage';
 import BackButtonHandler from './shared/navigation/BackButtonHandler';
@@ -43,6 +48,22 @@ function AuthenticatedTabs() {
         </Route>
         <Route exact path="/gym">
           <GymPage />
+        </Route>
+        {/* Authoring routes are owner-only server-side; the UI just doesn't link them for her. */}
+        <Route exact path="/gym/exercises">
+          <ExerciseLibraryPage />
+        </Route>
+        <Route exact path="/gym/programmes">
+          <ProgrammesPage />
+        </Route>
+        <Route exact path="/gym/programmes/:programmeId">
+          <ProgrammeEditorPage />
+        </Route>
+        <Route exact path="/gym/progress">
+          <ProgressPage />
+        </Route>
+        <Route exact path="/gym/day/:dayId">
+          <SessionPage />
         </Route>
         <Route exact path="/profile">
           <ProfilePage />
