@@ -53,7 +53,7 @@ export default function ProfilePage() {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
+      <IonContent className="ion-padding content-safe-top">
         <div className="profile-top">
           <div className="avatar">
             <IonIcon icon={personOutline} />

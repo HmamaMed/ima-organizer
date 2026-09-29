@@ -463,7 +463,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px;
+  /* Not an IonHeader/IonToolbar, so Ionic's automatic safe-area padding
+     (see .brand-header ion-toolbar above) doesn't apply here — add it
+     directly since this div sits at the very top of the page. */
+  padding: calc(var(--ion-safe-area-top, 0px) + 16px) 18px 16px;
   border-bottom: 1px solid var(--color-line);
   background: var(--color-bg);
 }
@@ -1417,11 +1420,23 @@
 .brand-header ion-toolbar {
   --background: var(--ion-background-color);
   --border-width: 0;
-  /* Add to the safe-area inset rather than replacing it — otherwise the
-     header renders under the status bar / camera cutout on edge-to-edge
-     Android (SDK 35+), worse on phones with taller cutouts. */
-  --padding-top: calc(var(--ion-safe-area-top, 0px) + 4px);
+  /* Ionic already pushes the first toolbar in a header below the status
+     bar / camera cutout automatically (core CSS: `ion-header ion-toolbar
+     :first-of-type { padding-top: var(--ion-safe-area-top) }`), on every
+     device. --padding-top here is a *separate*, additional inner spacing
+     — adding the safe area again here double-counts it. */
+  --padding-top: 4px;
   --padding-bottom: 4px;
+}
+
+/*
+ * Pages with no IonHeader (Home, Profile, Compose) get no automatic
+ * safe-area handling from Ionic at all, since there's no header toolbar
+ * to apply it. Add it once, generically, here — any page can opt in by
+ * adding this class alongside ion-padding.
+ */
+.content-safe-top {
+  --padding-top: calc(var(--ion-safe-area-top, 0px) + 16px);
 }
 
 .brand-header__inner {

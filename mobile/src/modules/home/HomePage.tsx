@@ -86,7 +86,7 @@ export default function HomePage() {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
+      <IonContent className="ion-padding content-safe-top">
         <div className="home-screen">
           <div className="home-greeting">
             <div className="home-greeting__mark">
