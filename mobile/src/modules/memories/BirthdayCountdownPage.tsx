@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
+import type { Role } from '../../shared/auth/AuthContext';
 import HeartMark from '../../shared/ui/HeartMark';
 import './BirthdayCountdownPage.css';
 
@@ -15,6 +16,11 @@ import './BirthdayCountdownPage.css';
  * device's local timezone instead of Morocco's.
  */
 export const MEMORIES_UNLOCK_DATE = new Date('2026-10-03T00:00:00+00:00');
+
+/** The recipient sees the countdown instead of the timeline until the unlock date; the owner never does. */
+export function isMemoriesLocked(role: Role | undefined, now: Date = new Date()): boolean {
+  return role !== 'OWNER' && now.getTime() < MEMORIES_UNLOCK_DATE.getTime();
+}
 
 function formatUnlockDate(date: Date): string {
   return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
@@ -106,9 +112,15 @@ export default function BirthdayCountdownPage() {
               : `Memories unlock on ${formatUnlockDate(MEMORIES_UNLOCK_DATE)}`}
           </p>
 
-          <button type="button" className="lock-screen__testing-link" onClick={() => history.push('/memories')}>
-            ← Testing: view the real memories page
-          </button>
+          {reached ? (
+            <button type="button" className="lock-screen__open" onClick={() => history.replace('/memories')}>
+              Open your memories
+            </button>
+          ) : (
+            <button type="button" className="lock-screen__home-link" onClick={() => history.push('/home')}>
+              ← Back to Home
+            </button>
+          )}
         </div>
       </IonContent>
     </IonPage>

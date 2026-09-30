@@ -11,6 +11,7 @@ import { useAuth } from '../../shared/auth/AuthContext';
 import HeartMark from '../../shared/ui/HeartMark';
 import { fetchNotes } from '../notes/notesApi';
 import { fetchMemories } from '../memories/memoriesApi';
+import { isMemoriesLocked } from '../memories/BirthdayCountdownPage';
 import { fetchLogs } from '../gym/gymApi';
 import { computeStreak } from '../../shared/utils/date';
 
@@ -80,6 +81,7 @@ export default function HomePage() {
 
   const subtitleFor = (mod: ModuleDef): string => {
     if (mod.path === '/notes') return counts.notes === null ? 'Notes' : `${counts.notes} note${counts.notes === 1 ? '' : 's'}`;
+    if (mod.path === '/memories' && isMemoriesLocked(user?.role, now)) return 'Something is waiting for you';
     if (mod.path === '/memories') return counts.memories === null ? 'Memories, kept safe' : `${counts.memories} memories · take a slow walk`;
     return 'Today’s plan';
   };
@@ -111,7 +113,9 @@ export default function HomePage() {
                 key={mod.path}
                 type="button"
                 className="mod-row"
-                onClick={() => history.push(mod.path)}
+                onClick={() =>
+                  history.push(mod.path === '/memories' && isMemoriesLocked(user?.role) ? '/memories/countdown' : mod.path)
+                }
               >
                 <div className={`mod-icon mod-icon--${mod.accent}`}>
                   <IonIcon icon={mod.icon} />

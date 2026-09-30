@@ -42,8 +42,8 @@ function AuthenticatedTabs() {
         <Route exact path="/memories">
           <MemoriesPage />
         </Route>
-        {/* Temporary preview route — not wired as a real gate yet, see BirthdayCountdownPage.tsx */}
-        <Route exact path="/memories/lock-preview">
+        {/* Home sends the recipient here instead of /memories until the unlock date. */}
+        <Route exact path="/memories/countdown">
           <BirthdayCountdownPage />
         </Route>
         <Route exact path="/gym">

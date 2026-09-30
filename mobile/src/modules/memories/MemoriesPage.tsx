@@ -36,7 +36,6 @@ import {
   stopOutline,
   trashOutline,
 } from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../shared/auth/AuthContext';
 import BrandHeader from '../../shared/ui/BrandHeader';
 import { uploadToStorage } from '../../shared/storage/mediaStorage';
@@ -280,7 +279,6 @@ function PhotoLightbox({ memory, onClose }: { memory: Memory; onClose: () => voi
 
 export default function MemoriesPage() {
   const { token, user } = useAuth();
-  const history = useHistory();
   const isOwner = user?.role === 'OWNER';
 
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -415,11 +413,6 @@ export default function MemoriesPage() {
             </IonFabButton>
           </IonFab>
         )}
-
-        {/* Temporary: lets you compare the locked countdown screen against the real timeline before wiring the gate. */}
-        <button type="button" className="lock-preview-link" onClick={() => history.push('/memories/lock-preview')}>
-          Preview: locked countdown screen →
-        </button>
       </IonContent>
 
       <IonModal isOpen={showComposer} onDidDismiss={closeComposer}>
