@@ -1,35 +1,41 @@
-/* Ionic theme variables — from DESIGN.md ("Kept" direction, see app-design.html) */
+/* Ionic mappings preserve chapter roles; shared primary actions use plum. */
 :root {
-  --ion-color-primary: #C65D7B;
-  --ion-color-primary-rgb: 198, 93, 123;
-  --ion-color-primary-contrast: #FFFFFF;
+  --ion-color-primary: #aa4566;
+  --ion-color-primary-rgb: 170, 69, 102;
+  --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #ae5169;
-  --ion-color-primary-tint: #cb7086;
+  --ion-color-primary-shade: #963d5a;
+  --ion-color-primary-tint: #b35875;
 
-  --ion-color-secondary: #B8935A;
-  --ion-color-secondary-rgb: 184, 147, 90;
-  --ion-color-secondary-contrast: #2B1E24;
-  --ion-color-secondary-contrast-rgb: 43, 30, 36;
-  --ion-color-secondary-shade: #a1814f;
-  --ion-color-secondary-tint: #bf9d6b;
+  --ion-color-secondary: #89642c;
+  --ion-color-secondary-rgb: 137, 100, 44;
+  --ion-color-secondary-contrast: #29232a;
+  --ion-color-secondary-contrast-rgb: 41, 35, 42;
+  --ion-color-secondary-shade: #795827;
+  --ion-color-secondary-tint: #957442;
 
-  --ion-color-tertiary: #4A1942;
-  --ion-color-tertiary-rgb: 74, 25, 66;
-  --ion-color-tertiary-contrast: #FFFFFF;
+  --ion-color-tertiary: #482541;
+  --ion-color-tertiary-rgb: 72, 37, 65;
+  --ion-color-tertiary-contrast: #ffffff;
   --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-  --ion-color-tertiary-shade: #41163a;
-  --ion-color-tertiary-tint: #5c3055;
+  --ion-color-tertiary-shade: #3f2139;
+  --ion-color-tertiary-tint: #5a3b54;
 
-  --ion-background-color: #FBF4EE;
-  --ion-background-color-rgb: 251, 244, 238;
-  --ion-text-color: #2B1E24;
-  --ion-text-color-rgb: 43, 30, 36;
+  --ion-background-color: #f8f6f3;
+  --ion-background-color-rgb: 248, 246, 243;
+  --ion-text-color: #29232a;
+  --ion-text-color-rgb: 41, 35, 42;
 
-  --ion-card-background: #FFFFFF;
-  --ion-item-background: #FFFFFF;
-  --ion-border-color: rgba(43, 30, 36, 0.12);
-  --ion-toolbar-background: #FBF4EE;
+  --ion-card-background: #ffffff;
+  --ion-item-background: #ffffff;
+  --ion-border-color: #e5dfe5;
+  --ion-toolbar-background: #f8f6f3;
+
+  --ion-color-danger: #ae334b;
+  --ion-color-danger-rgb: 174, 51, 75;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-shade: #992d42;
+  --ion-color-danger-tint: #b6475d;
 
   --ion-font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }

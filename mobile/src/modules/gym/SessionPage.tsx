@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { IonContent, IonIcon, IonPage, IonSpinner, IonText, IonToast } from '@ionic/react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { IonIcon, IonPage, IonToast, useIonViewWillEnter } from '@ionic/react';
 import { useHistory, useParams } from 'react-router-dom';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { barbellOutline, checkmarkCircle, ellipseOutline, informationCircleOutline, timerOutline } from 'ionicons/icons';
+import {
+  barbellOutline,
+  checkmarkCircle,
+  ellipseOutline,
+  informationCircleOutline,
+  timerOutline,
+} from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
 import BrandHeader from '../../shared/ui/BrandHeader';
+import AppScreen from '../../shared/ui/AppScreen';
 import { isSameLocalDay, localDateKey } from '../../shared/utils/date';
-import ProgressRing from './components/ProgressRing';
+import FeedbackState from '../../shared/ui/FeedbackState';
+import AppButton from '../../shared/ui/AppButton';
+import './gym.css';
 import ExerciseDetailSheet from './components/ExerciseDetailSheet';
 import Celebration from './components/Celebration';
 import {
@@ -32,11 +41,15 @@ const FINISH_LINES = [
  */
 export default function SessionPage() {
   const { dayId } = useParams<{ dayId: string }>();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const history = useHistory();
 
   const [day, setDay] = useState<ProgrammeDay | null>(null);
   const [tickedIds, setTickedIds] = useState<Set<string>>(new Set());
+  const [pending, setPending] = useState(false);
+  const writeLock = useRef(false);
+  const loadedDate = useRef(localDateKey());
+  const [completionError, setCompletionError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -44,11 +57,11 @@ export default function SessionPage() {
   const [celebrating, setCelebrating] = useState(false);
   const [loggedToday, setLoggedToday] = useState(false);
 
-  const today = localDateKey();
 
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
+    const date = localDateKey();
     try {
       const [programme, ticks, logs] = await Promise.all([
         fetchActiveProgramme(token),
@@ -57,12 +70,28 @@ export default function SessionPage() {
       ]);
       const found = programme?.days.find((d) => d.id === dayId) ?? null;
       setDay(found);
+      loadedDate.current = date;
+      setCompletionError(false);
       setTickedIds(
-        new Set(ticks.filter((t) => t.tickDate === today).map((t) => t.dayExerciseId)),
+        new Set(
+          ticks
+            .filter(
+              (t) =>
+                t.tickDate === date &&
+                t.userId === user?.userId &&
+                found?.exercises.some((ex) => ex.id === t.dayExerciseId),
+            )
+            .map((t) => t.dayExerciseId),
+        ),
       );
       const nowIso = new Date().toISOString();
       setLoggedToday(
-        logs.some((log) => log.programmeDayId === dayId && isSameLocalDay(log.completedAt, nowIso)),
+        logs.some(
+          (log) =>
+            log.userId === user?.userId &&
+            log.programmeDayId === dayId &&
+            isSameLocalDay(log.completedAt, nowIso),
+        ),
       );
       setError(found ? null : 'This session is no longer in the plan.');
     } catch {
@@ -70,11 +99,11 @@ export default function SessionPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, dayId, today]);
+  }, [token, user?.userId, dayId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useIonViewWillEnter(() => {
+    void load();
+  });
 
   const doneCount = useMemo(
     () => (day ? day.exercises.filter((e) => tickedIds.has(e.id)).length : 0),
@@ -82,55 +111,98 @@ export default function SessionPage() {
   );
   const total = day?.exercises.length ?? 0;
 
-  const toggle = async (exercise: DayExercise) => {
-    if (!token || !day) return;
-
-    const wasOn = tickedIds.has(exercise.id);
-    const next = new Set(tickedIds);
-    if (wasOn) {
-      next.delete(exercise.id);
-    } else {
-      next.add(exercise.id);
-    }
-
-    // Optimistic — a tick should feel instant, and it's recoverable if it fails.
-    setTickedIds(next);
-    Haptics.impact({ style: ImpactStyle.Light }).catch(() => {
-      // Desktop browser / no haptics hardware — nothing to do.
-    });
-
+  const finish = async () => {
+    if (!token || !day || loggedToday) return;
+    setCompletionError(false);
     try {
-      await setTick(token, exercise.id, today, !wasOn);
-
-      // Finishing the last one completes the session — but only once a day, so
-      // unticking and re-ticking can't log the same session twice.
-      if (!wasOn && next.size === day.exercises.length && !loggedToday) {
-        await logCompletion(token, day.id);
-        setLoggedToday(true);
-        setCelebrating(true);
-      }
+      await logCompletion(token, day.id);
+      setLoggedToday(true);
+      setCelebrating(true);
     } catch {
-      setTickedIds(tickedIds);
-      setToast('Could not save that. Check your connection.');
+      // The ticks were saved. Keep them checked and offer a completion retry.
+      setCompletionError(true);
     }
   };
 
-  const finishLine = useMemo(() => FINISH_LINES[Math.floor(Math.random() * FINISH_LINES.length)], []);
+  const retryCompletion = async () => {
+    if (writeLock.current || loggedToday) return;
+    if (loadedDate.current !== localDateKey()) {
+      await load();
+      return;
+    }
+    writeLock.current = true;
+    setPending(true);
+    try {
+      await finish();
+    } finally {
+      writeLock.current = false;
+      setPending(false);
+    }
+  };
+
+  const toggle = async (exercise: DayExercise) => {
+    if (!token || !day || writeLock.current) return;
+    if (loadedDate.current !== localDateKey()) {
+      await load();
+      setToast('A new day started. Your session has been refreshed.');
+      return;
+    }
+    writeLock.current = true;
+    setPending(true);
+    const wasOn = tickedIds.has(exercise.id);
+    const previous = new Set(tickedIds);
+    const next = new Set(tickedIds);
+    if (wasOn) next.delete(exercise.id);
+    else next.add(exercise.id);
+    setTickedIds(next);
+    setCompletionError(false);
+    Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    try {
+      await setTick(token, exercise.id, localDateKey(), !wasOn);
+    } catch {
+      setTickedIds(previous);
+      setToast('Could not save that check. Please try again.');
+      writeLock.current = false;
+      setPending(false);
+      return;
+    }
+    if (!wasOn && day.exercises.every((item) => next.has(item.id)) && !loggedToday) await finish();
+    writeLock.current = false;
+    setPending(false);
+  };
+
+  const finishLine = useMemo(
+    () => FINISH_LINES[Math.floor(Math.random() * FINISH_LINES.length)],
+    [],
+  );
 
   return (
     <IonPage>
-      <BrandHeader icon={barbellOutline} title={day?.label ?? 'Session'} accent="gold" showBack backTo="/gym" />
+      <BrandHeader icon={barbellOutline} title="Gym Coach" accent="gold" showBack backTo="/gym" />
 
-      <IonContent className="ion-padding">
-        {loading ? (
-          <div className="centered"><IonSpinner /></div>
-        ) : error ? (
-          <IonText color="danger"><p>{error}</p></IonText>
-        ) : day ? (
+      <AppScreen
+        title={day?.label ?? 'Your session.'}
+        eyebrow="Gym Coach"
+        subtitle="One movement at a time."
+      >
+        {loading && !day && <FeedbackState kind="loading" heading="Finding your session…" />}
+        {error && <FeedbackState kind="failure" heading={error} onRetry={load} />}
+        {day && (
           <div className="session">
-            <div className="session__ring">
-              <ProgressRing done={doneCount} total={total} />
+            <div className="session-progress">
+              <p className="session-progress__label">
+                <span>{total > 0 ? `${doneCount} of ${total} exercises` : 'No exercises yet'}</span>
+                <span>{total > 0 ? `${Math.round((doneCount / total) * 100)}%` : ''}</span>
+              </p>
+              <progress value={doneCount} max={total || 1} aria-label="Exercises checked" />
             </div>
+            {total === 0 && (
+              <FeedbackState
+                kind="empty"
+                heading="This session is still being written."
+                detail="There are no exercises to complete yet."
+              />
+            )}
 
             {day.coachNote && (
               <p className="session__coach-note font-display-italic">“{day.coachNote}”</p>
@@ -145,19 +217,16 @@ export default function SessionPage() {
                       type="button"
                       className="ex-row__tick"
                       onClick={() => toggle(item)}
-                      aria-label={on ? `Mark ${item.exercise.name} not done` : `Mark ${item.exercise.name} done`}
+                      disabled={pending || loading}
+                      aria-label={
+                        on
+                          ? `Mark ${item.exercise.name} not done`
+                          : `Mark ${item.exercise.name} done`
+                      }
                       aria-pressed={on}
                     >
                       <IonIcon icon={on ? checkmarkCircle : ellipseOutline} />
                     </button>
-
-                    {item.exercise.imageUrl ? (
-                      <img className="ex-row__thumb" src={item.exercise.imageUrl} alt="" />
-                    ) : (
-                      <span className="ex-row__thumb ex-row__thumb--empty">
-                        {item.exercise.name.charAt(0)}
-                      </span>
-                    )}
 
                     <div className="ex-row__body">
                       <span className="ex-row__name">{item.exercise.name}</span>
@@ -187,14 +256,36 @@ export default function SessionPage() {
               })}
             </div>
 
-            {total > 0 && doneCount === total && (
-              <button type="button" className="session__finish" onClick={() => history.push('/gym')}>
+            {pending && <FeedbackState kind="loading" heading="Saving your progress…" />}
+            {completionError && (
+              <FeedbackState
+                kind="failure"
+                heading="Your checks are saved. The session could not be logged."
+                detail="Try again to record your completed session."
+              />
+            )}
+            {total > 0 && doneCount === total && !loggedToday && !pending && (
+              <AppButton onClick={retryCompletion}>Save completed session</AppButton>
+            )}
+            {loggedToday && (
+              <FeedbackState
+                kind="success"
+                heading="Session saved for today."
+                detail="You showed up. That counts."
+              />
+            )}
+            {loggedToday && (
+              <button
+                type="button"
+                className="session__finish"
+                onClick={() => history.push('/gym')}
+              >
                 Back to the plan
               </button>
             )}
           </div>
-        ) : null}
-      </IonContent>
+        )}
+      </AppScreen>
 
       <ExerciseDetailSheet
         exercise={detail?.exercise ?? null}
@@ -204,7 +295,12 @@ export default function SessionPage() {
 
       <Celebration show={celebrating} message={finishLine} onDone={() => setCelebrating(false)} />
 
-      <IonToast isOpen={!!toast} message={toast ?? ''} duration={2500} onDidDismiss={() => setToast(null)} />
+      <IonToast
+        isOpen={!!toast}
+        message={toast ?? ''}
+        duration={2500}
+        onDidDismiss={() => setToast(null)}
+      />
     </IonPage>
   );
 }

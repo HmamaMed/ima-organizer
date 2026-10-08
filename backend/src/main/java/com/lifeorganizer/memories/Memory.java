@@ -5,13 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * A memory in the timeline. The photo is uploaded directly to Firebase Storage
+ * A memory in the timeline. The photo is uploaded directly to media storage
  * from the client; the backend only stores the resulting URL plus metadata.
  */
 @Entity
@@ -28,7 +31,7 @@ public class Memory {
     @Column
     private String caption;
 
-    /** Optional audio URL in Firebase Storage. */
+    /** Optional audio URL in media storage. */
     @Column
     private String audioUrl;
 
@@ -38,6 +41,11 @@ public class Memory {
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    /** Nullable so all existing memories and older clients remain compatible. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private MemoryGroup group;
 
     protected Memory() {
         // for JPA
@@ -90,4 +98,8 @@ public class Memory {
     public Instant getCreatedAt() {
         return createdAt;
     }
+
+    public MemoryGroup getGroup() { return group; }
+
+    public void setGroup(MemoryGroup group) { this.group = group; }
 }

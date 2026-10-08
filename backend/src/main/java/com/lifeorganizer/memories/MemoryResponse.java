@@ -10,7 +10,8 @@ public record MemoryResponse(
         String caption,
         String audioUrl,
         LocalDate memoryDate,
-        Instant createdAt) {
+        Instant createdAt,
+        UUID groupId) {
 
     public static MemoryResponse from(Memory memory) {
         return new MemoryResponse(
@@ -19,6 +20,7 @@ public record MemoryResponse(
                 memory.getCaption(),
                 memory.getAudioUrl(),
                 memory.getMemoryDate(),
-                memory.getCreatedAt());
+                memory.getCreatedAt(),
+                memory.getGroup() == null ? null : memory.getGroup().getId());
     }
 }

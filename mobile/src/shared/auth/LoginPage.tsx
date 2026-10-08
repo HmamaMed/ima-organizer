@@ -1,19 +1,13 @@
 import { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import {
-  IonButton,
-  IonContent,
-  IonIcon,
-  IonInput,
-  IonPage,
-  IonText,
-} from '@ionic/react';
+import { IonContent, IonIcon, IonInput, IonPage, IonModal } from '@ionic/react';
 import { eyeOffOutline, eyeOutline, lockClosedOutline, personOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { ApiError } from '../api/client';
 import { usePushNotifications } from '../push/usePushNotifications';
 import HeartMark from '../ui/HeartMark';
+import AppButton from '../ui/AppButton';
+import FeedbackState from '../ui/FeedbackState';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -33,6 +27,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting || !username.trim() || !password) return;
     setError(null);
     setSubmitting(true);
     try {
@@ -51,89 +46,102 @@ export default function LoginPage() {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
+      <IonContent className="ion-padding content-safe-top">
         <div className="login-screen">
-          <div className="login-mark">
+          <div className="login-brand">
             <HeartMark />
+            <span>Life Organizer</span>
           </div>
-
-          <h1 className="font-display-italic login-title">Welcome back</h1>
-          <IonText className="login-subtitle">
-            <p>Everything in here is just for you.</p>
-          </IonText>
+          <h1 className="login-title">Your little corner.</h1>
+          <p className="login-subtitle">
+            Everything in here is just for you.
+            <br />
+            Come in and make yourself at home.
+          </p>
 
           <form onSubmit={handleSubmit} className="login-form">
-            <IonInput
-              className="login-input"
-              fill="outline"
-              shape="round"
-              placeholder="Username"
-              value={username}
-              onIonInput={(e) => setUsername(String(e.detail.value ?? ''))}
-              autocomplete="username"
-              required
-            >
-              <IonIcon slot="start" icon={personOutline} aria-hidden="true" />
-            </IonInput>
-
-            <IonInput
-              className="login-input"
-              fill="outline"
-              shape="round"
-              placeholder="Password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onIonInput={(e) => setPassword(String(e.detail.value ?? ''))}
-              autocomplete="current-password"
-              required
-            >
-              <IonIcon slot="start" icon={lockClosedOutline} aria-hidden="true" />
-              <button
-                type="button"
-                slot="end"
-                className="login-input__eye"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+            <div className="login-field">
+              <span className="login-field__label" id="username-label">
+                Username
+              </span>
+              <IonInput
+                aria-labelledby="username-label"
+                className="login-input"
+                fill="outline"
+                placeholder="Username"
+                value={username}
+                onIonInput={(e) => setUsername(String(e.detail.value ?? ''))}
+                autocomplete="username"
+                required
               >
-                <IonIcon icon={showPassword ? eyeOffOutline : eyeOutline} />
-              </button>
-            </IonInput>
+                <IonIcon slot="start" icon={personOutline} aria-hidden="true" />
+              </IonInput>
+            </div>
 
-            {error && (
-              <IonText color="danger" className="login-error">
-                <p>{error}</p>
-              </IonText>
-            )}
+            <div className="login-field">
+              <span className="login-field__label" id="password-label">
+                Password
+              </span>
+              <IonInput
+                aria-labelledby="password-label"
+                className="login-input"
+                fill="outline"
+                placeholder="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onIonInput={(e) => setPassword(String(e.detail.value ?? ''))}
+                autocomplete="current-password"
+                required
+              >
+                <IonIcon slot="start" icon={lockClosedOutline} aria-hidden="true" />
+                <button
+                  type="button"
+                  slot="end"
+                  className="login-input__eye"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  <IonIcon icon={showPassword ? eyeOffOutline : eyeOutline} />
+                </button>
+              </IonInput>
+            </div>
 
-            <IonButton type="submit" expand="block" shape="round" disabled={submitting}>
+            {error && <FeedbackState kind="failure" heading={error} />}
+            <AppButton type="submit" busy={submitting} disabled={!username.trim() || !password}>
               {submitting ? 'Signing in…' : 'Sign in'}
-            </IonButton>
+            </AppButton>
             <div className="login-forgot-wrap">
               <button type="button" className="login-forgot" onClick={() => setShowForgot(true)}>
-                Forgot password?
+                Forgot your password?
               </button>
             </div>
           </form>
 
-          <p className="login-note">This app was written for one person only.</p>
+          <p className="login-note">Made for one person. Kept close, every day.</p>
         </div>
       </IonContent>
 
-      {showForgot && createPortal(
-        <div className="forgot-popup" onClick={() => setShowForgot(false)}>
-          <div className="forgot-popup__card" onClick={(e) => e.stopPropagation()}>
+      <IonModal
+        className="help-modal"
+        isOpen={showForgot}
+        onDidDismiss={() => setShowForgot(false)}
+        aria-labelledby="password-help-title"
+      >
+        <IonContent>
+          <div className="help-modal__body">
             <div className="forgot-popup__mark">
               <HeartMark />
             </div>
-            <p className="forgot-popup__title font-display-italic">Forgot your password?</p>
-            <p className="forgot-popup__body">Ask your man for it. He's the one who set it up for you.</p>
-            <IonButton expand="block" shape="round" onClick={() => setShowForgot(false)}>
-              Okay
-            </IonButton>
+            <h2 id="password-help-title" className="forgot-popup__title">
+              Forgot your password?
+            </h2>
+            <p className="forgot-popup__body">
+              Ask your man for it. He's the one who set it up for you.
+            </p>
+            <AppButton onClick={() => setShowForgot(false)}>Okay</AppButton>
           </div>
-        </div>,
-        document.body,
-      )}
+        </IonContent>
+      </IonModal>
     </IonPage>
   );
 }

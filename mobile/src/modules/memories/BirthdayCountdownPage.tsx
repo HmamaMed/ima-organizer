@@ -7,13 +7,9 @@ import './BirthdayCountdownPage.css';
 
 /**
  * Birthday unlock date: October 3rd, midnight Morocco time.
- * Morocco toggles between UTC+1 and standard UTC+0 around Ramadan; per the
- * tz database it's on UTC+0 from Sep 20, 2026 through the next transition
- * (well past Oct 3), so that's the offset hardcoded here. Re-verify the
- * offset against the current tz rules if this date ever moves to a different
- * year, since Morocco's schedule isn't fixed. The offset is hardcoded rather
- * than left timezone-less so `new Date(...)` doesn't parse it in the
- * device's local timezone instead of Morocco's.
+ * Existing configured instant is retained by this design refresh. The
+ * original comment’s Morocco offset has not been independently verified;
+ * changing the unlock moment needs a separate product decision.
  */
 export const MEMORIES_UNLOCK_DATE = new Date('2026-10-03T00:00:00+00:00');
 
@@ -65,11 +61,13 @@ export default function BirthdayCountdownPage() {
 
   return (
     <IonPage>
-      <IonContent fullscreen scrollY={false}>
+      <IonContent fullscreen>
         <div className="lock-screen">
           <div className="lock-screen__sparks" aria-hidden="true">
             {SPARKS.map((i) => (
-              <span key={i} className={`lock-screen__spark lock-screen__spark--${i}`}>♥</span>
+              <span key={i} className={`lock-screen__spark lock-screen__spark--${i}`}>
+                ♥
+              </span>
             ))}
           </div>
 
@@ -78,9 +76,9 @@ export default function BirthdayCountdownPage() {
           </div>
 
           <p className="lock-screen__eyebrow">Memories</p>
-          <p className="lock-screen__title font-display-italic">
+          <h1 className="lock-screen__title font-display">
             {reached ? 'It’s time.' : 'Something is waiting for you'}
-          </p>
+          </h1>
 
           {!reached && (
             <div className="lock-screen__countdown">
@@ -113,11 +111,19 @@ export default function BirthdayCountdownPage() {
           </p>
 
           {reached ? (
-            <button type="button" className="lock-screen__open" onClick={() => history.replace('/memories')}>
+            <button
+              type="button"
+              className="lock-screen__open"
+              onClick={() => history.replace('/memories')}
+            >
               Open your memories
             </button>
           ) : (
-            <button type="button" className="lock-screen__home-link" onClick={() => history.push('/home')}>
+            <button
+              type="button"
+              className="lock-screen__home-link"
+              onClick={() => history.push('/home')}
+            >
               ← Back to Home
             </button>
           )}

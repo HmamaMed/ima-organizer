@@ -1,57 +1,64 @@
 import { useEffect, useState } from 'react';
-import { IonContent, IonIcon, IonPage } from '@ionic/react';
+import { IonIcon, IonPage, useIonViewWillEnter } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import {
+  arrowForwardOutline,
   barbellOutline,
   chatbubbleEllipsesOutline,
   imagesOutline,
-  lockClosedOutline
+  personOutline,
+  sparklesOutline,
 } from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
+import AppScreen from '../../shared/ui/AppScreen';
 import HeartMark from '../../shared/ui/HeartMark';
-import { fetchNotes } from '../notes/notesApi';
+import { fetchNotes, type Note } from '../notes/notesApi';
 import { fetchMemories } from '../memories/memoriesApi';
 import { isMemoriesLocked } from '../memories/BirthdayCountdownPage';
 import { fetchLogs } from '../gym/gymApi';
-import { computeStreak } from '../../shared/utils/date';
+import { buildWeekdayStrip } from '../../shared/utils/date';
 
-type Accent = 'rose' | 'plum' | 'gold';
-
-interface ModuleDef {
-  icon: string;
-  label: string;
-  accent: Accent;
-  path: string;
-}
-
-const MODULES: ModuleDef[] = [
-  { icon: chatbubbleEllipsesOutline, label: 'Notes', accent: 'rose', path: '/notes' },
-  { icon: imagesOutline, label: 'Memories', accent: 'plum', path: '/memories' },
-  { icon: barbellOutline, label: 'Gym Coach', accent: 'gold', path: '/gym' },
+const CHAPTERS = [
+  {
+    icon: chatbubbleEllipsesOutline,
+    label: 'Notes',
+    accent: 'rose',
+    path: '/notes',
+    description: 'Words to keep close',
+  },
+  {
+    icon: imagesOutline,
+    label: 'Memories',
+    accent: 'plum',
+    path: '/memories',
+    description: 'Our moments, kept',
+  },
+  {
+    icon: barbellOutline,
+    label: 'Gym Coach',
+    accent: 'gold',
+    path: '/gym',
+    description: 'One step at a time',
+  },
 ];
 
 function greeting(now: Date): string {
-  const hour = now.getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
+  if (now.getHours() < 12) return 'Good morning';
+  if (now.getHours() < 18) return 'Good afternoon';
   return 'Good evening';
-}
-
-function formatToday(now: Date): string {
-  return now.toLocaleDateString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' });
-}
-
-interface Counts {
-  notes: number | null;
-  memories: number | null;
-  streak: number | null;
 }
 
 export default function HomePage() {
   const { user, token } = useAuth();
   const history = useHistory();
-  const [counts, setCounts] = useState<Counts>({ notes: null, memories: null, streak: null });
+  const [latestNote, setLatestNote] = useState<Note | null>(null);
+  const [counts, setCounts] = useState<{
+    memories: number | null;
+    activeDays: number | null;
+  }>({ memories: null, activeDays: null });
   const [now, setNow] = useState(() => new Date());
+  const [visit, setVisit] = useState(0);
+  useIonViewWillEnter(() => setVisit((v) => v + 1));
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 30_000);
@@ -61,87 +68,150 @@ export default function HomePage() {
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    (async () => {
-      const [notes, memories, logs] = await Promise.allSettled([
-        fetchNotes(token),
-        fetchMemories(token),
-        fetchLogs(token),
-      ]);
-      if (cancelled) return;
-      setCounts({
-        notes: notes.status === 'fulfilled' ? notes.value.length : null,
-        memories: memories.status === 'fulfilled' ? memories.value.length : null,
-        streak: logs.status === 'fulfilled' ? computeStreak(logs.value.map((l) => l.completedAt)) : null,
-      });
-    })();
+    // Each chapter loads independently: navigation is usable immediately.
+    fetchNotes(token)
+      .then((notes) => {
+        if (cancelled) return;
+        const sent = notes
+          .filter((n) => n.status === 'SENT')
+          .sort(
+            (a, b) => Date.parse(b.sentAt ?? b.createdAt) - Date.parse(a.sentAt ?? a.createdAt),
+          );
+        setLatestNote(sent[0] ?? null);
+      })
+      .catch(() => {});
+    fetchMemories(token)
+      .then((memories) => {
+        if (!cancelled) setCounts((c) => ({ ...c, memories: memories.length }));
+      })
+      .catch(() => {});
+    fetchLogs(token)
+      .then((logs) => {
+        if (cancelled) return;
+        const mine = logs.filter((log) => log.userId === user?.userId);
+        setCounts((c) => ({
+          ...c,
+          activeDays: buildWeekdayStrip(mine.map((l) => l.completedAt)).filter((d) => d.hasLog)
+            .length,
+        }));
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [token]);
-
-  const subtitleFor = (mod: ModuleDef): string => {
-    if (mod.path === '/notes') return counts.notes === null ? 'Notes' : `${counts.notes} note${counts.notes === 1 ? '' : 's'}`;
-    if (mod.path === '/memories' && isMemoriesLocked(user?.role, now)) return 'Something is waiting for you';
-    if (mod.path === '/memories') return counts.memories === null ? 'Memories, kept safe' : `${counts.memories} memories · take a slow walk`;
-    return 'Today’s plan';
-  };
+  }, [token, user?.userId, visit]);
 
   return (
     <IonPage>
-      <IonContent className="ion-padding content-safe-top">
+      <AppScreen className="content-safe-top">
         <div className="home-screen">
+          <div className="home-brand">
+            <HeartMark />
+            <span>Life Organizer</span>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Open profile"
+              onClick={() => history.push('/profile')}
+            >
+              <IonIcon icon={personOutline} />
+            </button>
+          </div>
           <div className="home-greeting">
-            <div className="home-greeting__mark">
-              <HeartMark />
-            </div>
-            <div>
-              <p className="home-greeting__hi font-display-italic">{greeting(now)}{user ? `, ${user.name}` : ''}</p>
-              <p className="home-greeting__date">{formatToday(now)}</p>
-            </div>
+            <p className="lo-eyebrow">
+              {now.toLocaleDateString(undefined, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </p>
+            <h1 className="home-greeting__hi">
+              {greeting(now)}
+              {user ? `, ${user.name}.` : '.'}
+            </h1>
+            <p className="home-greeting__sub">A little space for your everyday.</p>
           </div>
-
-          {counts.streak !== null && counts.streak > 0 && (
-            <div className="home-glance">
-              <span className="home-glance__text">Gym Coach: <b>{counts.streak}-day streak</b></span>
-              <span className="home-glance__badge">🔥</span>
-            </div>
+          {latestNote && (
+            <button type="button" className="home-note" onClick={() => history.push('/notes')}>
+              <span className="home-note__label">
+                <IonIcon icon={chatbubbleEllipsesOutline} />
+                {user?.role === 'OWNER' ? 'Your latest sent note' : 'A little note for you'}
+              </span>
+              <span className="home-note__quote">{latestNote.content}</span>
+              <span className="home-note__foot">
+                <span>
+                  {new Date(latestNote.sentAt ?? latestNote.createdAt).toLocaleString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </span>
+                <IonIcon icon={arrowForwardOutline} />
+              </span>
+            </button>
           )}
-
+          <h2 className="lo-section-heading">Your chapters</h2>
           <div className="modules">
-            {MODULES.map((mod) => (
-              <button
-                key={mod.path}
-                type="button"
-                className="mod-row"
-                onClick={() =>
-                  history.push(mod.path === '/memories' && isMemoriesLocked(user?.role) ? '/memories/countdown' : mod.path)
-                }
-              >
-                <div className={`mod-icon mod-icon--${mod.accent}`}>
-                  <IonIcon icon={mod.icon} />
-                </div>
-                <div className="mod-row__text">
-                  <p className="mod-row__title font-display">{mod.label}</p>
-                  <p className="mod-row__sub">{subtitleFor(mod)}</p>
-                </div>
-              </button>
-            ))}
-
-            <div className="mod-row mod-row--soon" onClick={() => history.push('/more')}>
-              <div className="mod-icon mod-icon--soon">
-                <IonIcon icon={lockClosedOutline} />
-              </div>
-              <div className="mod-row__text">
-                <p className="mod-row__title font-display">More</p>
-                <p className="mod-row__sub">Coming soon</p>
-              </div>
-              <span className="tag-soon">Soon</span>
-            </div>
+            {CHAPTERS.map((chapter) => {
+              const locked = chapter.path === '/memories' && isMemoriesLocked(user?.role, now);
+              const count = chapter.path === '/memories' ? counts.memories : null;
+              return (
+                <button
+                  key={chapter.path}
+                  type="button"
+                  className="mod-row"
+                  onClick={() => history.push(locked ? '/memories/countdown' : chapter.path)}
+                >
+                  <span className={`mod-icon mod-icon--${chapter.accent}`}>
+                    <IonIcon icon={chapter.icon} />
+                  </span>
+                  <span>
+                    <span className="mod-row__title" style={{ display: 'block' }}>
+                      {chapter.label}
+                    </span>
+                    <span className="mod-row__sub">
+                      {locked ? 'Something is waiting for you' : chapter.description}
+                      {!locked && chapter.path !== '/notes' && count !== null && count > 0
+                        ? ` · ${count}`
+                        : ''}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+            <button type="button" className="mod-row" onClick={() => history.push('/more')}>
+              <span className="mod-row__top">
+                <span className="mod-icon mod-icon--soon">
+                  <IonIcon icon={sparklesOutline} />
+                </span>
+                <span className="tag-soon">Soon</span>
+              </span>
+              <span>
+                <span className="mod-row__title" style={{ display: 'block' }}>
+                  More chapters
+                </span>
+                <span className="mod-row__sub">A little more, in time</span>
+              </span>
+            </button>
           </div>
-
-          <p className="modules-foot">This is chapter three. More get added here as they're written.</p>
+          {counts.activeDays !== null && counts.activeDays > 0 && (
+            <button
+              type="button"
+              className="home-glance"
+              onClick={() => history.push('/gym/progress', { showing: 'mine' })}
+            >
+              <IonIcon icon={barbellOutline} />
+              <span>
+                You showed up on {counts.activeDays} day{counts.activeDays === 1 ? '' : 's'} this
+                week.
+              </span>
+              <IonIcon icon={arrowForwardOutline} />
+            </button>
+          )}
+          <p className="modules-foot">Made just for you. One chapter at a time.</p>
         </div>
-      </IonContent>
+      </AppScreen>
     </IonPage>
   );
 }

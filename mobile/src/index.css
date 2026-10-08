@@ -1,44 +1,155 @@
-/* Design tokens — from DESIGN.md ("Kept" direction, see app-design.html) */
+/* Modern Warm: shared app tokens; Ionic resets stay in main.tsx. */
 :root {
-  --font-display: 'Fraunces', ui-serif, Georgia, serif;
-  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --lo-bg: #f8f6f3;
+  --lo-surface: #ffffff;
+  --lo-ink: #29232a;
+  --lo-muted: #6c636f;
+  --lo-line: #e5dfe5;
+  --lo-control-border: #968b98;
+  --lo-plum: #482541;
+  --lo-plum-soft: #ede6ef;
+  --lo-rose: #aa4566;
+  --lo-rose-soft: #f4e5eb;
+  --lo-gold: #89642c;
+  --lo-gold-soft: #f3ebdd;
+  --lo-success: #366a55;
+  --lo-success-soft: #e6f0e9;
+  --lo-danger: #ae334b;
+  --lo-focus: #aa4566;
+  --lo-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --lo-font-display: 'Fraunces', Georgia, serif;
+  --lo-space-1: 4px;
+  --lo-space-2: 8px;
+  --lo-space-3: 12px;
+  --lo-space-4: 16px;
+  --lo-space-5: 20px;
+  --lo-space-6: 24px;
+  --lo-space-8: 32px;
+  --lo-space-10: 40px;
+  --lo-radius-control: 12px;
+  --lo-radius-card: 20px;
+  --lo-radius-feature: 24px;
+  --lo-radius-sheet: 28px;
+  --lo-radius-pill: 999px;
+  --lo-touch-target: 48px;
+  --lo-motion-fast: 160ms;
+  --lo-motion-standard: 220ms;
+}
 
-  --color-bg: #FBF4EE;
-  --color-surface: #FFFFFF;
-  --color-mist: #F1E4E6;
-  --color-line: rgba(43, 30, 36, 0.12);
-  --color-ink: #2B1E24;
-  --color-ink-muted: #8A6483;
-  --color-rose: #C65D7B;
-  --color-gold: #B8935A;
-  --color-plum: #4A1942;
-  --color-plum-dark: #34102E;
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lo-motion-fast: 0ms;
+    --lo-motion-standard: 0ms;
+  }
+}
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: Fraunces;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/fraunces.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: Fraunces;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/fraunces-italic.ttf') format('truetype');
+}
+
+:root {
+  --font-ui: var(--lo-font-body);
+  --font-display: var(--lo-font-display);
+  --color-bg: var(--lo-bg);
+  --color-surface: var(--lo-surface);
+  --color-mist: var(--lo-plum-soft);
+  --color-line: var(--lo-line);
+  --color-ink: var(--lo-ink);
+  --color-ink-muted: var(--lo-muted);
+  --color-rose: var(--lo-rose);
+  --color-gold: var(--lo-gold);
+  --color-plum: var(--lo-plum);
+  --color-plum-dark: #34102e;
+  --lo-gutter: 24px;
 }
 
 html,
 body {
   margin: 0;
-  padding: 0;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-ui);
+  background: var(--lo-bg);
+  color: var(--lo-ink);
+  font-family: var(--lo-font-body);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100svh;
 }
 
-/* Display serif — used sparingly for the logo wordmark and screen titles only */
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+button,
+a,
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a, input, textarea):focus-visible {
+  outline: 3px solid var(--lo-focus);
+  outline-offset: 3px;
+}
+
+:where(ion-input, ion-textarea):focus-within {
+  outline: 3px solid var(--lo-focus);
+  outline-offset: 3px;
+}
+
+:where(p, h1, h2, h3, span) {
+  overflow-wrap: anywhere;
+}
+
 .font-display {
   font-family: var(--font-display);
   font-weight: 500;
 }
 
-/* Italic variant — greetings, captions, and other "personal moment" text */
 .font-display-italic {
   font-family: var(--font-display);
   font-weight: 500;
   font-style: italic;
+}
+
+@media (max-width: 374px) {
+  :root {
+    --lo-gutter: 20px;
+  }
+}
+
+@media (max-width: 339px) {
+  :root {
+    --lo-gutter: 16px;
+  }
 }

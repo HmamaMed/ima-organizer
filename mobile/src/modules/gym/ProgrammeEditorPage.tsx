@@ -1,16 +1,23 @@
-import { useCallback, useEffect, useState } from 'react';
-import { IonContent, IonIcon, IonInput, IonPage, IonSpinner, IonText, IonToast } from '@ionic/react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { IonIcon, IonInput, IonPage, IonToast, useIonViewWillEnter } from '@ionic/react';
+import { Redirect, useParams } from 'react-router-dom';
 import {
   addOutline,
   arrowDownOutline,
   arrowUpOutline,
   barbellOutline,
   closeOutline,
+  createOutline,
   trashOutline,
 } from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
 import BrandHeader from '../../shared/ui/BrandHeader';
+import AppScreen from '../../shared/ui/AppScreen';
+import AppButton from '../../shared/ui/AppButton';
+import FeedbackState from '../../shared/ui/FeedbackState';
+import ConfirmSheet from '../../shared/ui/ConfirmSheet';
+import useUnsavedChanges from '../../shared/navigation/useUnsavedChanges';
+import PrescriptionSheet from './components/PrescriptionSheet';
 import ExercisePickerSheet from './components/ExercisePickerSheet';
 import {
   addDay,
@@ -35,11 +42,7 @@ interface DraftExercise {
   imageUrl: string | null;
   sets: number;
   reps: string;
-  /**
-   * Not editable in this screen, but carried through the draft so re-saving a
-   * day doesn't silently wipe rest timings and per-day notes that came from
-   * the seeder or an earlier edit.
-   */
+  /** Preserve the existing optional prescription fields in every replace-list write. */
   restSeconds: number | null;
   note: string | null;
 }
@@ -55,7 +58,7 @@ interface DraftDay {
 /** Owner-only: fill a programme's days with exercises from the library. */
 export default function ProgrammeEditorPage() {
   const { programmeId } = useParams<{ programmeId: string }>();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [days, setDays] = useState<DraftDay[]>([]);
@@ -65,9 +68,18 @@ export default function ProgrammeEditorPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [pickerDayId, setPickerDayId] = useState<string | null>(null);
   const [savingDayId, setSavingDayId] = useState<string | null>(null);
+  const [dayBusy, setDayBusy] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DraftDay | null>(null);
+  const [editing, setEditing] = useState<{ dayId: string; index: number } | null>(null);
+  const [ordering, setOrdering] = useState<string | null>(null);
+  const { confirmation } = useUnsavedChanges(
+    days.some((day) => day.dirty),
+    !!savingDayId || dayBusy,
+    `/gym/programmes/${programmeId}`,
+  );
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!token || user?.role !== 'OWNER') return;
     setLoading(true);
     try {
       const [all, libraryData] = await Promise.all([fetchProgrammes(token), fetchExercises(token)]);
@@ -97,11 +109,11 @@ export default function ProgrammeEditorPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, programmeId]);
+  }, [token, programmeId, user?.role]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useIonViewWillEnter(() => {
+    void load();
+  });
 
   const patchDay = (dayId: string, patch: Partial<DraftDay>) => {
     setDays((current) =>
@@ -177,14 +189,24 @@ export default function ProgrammeEditorPage() {
   };
 
   const saveDay = async (day: DraftDay) => {
-    if (!token) return;
+    if (
+      !token ||
+      savingDayId ||
+      dayBusy ||
+      !day.label.trim() ||
+      day.exercises.some((ex) => !ex.reps.trim() || ex.sets < 1)
+    )
+      return;
     setSavingDayId(day.id);
     try {
-      await updateDay(token, day.id, { label: day.label.trim(), coachNote: day.coachNote.trim() || null });
+      await updateDay(token, day.id, {
+        label: day.label.trim(),
+        coachNote: day.coachNote.trim() || null,
+      });
       const payload: DayExerciseInput[] = day.exercises.map((ex) => ({
         exerciseId: ex.exerciseId,
         sets: ex.sets,
-        reps: ex.reps.trim() || '1',
+        reps: ex.reps.trim(),
         restSeconds: ex.restSeconds,
         note: ex.note,
       }));
@@ -199,54 +221,89 @@ export default function ProgrammeEditorPage() {
   };
 
   const createDay = async () => {
-    if (!token || !programme) return;
+    if (!token || !programme || dayBusy || savingDayId) return;
+    setDayBusy(true);
     try {
-      await addDay(token, programme.id, {
+      const added = await addDay(token, programme.id, {
         label: `Day ${days.length + 1}`,
         coachNote: null,
       });
-      await load();
+      setDays((current) => [
+        ...current,
+        {
+          id: added.id,
+          label: added.label,
+          coachNote: added.coachNote ?? '',
+          exercises: [],
+          dirty: false,
+        },
+      ]);
     } catch {
       setToast('Could not add a session.');
+    } finally {
+      setDayBusy(false);
     }
   };
 
   const removeDay = async (day: DraftDay) => {
-    if (!token) return;
+    if (!token || dayBusy || savingDayId) return;
+    setDayBusy(true);
     try {
       await deleteDay(token, day.id);
       setToast(`Removed “${day.label}”.`);
-      await load();
+      setDays((current) => current.filter((d) => d.id !== day.id));
+      setDeleteTarget(null);
     } catch {
       setToast('Could not remove that session.');
+    } finally {
+      setDayBusy(false);
     }
   };
 
+  const editingExercise = editing
+    ? (days.find((d) => d.id === editing.dayId)?.exercises[editing.index] ?? null)
+    : null;
   const pickerDay = days.find((d) => d.id === pickerDayId);
+
+  if (user?.role !== 'OWNER') return <Redirect to="/gym" />;
 
   return (
     <IonPage>
-      <BrandHeader icon={barbellOutline} title={programme?.name ?? 'Programme'} accent="gold" showBack backTo="/gym/programmes" />
+      <BrandHeader
+        icon={barbellOutline}
+        title="Gym Coach"
+        accent="gold"
+        showBack
+        backTo="/gym/programmes"
+      />
 
-      <IonContent className="ion-padding">
-        {loading ? (
-          <div className="centered"><IonSpinner /></div>
-        ) : error ? (
-          <IonText color="danger"><p>{error}</p></IonText>
-        ) : (
+      <AppScreen
+        title={programme?.name ?? 'Programme'}
+        eyebrow="Programme editor"
+        subtitle="Changes stay here until you save each session."
+      >
+        {loading && !programme && (
+          <FeedbackState kind="loading" heading="Finding your programme…" />
+        )}
+        {error && <FeedbackState kind="failure" heading={error} onRetry={load} />}
+        {programme && (
           <div className="editor">
             {library.length === 0 && (
               <p className="editor__hint">
-                Your exercise library is empty — add exercises first, then come back to build sessions from them.
+                Your exercise library is empty — add exercises first, then come back to build
+                sessions from them.
               </p>
             )}
 
             {days.map((day) => (
-              <div key={day.id} className="edit-day">
+              <fieldset key={day.id} className="edit-day" disabled={!!savingDayId || dayBusy}>
+                <legend className="lo-eyebrow">Session {days.indexOf(day) + 1}</legend>
                 <div className="edit-day__head">
                   <IonInput
                     className="edit-day__label"
                     value={day.label}
+                    label="Session name"
+                    labelPlacement="stacked"
                     placeholder="Day 1 — Legs"
                     onIonInput={(e) => patchDay(day.id, { label: String(e.detail.value ?? '') })}
                   />
@@ -254,7 +311,7 @@ export default function ProgrammeEditorPage() {
                     type="button"
                     className="edit-day__delete"
                     aria-label={`Delete ${day.label}`}
-                    onClick={() => removeDay(day)}
+                    onClick={() => setDeleteTarget(day)}
                   >
                     <IonIcon icon={trashOutline} />
                   </button>
@@ -263,6 +320,8 @@ export default function ProgrammeEditorPage() {
                 <IonInput
                   className="edit-day__note"
                   value={day.coachNote}
+                  label="Coaching note (optional)"
+                  labelPlacement="stacked"
                   placeholder="A line for her — “you got this ♥”"
                   onIonInput={(e) => patchDay(day.id, { coachNote: String(e.detail.value ?? '') })}
                 />
@@ -273,64 +332,64 @@ export default function ProgrammeEditorPage() {
                   <div className="edit-day__list">
                     {day.exercises.map((ex, index) => (
                       <div key={`${ex.exerciseId}-${index}`} className="edit-ex">
-                        {ex.imageUrl ? (
-                          <img className="edit-ex__thumb" src={ex.imageUrl} alt="" />
-                        ) : (
-                          <span className="edit-ex__thumb edit-ex__thumb--empty">{ex.name.charAt(0)}</span>
+                        <button
+                          type="button"
+                          className="edit-ex__main"
+                          aria-label={`Edit prescription for ${ex.name}`}
+                          onClick={() => setEditing({ dayId: day.id, index })}
+                        >
+                          <span className="edit-ex__number">{index + 1}</span>
+                          <span className="edit-ex__body">
+                            <span className="edit-ex__name">{ex.name}</span>
+                            <span className="edit-ex__prescription">
+                              {ex.sets} sets × {ex.reps}
+                              {ex.restSeconds == null ? '' : ` · ${ex.restSeconds}s rest`}
+                            </span>
+                            {ex.note && <span className="edit-ex__prescription">{ex.note}</span>}
+                          </span>
+                          <IonIcon icon={createOutline} />
+                        </button>
+                        {ordering === day.id && (
+                          <div className="edit-ex__order">
+                            <button
+                              type="button"
+                              aria-label={`Move ${ex.name} up`}
+                              disabled={index === 0}
+                              onClick={() => moveExercise(day.id, index, -1)}
+                            >
+                              <IonIcon icon={arrowUpOutline} /> Up
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Move ${ex.name} down`}
+                              disabled={index === day.exercises.length - 1}
+                              onClick={() => moveExercise(day.id, index, 1)}
+                            >
+                              <IonIcon icon={arrowDownOutline} /> Down
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Remove ${ex.name}`}
+                              onClick={() => removeExercise(day.id, index)}
+                            >
+                              <IonIcon icon={closeOutline} /> Remove
+                            </button>
+                          </div>
                         )}
-
-                        <span className="edit-ex__name">{ex.name}</span>
-
-                        <div className="edit-ex__fields">
-                          <input
-                            className="edit-ex__num"
-                            type="number"
-                            min={1}
-                            value={ex.sets}
-                            aria-label={`Sets for ${ex.name}`}
-                            onChange={(e) =>
-                              patchExercise(day.id, index, { sets: Math.max(1, Number(e.target.value) || 1) })
-                            }
-                          />
-                          <span className="edit-ex__times">×</span>
-                          <input
-                            className="edit-ex__reps"
-                            value={ex.reps}
-                            aria-label={`Reps for ${ex.name}`}
-                            onChange={(e) => patchExercise(day.id, index, { reps: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="edit-ex__order">
-                          <button
-                            type="button"
-                            aria-label={`Move ${ex.name} up`}
-                            disabled={index === 0}
-                            onClick={() => moveExercise(day.id, index, -1)}
-                          >
-                            <IonIcon icon={arrowUpOutline} />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`Move ${ex.name} down`}
-                            disabled={index === day.exercises.length - 1}
-                            onClick={() => moveExercise(day.id, index, 1)}
-                          >
-                            <IonIcon icon={arrowDownOutline} />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`Remove ${ex.name}`}
-                            onClick={() => removeExercise(day.id, index)}
-                          >
-                            <IonIcon icon={closeOutline} />
-                          </button>
-                        </div>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {day.exercises.length > 0 && (
+                  <AppButton
+                    variant="quiet"
+                    aria-pressed={ordering === day.id}
+                    onClick={() => setOrdering(ordering === day.id ? null : day.id)}
+                  >
+                    {ordering === day.id ? 'Done reordering' : 'Reorder or remove exercises'}
+                  </AppButton>
+                )}
                 <div className="edit-day__foot">
                   <button
                     type="button"
@@ -344,22 +403,28 @@ export default function ProgrammeEditorPage() {
                     <button
                       type="button"
                       className="edit-day__save"
-                      disabled={savingDayId === day.id}
+                      disabled={!!savingDayId || !day.label.trim()}
                       onClick={() => saveDay(day)}
                     >
                       {savingDayId === day.id ? 'Saving…' : 'Save session'}
                     </button>
                   )}
                 </div>
-              </div>
+              </fieldset>
             ))}
 
-            <button type="button" className="primary-cta" onClick={createDay}>
-              <IonIcon icon={addOutline} /> Add a session
-            </button>
+            <AppButton
+              icon={addOutline}
+              variant="secondary"
+              busy={dayBusy}
+              disabled={!!savingDayId}
+              onClick={createDay}
+            >
+              Add a session
+            </AppButton>
           </div>
         )}
-      </IonContent>
+      </AppScreen>
 
       <ExercisePickerSheet
         open={!!pickerDayId}
@@ -369,7 +434,32 @@ export default function ProgrammeEditorPage() {
         onConfirm={addPicked}
       />
 
-      <IonToast isOpen={!!toast} message={toast ?? ''} duration={2600} onDidDismiss={() => setToast(null)} />
+      <PrescriptionSheet
+        exercise={editingExercise}
+        onClose={() => setEditing(null)}
+        onApply={(value) => {
+          if (editing) patchExercise(editing.dayId, editing.index, value);
+          setEditing(null);
+        }}
+      />
+      <ConfirmSheet
+        open={!!deleteTarget}
+        title="Delete this session?"
+        detail="This session and its exercise prescriptions will be removed from the programme."
+        confirmLabel="Delete session"
+        busy={dayBusy}
+        onConfirm={() => {
+          if (deleteTarget) void removeDay(deleteTarget);
+        }}
+        onClose={() => setDeleteTarget(null)}
+      />
+      {confirmation}
+      <IonToast
+        isOpen={!!toast}
+        message={toast ?? ''}
+        duration={2600}
+        onDidDismiss={() => setToast(null)}
+      />
     </IonPage>
   );
 }

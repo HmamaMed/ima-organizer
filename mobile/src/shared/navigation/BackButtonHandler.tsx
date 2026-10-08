@@ -28,7 +28,15 @@ export default function BackButtonHandler() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const listenerPromise = App.addListener('backButton', ({ canGoBack }) => {
+    const listenerPromise = App.addListener('backButton', async ({ canGoBack }) => {
+      // Close the top Ionic sheet/lightbox before navigating its underlying page.
+      // dismiss respects canDismiss while a write is in progress.
+      const modals = document.querySelectorAll<HTMLIonModalElement>('ion-modal.show-modal');
+      const modal = modals[modals.length - 1];
+      if (modal) {
+        await modal.dismiss(undefined, 'backdrop');
+        return;
+      }
       const atRoot = ROOT_PATHS.has(pathnameRef.current);
 
       if (!atRoot) {

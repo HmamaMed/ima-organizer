@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "checks": [
+    "OWNER: 320/360/390/430px and 200% text; group isolation; original chronology; correct authoring permissions.",
+    "RECIPIENT: 320/360/390/430px and 200% text; group isolation; original chronology; correct authoring permissions.",
+    "Create group → empty timeline → gallery photo → failed save retains draft → successful save carries groupId → revisit saved collection. Group-creation errors retain details. Original memories untouched.",
+    "Unavailable groups endpoint: original Our story timeline remains accessible.",
+    "No groups/memories: clear first-group state. Unknown group: no misplaced-memory authoring.",
+    "Normal motion: original staggered scroll reveal, alternating left/right rotation, photo scale transition and lightbox zoom. Reduced motion remains fully visible."
+  ]
+}

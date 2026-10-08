@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-08T08:07:41.365465+00:00",
+  "status": "passed",
+  "evidence": "Local Vite app and isolated API/storage fixtures. Layouts and text checks completed in the broad run; all interaction checks completed in the follow-up run after correcting the login-help text assertion.",
+  "checks": [
+    "Layout RECIPIENT 320px: 11 routes passed",
+    "Layout RECIPIENT 360px: 11 routes passed",
+    "Layout RECIPIENT 390px: 11 routes passed",
+    "Layout RECIPIENT 430px: 11 routes passed",
+    "Layout OWNER 320px: 15 routes passed",
+    "Layout OWNER 360px: 15 routes passed",
+    "Layout OWNER 390px: 15 routes passed",
+    "Layout OWNER 430px: 15 routes passed",
+    "Both roles: 200% text checks completed in the broad run. Group layouts, text scaling and effects also independently verified in memory-groups-checks.json.",
+    "Composer: 4,000 limit, unsaved navigation, failed write retains text, 21 days, occupied hours, future whole-hour UTC payload. Programme: Apply stays local; Save preserves textual reps/rest/note and ordered list.",
+    "Session: optimistic rollback, partner log excluded, failed completion keeps saved checks, explicit retry, successful log required, untick/retick does not relog in this UI.",
+    "Empty data: 7 reading routes remain usable",
+    "Failed reads: 7 reading routes remain usable",
+    "Sheets: edit-save and delete close, referenced exercise error retained, info does not tick, Ionic memory lightbox, failed voice playback honest, refresh failure retains content.",
+    "Recipient cannot enter owner authoring routes directly.",
+    "Login: labelled fields, password reveal, Ionic password-help modal"
+  ]
+}

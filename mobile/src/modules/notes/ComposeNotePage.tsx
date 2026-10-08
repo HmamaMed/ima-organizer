@@ -1,43 +1,26 @@
-import { useMemo, useState } from 'react';
-import { IonButton, IonContent, IonIcon, IonPage, IonText, IonTextarea, IonToast } from '@ionic/react';
-import { Redirect, useHistory } from 'react-router-dom';
-import { closeOutline, paperPlaneOutline, calendarClearOutline } from 'ionicons/icons';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  IonFooter,
+  IonPage,
+  IonTextarea,
+  useIonViewDidLeave,
+  useIonViewWillEnter,
+} from '@ionic/react';
+import { Redirect, useHistory, useLocation } from 'react-router-dom';
+import { chatbubbleEllipsesOutline, paperPlaneOutline, calendarClearOutline } from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
 import { ApiError } from '../../shared/api/client';
-import { createNote } from './notesApi';
+import BrandHeader from '../../shared/ui/BrandHeader';
+import AppScreen from '../../shared/ui/AppScreen';
+import AppButton from '../../shared/ui/AppButton';
+import FeedbackState from '../../shared/ui/FeedbackState';
+import useUnsavedChanges from '../../shared/navigation/useUnsavedChanges';
+import { localDateKey } from '../../shared/utils/date';
+import { createNote, fetchNotes } from './notesApi';
 
-function toIsoDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+const NOTE_LIMIT = 4000;
 
-function todayIsoDate(): string {
-  return toIsoDate(new Date());
-}
-
-function formatHour(hour: number): string {
-  const period = hour < 12 ? 'AM' : 'PM';
-  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  return `${displayHour}:00 ${period}`;
-}
-
-interface DateChip {
-  iso: string;
-  top: string;
-  day: number;
-}
-
-/** The next few weeks as day chips — no month-grid calendar needed for near-term scheduling. */
-function buildDateChips(count: number): DateChip[] {
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    const top = i === 0 ? 'Today' : i === 1 ? 'Tmrw' : d.toLocaleDateString(undefined, { weekday: 'short' });
-    return { iso: toIsoDate(d), top, day: d.getDate() };
-  });
-}
-
-/** Combines a local date + hour into the UTC instant the backend stores. */
-function buildScheduledInstant(dateStr: string, hour: number): string {
+function scheduledInstant(dateStr: string, hour: number): string {
   const [year, month, day] = dateStr.split('-').map(Number);
   return new Date(year, month - 1, day, hour, 0, 0, 0).toISOString();
 }
@@ -45,45 +28,107 @@ function buildScheduledInstant(dateStr: string, hour: number): string {
 export default function ComposeNotePage() {
   const { token, user } = useAuth();
   const history = useHistory();
-
+  const location = useLocation();
   const [content, setContent] = useState('');
   const [sendMode, setSendMode] = useState<'now' | 'schedule'>('now');
-  const [scheduleDate, setScheduleDate] = useState(todayIsoDate());
+  const [scheduleDate, setScheduleDate] = useState(localDateKey());
   const [scheduleHour, setScheduleHour] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [occupied, setOccupied] = useState<Set<string>>(new Set());
+  const [slotsError, setSlotsError] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+  const { allowNavigation, confirmation } = useUnsavedChanges(
+    content.length > 0,
+    saving,
+    '/notes/compose',
+  );
 
-  const now = new Date();
-  const dateChips = useMemo(() => buildDateChips(21), []);
-  const hourOptions = useMemo(() => {
-    const isToday = scheduleDate === todayIsoDate();
-    const options = Array.from({ length: 24 }, (_, h) => h);
-    return isToday ? options.filter((h) => h > now.getHours()) : options;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scheduleDate]);
+  const loadSlots = useCallback(async () => {
+    if (!token) return;
+    try {
+      const notes = await fetchNotes(token);
+      setOccupied(
+        new Set(
+          notes
+            .filter((n) => n.status === 'SCHEDULED' && n.scheduledFor)
+            .map((n) => new Date(n.scheduledFor!).toISOString()),
+        ),
+      );
+      setSlotsError(false);
+    } catch {
+      setSlotsError(true);
+    }
+  }, [token]);
+  useIonViewWillEnter(() => {
+    setNow(new Date());
+    void loadSlots();
+  });
+  useEffect(() => {
+    void loadSlots();
+  }, [loadSlots]);
+  useEffect(() => {
+    if (location.pathname !== '/notes/compose') return;
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, [location.pathname]);
 
-  if (user && user.role !== 'OWNER') {
-    return <Redirect to="/notes" />;
-  }
+  useIonViewDidLeave(() => {
+    setContent('');
+    setSendMode('now');
+    setScheduleHour(null);
+    setError(null);
+  });
 
-  const canSubmit = content.trim().length > 0 && (sendMode === 'now' || scheduleHour !== null);
+  const dates = Array.from({ length: 21 }, (_, i) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + i);
+    return { date, iso: localDateKey(date) };
+  });
+  const hours = Array.from({ length: 24 }, (_, h) => h).filter(
+    (hour) => Date.parse(scheduledInstant(scheduleDate, hour)) > now.getTime(),
+  );
+  const selectedInstant =
+    scheduleHour === null ? null : scheduledInstant(scheduleDate, scheduleHour);
+  const validSlot =
+    !!selectedInstant &&
+    dates.some((d) => d.iso === scheduleDate) &&
+    Date.parse(selectedInstant) > now.getTime() &&
+    !occupied.has(selectedInstant);
+  const canSubmit =
+    !!content.trim() && content.length <= NOTE_LIMIT && (sendMode === 'now' || validSlot);
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const handleSubmit = async () => {
-    if (!token || !canSubmit) return;
+  if (user?.role !== 'OWNER') return <Redirect to="/notes" />;
+
+  const submit = async () => {
+    if (!token || !canSubmit || saving) return;
+    if (
+      sendMode === 'schedule' &&
+      (!selectedInstant || Date.parse(selectedInstant) <= Date.now())
+    ) {
+      setError('That hour has passed. Choose another moment.');
+      setNow(new Date());
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      const scheduledFor = sendMode === 'schedule' ? buildScheduledInstant(scheduleDate, scheduleHour!) : null;
-      await createNote(token, { content: content.trim(), scheduledFor });
-      setToast(sendMode === 'now' ? 'Note sent.' : 'Note scheduled.');
-      history.push('/notes');
+      await createNote(token, {
+        content: content.trim(),
+        scheduledFor: sendMode === 'schedule' ? selectedInstant : null,
+      });
+      allowNavigation();
+      setContent('');
+      setScheduleHour(null);
+      history.push('/notes', { feedback: sendMode === 'now' ? 'Note sent.' : 'Note scheduled.' });
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('Could not reach the server. Please try again.');
-      }
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : 'Could not reach the server. Your note is still here.',
+      );
+      void loadSlots();
     } finally {
       setSaving(false);
     }
@@ -91,113 +136,172 @@ export default function ComposeNotePage() {
 
   return (
     <IonPage>
-      <div className="compose-header">
-        <button className="icon-btn" onClick={() => history.push('/notes')} aria-label="Cancel">
-          <IonIcon icon={closeOutline} />
-        </button>
-        <span className="compose-header__label">Write a note</span>
-        <button
-          className="compose-header__send"
-          onClick={handleSubmit}
-          disabled={saving || !canSubmit}
-        >
-          {saving ? 'Saving…' : 'Send'}
-        </button>
-      </div>
-
-      <IonContent className="ion-padding">
+      <BrandHeader
+        icon={chatbubbleEllipsesOutline}
+        title="Notes"
+        accent="rose"
+        showBack
+        backTo="/notes"
+      />
+      <AppScreen
+        title="Write a little note."
+        eyebrow="Notes"
+        subtitle="A few words can make an ordinary day."
+      >
         <div className="compose-body">
-          <IonTextarea
-            value={content}
-            onIonInput={(e) => setContent(String(e.detail.value ?? ''))}
-            placeholder="What do you want to say?"
-            autoGrow
-            rows={5}
-            className="compose-body__textarea"
-          />
-
-          <div className="mode-toggle" role="tablist">
+          <div>
+            <span className="compose-field-label" id="note-label">
+              Your note
+            </span>
+            <IonTextarea
+              aria-labelledby="note-label"
+              aria-describedby="note-count"
+              value={content}
+              onIonInput={(e) => setContent(String(e.detail.value ?? ''))}
+              maxlength={NOTE_LIMIT}
+              placeholder="What do you want to say?"
+              autoGrow
+              rows={7}
+              className="compose-body__textarea"
+              disabled={saving}
+            />
+            <p id="note-count" className="compose-count">
+              {content.length.toLocaleString()} / 4,000
+            </p>
+          </div>
+          <div className="mode-toggle" role="group" aria-label="When to send">
             <button
               type="button"
-              role="tab"
-              aria-selected={sendMode === 'now'}
               className={`mode-toggle__btn ${sendMode === 'now' ? 'mode-toggle__btn--active' : ''}`}
+              aria-pressed={sendMode === 'now'}
+              disabled={saving}
               onClick={() => setSendMode('now')}
             >
               Send now
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={sendMode === 'schedule'}
               className={`mode-toggle__btn ${sendMode === 'schedule' ? 'mode-toggle__btn--active' : ''}`}
+              aria-pressed={sendMode === 'schedule'}
+              disabled={saving}
               onClick={() => setSendMode('schedule')}
             >
               Schedule
             </button>
           </div>
-
-          {sendMode === 'schedule' && (
+          {sendMode === 'schedule' ? (
             <div className="schedule-picker">
               <div className="schedule-field">
-                <span className="schedule-field__label">Date</span>
-                <div className="chip-row">
-                  {dateChips.map((c) => (
+                <span className="schedule-field__label" id="schedule-date-label">
+                  Choose a day · next 21 days
+                </span>
+                <div className="chip-row" role="group" aria-labelledby="schedule-date-label">
+                  {dates.map(({ date, iso }, i) => (
                     <button
-                      key={c.iso}
+                      key={iso}
                       type="button"
-                      className={`chip ${scheduleDate === c.iso ? 'chip--active' : ''}`}
+                      className={`chip ${scheduleDate === iso ? 'chip--active' : ''}`}
+                      aria-pressed={scheduleDate === iso}
+                      aria-label={date.toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                      disabled={saving}
                       onClick={() => {
-                        setScheduleDate(c.iso);
+                        setScheduleDate(iso);
                         setScheduleHour(null);
                       }}
                     >
-                      <span className="chip__top">{c.top}</span>
-                      <span className="chip__day">{c.day}</span>
+                      <span className="chip__top">
+                        {i === 0
+                          ? 'Today'
+                          : date.toLocaleDateString(undefined, { weekday: 'short' })}
+                      </span>
+                      <span className="chip__day">{date.getDate()}</span>
+                      <span className="chip__month">
+                        {date.toLocaleDateString(undefined, { month: 'short' })}
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
-
               <div className="schedule-field">
-                <span className="schedule-field__label">Time</span>
-                <div className="chip-row">
-                  {hourOptions.map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      className={`chip chip--hour ${scheduleHour === h ? 'chip--active' : ''}`}
-                      onClick={() => setScheduleHour(h)}
-                    >
-                      {formatHour(h)}
-                    </button>
-                  ))}
-                  {hourOptions.length === 0 && (
-                    <span className="chip-row__empty">No hours left today</span>
+                <span className="schedule-field__label" id="schedule-hour-label">
+                  Choose an hour
+                </span>
+                <div className="schedule-hours" role="group" aria-labelledby="schedule-hour-label">
+                  {hours.map((hour) => {
+                    const taken = occupied.has(scheduledInstant(scheduleDate, hour));
+                    const label = new Date(scheduledInstant(scheduleDate, hour)).toLocaleTimeString(
+                      undefined,
+                      {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      },
+                    );
+                    return (
+                      <button
+                        key={hour}
+                        type="button"
+                        className={`chip ${scheduleHour === hour ? 'chip--active' : ''}`}
+                        aria-pressed={scheduleHour === hour}
+                        disabled={saving || taken}
+                        title={taken ? 'Already scheduled at this hour' : undefined}
+                        onClick={() => setScheduleHour(hour)}
+                      >
+                        {label}
+                        {taken ? ' · Taken' : ''}
+                      </button>
+                    );
+                  })}
+                  {hours.length === 0 && (
+                    <p className="compose-hint">No hours left today. Choose another day.</p>
                   )}
                 </div>
               </div>
+              {selectedInstant && (
+                <p className="schedule-summary">
+                  {new Date(selectedInstant).toLocaleString(undefined, {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                  <br />
+                  Local time · {timezone}
+                </p>
+              )}
+              {slotsError && (
+                <FeedbackState
+                  kind="failure"
+                  heading="Could not check occupied hours."
+                  detail="Your choice will be checked when you save."
+                  onRetry={loadSlots}
+                />
+              )}
+              <p className="compose-hint">
+                Delivery runs hourly. Scheduling saves your note for the chosen moment.
+              </p>
             </div>
+          ) : (
+            <p className="compose-hint">Your note will appear in Notes as soon as it is saved.</p>
           )}
-
-          {error && (
-            <IonText color="danger" className="composer-error"><p>{error}</p></IonText>
-          )}
-
-          <IonButton
-            expand="block"
-            shape="round"
-            className="composer-submit"
-            onClick={handleSubmit}
-            disabled={saving || !canSubmit}
-          >
-            <IonIcon slot="start" icon={sendMode === 'now' ? paperPlaneOutline : calendarClearOutline} />
-            {saving ? 'Saving…' : sendMode === 'now' ? 'Send' : 'Schedule note'}
-          </IonButton>
+          {error && <FeedbackState kind="failure" heading={error} />}
         </div>
-      </IonContent>
-
-      <IonToast isOpen={!!toast} message={toast ?? ''} duration={2500} onDidDismiss={() => setToast(null)} />
+      </AppScreen>
+      <IonFooter className="lo-action-footer">
+        <AppButton
+          busy={saving}
+          disabled={!canSubmit}
+          icon={sendMode === 'now' ? paperPlaneOutline : calendarClearOutline}
+          onClick={submit}
+        >
+          {saving ? 'Saving…' : sendMode === 'now' ? 'Send note' : 'Schedule note'}
+        </AppButton>
+      </IonFooter>
+      {confirmation}
     </IonPage>
   );
 }

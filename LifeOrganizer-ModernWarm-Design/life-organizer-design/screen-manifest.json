@@ -1,0 +1,87 @@
+[
+  {
+    "slug": "01-login",
+    "title": "Login",
+    "kind": "current"
+  },
+  {
+    "slug": "02-home",
+    "title": "Home",
+    "kind": "current"
+  },
+  {
+    "slug": "03-notes",
+    "title": "Notes",
+    "kind": "current"
+  },
+  {
+    "slug": "04-compose",
+    "title": "Write a note",
+    "kind": "current"
+  },
+  {
+    "slug": "05-memories",
+    "title": "Memories",
+    "kind": "current"
+  },
+  {
+    "slug": "06-gym",
+    "title": "Gym Coach",
+    "kind": "current"
+  },
+  {
+    "slug": "07-session",
+    "title": "Workout session",
+    "kind": "current"
+  },
+  {
+    "slug": "08-progress",
+    "title": "Progress",
+    "kind": "current"
+  },
+  {
+    "slug": "09-profile",
+    "title": "Profile",
+    "kind": "current"
+  },
+  {
+    "slug": "10-programmes",
+    "title": "Programmes",
+    "kind": "current"
+  },
+  {
+    "slug": "11-exercise-library",
+    "title": "Exercise library",
+    "kind": "current"
+  },
+  {
+    "slug": "12-programme-editor",
+    "title": "Programme editor",
+    "kind": "current"
+  },
+  {
+    "slug": "13-schedule",
+    "title": "Schedule a note",
+    "kind": "current"
+  },
+  {
+    "slug": "14-shopping",
+    "title": "Shopping together",
+    "kind": "proposal"
+  },
+  {
+    "slug": "15-calendar",
+    "title": "Our calendar",
+    "kind": "proposal"
+  },
+  {
+    "slug": "16-little-plans",
+    "title": "Little plans",
+    "kind": "proposal"
+  },
+  {
+    "slug": "17-components",
+    "title": "Component sheet",
+    "kind": "components"
+  }
+]

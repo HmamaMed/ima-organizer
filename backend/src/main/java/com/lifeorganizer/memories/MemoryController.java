@@ -35,4 +35,15 @@ public class MemoryController {
     public List<MemoryResponse> list() {
         return memoryService.list();
     }
+
+    @PostMapping("/groups")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<MemoryGroupResponse> createGroup(@Valid @RequestBody MemoryGroupRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(memoryService.createGroup(request));
+    }
+
+    @GetMapping("/groups")
+    public List<MemoryGroupResponse> listGroups() {
+        return memoryService.listGroups();
+    }
 }

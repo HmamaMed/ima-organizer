@@ -42,6 +42,9 @@ function AuthenticatedTabs() {
         <Route exact path="/memories">
           <MemoriesPage />
         </Route>
+        <Route exact path="/memories/groups/:groupId">
+          <MemoriesPage />
+        </Route>
         {/* Home sends the recipient here instead of /memories until the unlock date. */}
         <Route exact path="/memories/countdown">
           <BirthdayCountdownPage />
