@@ -18,6 +18,7 @@ import ProgrammesPage from './modules/gym/ProgrammesPage';
 import ProgrammeEditorPage from './modules/gym/ProgrammeEditorPage';
 import ProgressPage from './modules/gym/ProgressPage';
 import ProfilePage from './modules/profile/ProfilePage';
+import AgiosPage from './modules/agios/AgiosPage';
 import ComingSoonPage from './modules/coming-soon/ComingSoonPage';
 import BackButtonHandler from './shared/navigation/BackButtonHandler';
 import './App.css';
@@ -70,6 +71,9 @@ function AuthenticatedTabs() {
         </Route>
         <Route exact path="/profile">
           <ProfilePage />
+        </Route>
+        <Route exact path="/agios">
+          <AgiosPage />
         </Route>
         <Route exact path="/more">
           <ComingSoonPage />

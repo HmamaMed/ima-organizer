@@ -113,3 +113,11 @@ adb devices returned no attached device or emulator. Android hardware back, stat
 - `backend/src/test/java/com/lifeorganizer/memories/MemoryGroupsIntegrationTests.java`
 
 Screenshots and this report are under `design-validation/`. The supplied handoff and pre-existing previews remain untouched.
+
+## Agios Tracker
+
+The savings-interest module uses the existing warm surfaces, plum controls and a sage accent. Both authenticated accounts can see and maintain either person's entries; names clarify the viewer-relative **Your agios / My agios** sections.
+
+Validation is recorded in [agios-checks.json](agios-checks.json). The production build, lint, three monetary/date utility tests and all twelve backend tests pass. Browser checks use a real local backend with an isolated in-memory H2 database and synthetic accounts. They cover shared persistence, account switching, add/edit/delete, correct all-time and yearly totals, date ordering, failed-write and failed-refresh recovery, duplicate-submit prevention and accessible modal closure. Content fits at 320, 390 and 768px, including 200% root text at 320px; the entry modal also fits at 200%. Native Android behavior and production deployment were not checked.
+
+Previews: [My agios](screenshots/agios-my-interest.png), [Your agios](screenshots/agios-partner-interest.png), [Add agios](screenshots/agios-add-interest.png).

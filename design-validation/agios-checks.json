@@ -1,0 +1,74 @@
+{
+  "module": "Agios Tracker",
+  "currency": "MAD",
+  "environment": "Chrome DevTools CLI, isolated local Spring Boot server on port 8089 with an in-memory H2 database. Synthetic accounts Alex and Sam. No production data writes.",
+  "backend": {
+    "tests": 12,
+    "failures": 0,
+    "newAgiosTests": 5,
+    "command": "./mvnw test '-Dspring.datasource.url=jdbc:h2:mem:all-tests;MODE=PostgreSQL;DB_CLOSE_DELAY=-1' -Dspring.datasource.driver-class-name=org.h2.Driver -Dspring.datasource.username=sa -Dspring.datasource.password= -Dspring.jpa.hibernate.ddl-auto=create-drop -Dfirebase.service-account-path=/nonexistent/test-firebase.json"
+  },
+  "frontend": {
+    "build": "passed",
+    "lint": "passed with three pre-existing warnings",
+    "utilityTests": 3,
+    "utilityCommand": "npm run test:agios"
+  },
+  "browserChecks": [
+    "Home module opens /agios.",
+    "Both roles read both accounts; My agios and Your agios names swap with the authenticated viewer.",
+    "Both roles can add interest for the selected person, including the other account.",
+    "Amount 125,55 is saved as 125.55; edited amount 130.20 and credited date 2026-09-30 persist.",
+    "Reload and switching to the other account retain the saved records.",
+    "All-time total 95.45 and current-year total 75.40 correctly separate the 20.05 credit on 2025-12-31.",
+    "History groups and orders credits by calendar date, newest first.",
+    "Zero amount is rejected before saving.",
+    "Failed save retains entered amount and date; retry succeeds.",
+    "Delete confirmation can be cancelled; failed delete retains the entry and allows retry; successful deletion updates totals without affecting the other account.",
+    "Failed refresh retains loaded history and totals; retry recovers.",
+    "Two submissions in the same event loop create only one entry.",
+    "Entry-modal closure restores accessibility of the underlying router outlet."
+  ],
+  "layouts": [
+    {
+      "width": 320,
+      "rootFontSize": "16px",
+      "contentOverflow": [],
+      "buttonsBelow48px": []
+    },
+    {
+      "width": 390,
+      "rootFontSize": "16px",
+      "contentOverflow": [],
+      "buttonsBelow48px": []
+    },
+    {
+      "width": 768,
+      "rootFontSize": "16px",
+      "contentOverflow": [],
+      "buttonsBelow48px": []
+    },
+    {
+      "width": 320,
+      "rootFontSize": "32px",
+      "contentOverflow": [],
+      "buttonsBelow48px": []
+    },
+    {
+      "surface": "entry modal",
+      "width": 320,
+      "rootFontSize": "32px",
+      "contentOverflow": []
+    }
+  ],
+  "screenshots": [
+    "screenshots/agios-my-interest.png",
+    "screenshots/agios-partner-interest.png",
+    "screenshots/agios-add-interest.png"
+  ],
+  "limits": [
+    "No native Android device check.",
+    "Production deployment was not performed.",
+    "Existing Ionic CSS minification and bundle-size build warnings remain."
+  ]
+}

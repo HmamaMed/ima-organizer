@@ -6,6 +6,7 @@ import {
   barbellOutline,
   chatbubbleEllipsesOutline,
   imagesOutline,
+  leafOutline,
   personOutline,
   sparklesOutline,
 } from 'ionicons/icons';
@@ -39,6 +40,13 @@ const CHAPTERS = [
     accent: 'gold',
     path: '/gym',
     description: 'One step at a time',
+  },
+  {
+    icon: leafOutline,
+    label: 'Agios Tracker',
+    accent: 'sage',
+    path: '/agios',
+    description: 'Little gains, kept together',
   },
 ];
 
