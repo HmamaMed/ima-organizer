@@ -4,7 +4,7 @@ import {
   IonToast, useIonViewWillEnter,
 } from '@ionic/react';
 import {
-  addOutline, arrowUpOutline, calendarOutline, checkmarkOutline, closeOutline,
+  addOutline, arrowDownOutline, arrowUpOutline, calendarOutline, checkmarkOutline, closeOutline,
   createOutline, leafOutline, peopleOutline, trashOutline,
 } from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
@@ -15,24 +15,27 @@ import FeedbackState from '../../shared/ui/FeedbackState';
 import ConfirmSheet from '../../shared/ui/ConfirmSheet';
 import { deleteAgio, fetchAgios, saveAgio, type Agio, type AgiosParticipant, type AgiosTracker } from './agiosApi';
 import {
-  AGIOS_CURRENCY, amountInCents, creditDate, formatCreditDate, formatMoney,
-  localDate, normalizeAmount, sortAgios,
+  AGIOS_CURRENCY, amountInCents, creditDate, formatCreditDate, formatEntryAmount, formatMoney,
+  localDate, normalizeAmount, sortAgios, summarizeAgios,
 } from './agiosUtils';
 import './agios.css';
 
 type View = 'partner' | 'mine';
+type EntryKind = 'interest' | 'withdrawal';
 
 function AgioEditor({
-  participant, entry, token, onSaved, onClose, onBusyChange,
+  participant, entry, kind, token, onSaved, onClose, onBusyChange,
 }: {
   participant: AgiosParticipant;
   entry: Agio | null;
+  kind: EntryKind;
   token: string;
   onSaved: (entry: Agio) => void;
   onClose: () => void;
   onBusyChange: (busy: boolean) => void;
 }) {
-  const [amount, setAmount] = useState(entry?.amount ?? '');
+  const withdrawal = kind === 'withdrawal';
+  const [amount, setAmount] = useState(entry?.amount.replace(/^-/, '') ?? '');
   const [date, setDate] = useState(entry?.date ?? localDate());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ function AgioEditor({
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > localDate()
       || Number.isNaN(creditDate(date).getTime()) || localDate(creditDate(date)) !== date) {
-      setError('Choose the date the interest was credited, today or earlier.');
+      setError('Choose the date of this entry, today or earlier.');
       return;
     }
     submitting.current = true;
@@ -58,7 +61,9 @@ function AgioEditor({
     onBusyChange(true);
     setError(null);
     try {
-      const saved = await saveAgio(token, { userId: participant.userId, amount: normalized, date }, entry?.id);
+      const saved = await saveAgio(token, {
+        userId: participant.userId, amount: withdrawal ? `-${normalized}` : normalized, date,
+      }, entry?.id);
       onSaved(saved);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not save this entry. Please try again.');
@@ -72,15 +77,15 @@ function AgioEditor({
   return (
     <form className="agios-editor__body" onSubmit={submit}>
       <div className="agios-editor__heading">
-        <span className="agios-mark"><IonIcon icon={leafOutline} aria-hidden="true" /></span>
+        <span className={`agios-mark ${withdrawal ? 'agios-mark--withdrawal' : ''}`}><IonIcon icon={withdrawal ? arrowDownOutline : leafOutline} aria-hidden="true" /></span>
         <button type="button" className="icon-btn" onClick={onClose} disabled={saving} aria-label="Close entry form">
           <IonIcon icon={closeOutline} />
         </button>
       </div>
       <div>
-        <p className="lo-eyebrow">Savings interest</p>
-        <h2 id="agios-editor-title">{entry ? 'Edit agios.' : 'A little more saved.'}</h2>
-        <p className="agios-editor__subtitle">{entry ? 'Update' : 'Add'} an interest credit for {participant.name}.</p>
+        <p className="lo-eyebrow">{withdrawal ? 'Withdrawal' : 'Savings interest'}</p>
+        <h2 id="agios-editor-title">{withdrawal ? (entry ? 'Edit withdrawal.' : 'Record a withdrawal.') : (entry ? 'Edit agios.' : 'A little more saved.')}</h2>
+        <p className="agios-editor__subtitle">{entry ? 'Update' : 'Record'} {withdrawal ? 'a withdrawal' : 'an interest credit'} for {participant.name}.</p>
       </div>
       <fieldset disabled={saving} className="agios-editor__fields">
         <label className="agios-field" htmlFor="agios-amount">
@@ -94,14 +99,14 @@ function AgioEditor({
           </span>
         </label>
         <label className="agios-field" htmlFor="agios-date">
-          <span>Date credited</span>
+          <span>{withdrawal ? 'Date withdrawn' : 'Date credited'}</span>
           <input id="agios-date" name="date" type="date" required max={localDate()} value={date}
             onChange={(event) => setDate(event.target.value)} />
         </label>
       </fieldset>
       {error && <p id="agios-form-error" className="agios-form-error" role="alert">{error}</p>}
-      <p className="agios-editor__hint"><IonIcon icon={peopleOutline} aria-hidden="true" /> Visible to both of you.</p>
-      <AppButton type="submit" icon={checkmarkOutline} busy={saving}>{entry ? 'Save changes' : 'Save agios'}</AppButton>
+      <p className="agios-editor__hint"><IonIcon icon={peopleOutline} aria-hidden="true" /> {withdrawal ? 'Saved as a negative entry. Visible to both of you.' : 'Visible to both of you.'}</p>
+      <AppButton type="submit" icon={checkmarkOutline} busy={saving}>{entry ? 'Save changes' : withdrawal ? 'Save withdrawal' : 'Save agios'}</AppButton>
     </form>
   );
 }
@@ -112,7 +117,7 @@ export default function AgiosPage() {
   const [view, setView] = useState<View>('mine');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [editor, setEditor] = useState<{ participant: AgiosParticipant; entry: Agio | null } | null>(null);
+  const [editor, setEditor] = useState<{ participant: AgiosParticipant; entry: Agio | null; kind: EntryKind } | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorSaving, setEditorSaving] = useState(false);
   const [toDelete, setToDelete] = useState<Agio | null>(null);
@@ -144,10 +149,8 @@ export default function AgiosPage() {
   const partner = tracker?.participants.find((person) => person.userId !== user?.userId);
   const selected = view === 'mine' ? mine : partner;
   const visible = useMemo(() => sortAgios(tracker?.entries.filter((entry) => entry.userId === selected?.userId) ?? []), [tracker, selected?.userId]);
-  const total = visible.reduce((sum, entry) => sum + amountInCents(entry.amount), 0);
   const year = new Date().getFullYear();
-  const yearTotal = visible.filter((entry) => entry.date.startsWith(`${year}-`))
-    .reduce((sum, entry) => sum + amountInCents(entry.amount), 0);
+  const summary = summarizeAgios(visible, year);
   const months = useMemo(() => {
     const groups = new Map<string, Agio[]>();
     visible.forEach((entry) => {
@@ -163,11 +166,11 @@ export default function AgiosPage() {
     setLoading(false);
     setTracker((current) => current && ({ ...current, entries: [...current.entries.filter((item) => item.id !== entry.id), entry] }));
     setEditorOpen(false);
-    setToast(editor?.entry ? 'Agios updated.' : 'Agios added. A little gain, kept.');
+    setToast(editor?.entry ? 'Entry updated.' : editor?.kind === 'withdrawal' ? 'Withdrawal recorded.' : 'Agios added. A little gain, kept.');
   }
 
-  function openEditor(participant: AgiosParticipant, entry: Agio | null = null) {
-    setEditor({ participant, entry });
+  function openEditor(participant: AgiosParticipant, entry: Agio | null = null, kind: EntryKind = 'interest') {
+    setEditor({ participant, entry, kind: entry ? (amountInCents(entry.amount) < 0 ? 'withdrawal' : 'interest') : kind });
     setEditorOpen(true);
   }
 
@@ -182,7 +185,7 @@ export default function AgiosPage() {
       setLoading(false);
       setTracker((current) => current && ({ ...current, entries: current.entries.filter((entry) => entry.id !== toDelete.id) }));
       setToDelete(null);
-      setToast('Agios entry deleted.');
+      setToast('Entry deleted.');
     } catch {
       setDeleteError('Could not delete this entry. Please try again.');
     } finally {
@@ -218,19 +221,23 @@ export default function AgiosPage() {
           <section className="agios-tracker" aria-label={`${selected.name}'s agios`} aria-busy={loading}>
             <div className="agios-total">
               <div className="agios-total__top">
-                <span className="lo-eyebrow">Total interest earned</span>
+                <span className="lo-eyebrow">Remaining agios</span>
                 <span className="agios-mark"><IonIcon icon={leafOutline} aria-hidden="true" /></span>
               </div>
-              <p className="agios-total__amount">{formatMoney(total)}</p>
-              <p className="agios-total__person">{selected.name}’s savings, growing little by little.</p>
+              <p className={`agios-total__amount ${summary.balance < 0 ? 'agios-total__amount--negative' : ''}`}>{formatMoney(summary.balance)}</p>
+              <p className="agios-total__person">{selected.name}’s earned interest, after withdrawals.</p>
               <div className="agios-total__stats">
-                <div><span>{year} interest</span><strong>{formatMoney(yearTotal)}</strong></div>
-                <div><span>Interest credits</span><strong>{visible.length}</strong></div>
+                <div><span>Total earned</span><strong>{formatMoney(summary.earned)}</strong></div>
+                <div><span>Withdrawn</span><strong>{formatMoney(summary.withdrawn)}</strong></div>
               </div>
+              <p className="agios-total__year">{year} interest earned · {formatMoney(summary.yearEarned)}</p>
+            </div>
+            <div className="agios-actions">
+              <AppButton icon={addOutline} onClick={() => openEditor(selected)}>Add agios</AppButton>
+              <AppButton variant="secondary" icon={arrowDownOutline} onClick={() => openEditor(selected, null, 'withdrawal')}>Withdraw</AppButton>
             </div>
             <div className="agios-history-heading">
-              <div><h2>Interest history</h2><p>{visible[0] ? `Latest credit · ${formatCreditDate(visible[0].date)}` : 'Every little gain has a place.'}</p></div>
-              <AppButton icon={addOutline} onClick={() => openEditor(selected)}>Add agios</AppButton>
+              <div><h2>Activity history</h2><p>{visible[0] ? `Latest entry · ${formatCreditDate(visible[0].date)}` : 'Every little gain has a place.'}</p></div>
             </div>
             {visible.length === 0 ? (
               <div className="agios-empty">
@@ -244,19 +251,24 @@ export default function AgiosPage() {
                   <section key={month} aria-label={creditDate(`${month}-01`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}>
                     <h3 className="agios-month">{creditDate(`${month}-01`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h3>
                     <div className="agios-entries">
-                      {entries.map((entry) => (
-                        <article className="agios-entry" key={entry.id}>
-                          <span className="agios-entry__icon"><IonIcon icon={arrowUpOutline} aria-hidden="true" /></span>
+                      {entries.map((entry) => {
+                        const withdrawal = amountInCents(entry.amount) < 0;
+                        const entryLabel = withdrawal ? 'Withdrawal' : 'Interest credit';
+                        return (
+                        <article className={`agios-entry ${withdrawal ? 'agios-entry--withdrawal' : ''}`} key={entry.id}>
+                          <span className="agios-entry__icon"><IonIcon icon={withdrawal ? arrowDownOutline : arrowUpOutline} aria-hidden="true" /></span>
                           <div className="agios-entry__detail">
-                            <strong>+{formatMoney(amountInCents(entry.amount))}</strong>
+                            <strong>{formatEntryAmount(entry.amount)}</strong>
+                            <small className="agios-entry__kind">{entryLabel}</small>
                             <span><IonIcon icon={calendarOutline} aria-hidden="true" /><time dateTime={entry.date}>{formatCreditDate(entry.date)}</time></span>
                           </div>
                           <div className="agios-entry__actions">
-                            <button type="button" className="icon-btn" aria-label={`Edit ${formatMoney(amountInCents(entry.amount))} credited ${formatCreditDate(entry.date)}`} onClick={() => openEditor(selected, entry)}><IonIcon icon={createOutline} /></button>
-                            <button type="button" className="icon-btn agios-entry__delete" aria-label={`Delete ${formatMoney(amountInCents(entry.amount))} credited ${formatCreditDate(entry.date)}`} onClick={() => { setDeleteError(null); setToDelete(entry); }}><IonIcon icon={trashOutline} /></button>
+                            <button type="button" className="icon-btn" aria-label={`Edit ${entryLabel.toLowerCase()} ${formatEntryAmount(entry.amount)} on ${formatCreditDate(entry.date)}`} onClick={() => openEditor(selected, entry)}><IonIcon icon={createOutline} /></button>
+                            <button type="button" className="icon-btn agios-entry__delete" aria-label={`Delete ${entryLabel.toLowerCase()} ${formatEntryAmount(entry.amount)} on ${formatCreditDate(entry.date)}`} onClick={() => { setDeleteError(null); setToDelete(entry); }}><IonIcon icon={trashOutline} /></button>
                           </div>
                         </article>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
                 ))}
@@ -271,13 +283,13 @@ export default function AgiosPage() {
         onDidDismiss={() => { setEditor(null); setEditorOpen(false); }}
         onDidPresent={() => document.getElementById('agios-amount')?.focus()} aria-labelledby="agios-editor-title">
         <IonContent>
-          {editor && token && <AgioEditor participant={editor.participant} entry={editor.entry} token={token}
+          {editor && token && <AgioEditor participant={editor.participant} entry={editor.entry} kind={editor.kind} token={token}
             onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setEditorSaving} />}
         </IonContent>
       </IonModal>
-      <ConfirmSheet open={toDelete !== null} title="Delete this agios?"
-        detail={deleteError ?? (toDelete ? `${formatMoney(amountInCents(toDelete.amount))} credited on ${formatCreditDate(toDelete.date)} will be removed from ${selected?.name ?? 'this account'}’s history and totals.` : '')}
-        confirmLabel="Delete agios" busy={deleting} onConfirm={() => { void remove(); }} onClose={() => { setToDelete(null); setDeleteError(null); }} />
+      <ConfirmSheet open={toDelete !== null} title="Delete this entry?"
+        detail={deleteError ?? (toDelete ? `${formatEntryAmount(toDelete.amount)} recorded on ${formatCreditDate(toDelete.date)} will be removed from ${selected?.name ?? 'this account'}’s history. Use Withdraw to record money taken out.` : '')}
+        confirmLabel="Delete entry" busy={deleting} onConfirm={() => { void remove(); }} onClose={() => { setToDelete(null); setDeleteError(null); }} />
       <IonToast isOpen={Boolean(toast)} message={toast} duration={2600} onDidDismiss={() => setToast('')} />
     </IonPage>
   );

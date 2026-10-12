@@ -1,0 +1,70 @@
+{
+  "environment": "Chrome DevTools CLI with isolated local Spring Boot/H2 backend and synthetic Alex/Sam accounts; no production writes",
+  "backendTests": 14,
+  "backendFailures": 0,
+  "utilityTests": 4,
+  "build": "passed",
+  "lint": "passed with three existing warnings",
+  "checks": [
+    {
+      "failedWithdrawalRetainsFormAndBalance": true
+    },
+    {
+      "threeCreditsAndWithdrawalRemain": true,
+      "remaining": "100.00",
+      "earned": "300.00",
+      "withdrawn": "200.00",
+      "withdrawalStoredNegative": true
+    },
+    {
+      "withdrawalEditorUsesPositiveMagnitude": true
+    },
+    {
+      "editedWithdrawalRetainsNegativeSignAndExactCents": true
+    },
+    {
+      "deleteWithdrawalsCorrectsBalanceAndKeepsEarnedCredits": true
+    },
+    {
+      "recipientCanWithdrawOwnAgios": true,
+      "balancesStaySeparate": true,
+      "otherViewerSeesPartnerWithdrawals": true
+    }
+  ],
+  "layouts": [
+    {
+      "width": 320,
+      "rootFontSize": "16px",
+      "overflow": [],
+      "smallButtons": []
+    },
+    {
+      "width": 390,
+      "rootFontSize": "16px",
+      "overflow": [],
+      "smallButtons": []
+    },
+    {
+      "width": 768,
+      "rootFontSize": "16px",
+      "overflow": [],
+      "smallButtons": []
+    },
+    {
+      "width": 320,
+      "rootFontSize": "32px",
+      "overflow": [],
+      "smallButtons": []
+    },
+    {
+      "surface": "withdrawal form",
+      "width": 320,
+      "rootFontSize": "32px",
+      "overflow": []
+    }
+  ],
+  "limits": [
+    "No native Android device check",
+    "Production deployment not performed"
+  ]
+}

@@ -10,7 +10,7 @@ export interface AgiosParticipant {
 export interface Agio {
   id: string;
   userId: string;
-  /** Decimal string keeps monetary precision across the API boundary. */
+  /** Exact decimal string: positive interest credit or negative withdrawal. */
   amount: string;
   date: string;
   createdAt: string;

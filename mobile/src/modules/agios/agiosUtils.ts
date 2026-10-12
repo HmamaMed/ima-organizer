@@ -26,8 +26,29 @@ export function normalizeAmount(value: string): string | null {
 }
 
 export function amountInCents(amount: string): number {
-  const [whole, fraction = ''] = amount.split('.');
-  return Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  const negative = amount.startsWith('-');
+  const [whole, fraction = ''] = (negative ? amount.slice(1) : amount).split('.');
+  const cents = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  return negative ? -cents : cents;
+}
+
+export function summarizeAgios(entries: Agio[], year: number) {
+  return entries.reduce((summary, entry) => {
+    const cents = amountInCents(entry.amount);
+    summary.balance += cents;
+    if (cents < 0) {
+      summary.withdrawn -= cents;
+    } else {
+      summary.earned += cents;
+      if (entry.date.startsWith(`${year}-`)) summary.yearEarned += cents;
+    }
+    return summary;
+  }, { balance: 0, earned: 0, withdrawn: 0, yearEarned: 0 });
+}
+
+export function formatEntryAmount(amount: string): string {
+  const cents = amountInCents(amount);
+  return `${cents < 0 ? '−' : '+'}${formatMoney(Math.abs(cents))}`;
 }
 
 export function formatMoney(cents: number): string {

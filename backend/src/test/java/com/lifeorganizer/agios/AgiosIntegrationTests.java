@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,7 +97,7 @@ class AgiosIntegrationTests {
     @WithMockUser(roles = "OWNER")
     void invalidAmountsDatesAndMissingFieldsCannotBePersisted() throws Exception {
         UUID owner = account(Role.OWNER);
-        for (String amount : new String[]{"0", "-1", "0.001", "12.345", "1000000000000"}) {
+        for (String amount : new String[]{"0", "-0.00", "0.001", "-0.001", "12.345", "1000000000000", "-1000000000000"}) {
             mvc.perform(post("/api/agios").contentType("application/json")
                             .content(input(owner, amount, "2025-01-01")))
                     .andExpect(status().isBadRequest());
@@ -108,6 +109,53 @@ class AgiosIntegrationTests {
                     .andExpect(status().isBadRequest());
         }
         assertThat(agios.count()).isZero();
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    void threeInterestCreditsAndWithdrawalLeaveOneHundredWithoutDeletingHistory() throws Exception {
+        UUID owner = account(Role.OWNER), partner = account(Role.RECIPIENT);
+        for (int day = 3; day >= 1; day--) {
+            mvc.perform(post("/api/agios").contentType("application/json")
+                            .content(input(owner, "100.00", LocalDate.now().minusDays(day).toString())))
+                    .andExpect(status().isCreated());
+        }
+        mvc.perform(post("/api/agios").contentType("application/json")
+                        .content(input(partner, "75.40", LocalDate.now().toString())))
+                .andExpect(status().isCreated());
+        mvc.perform(post("/api/agios").contentType("application/json")
+                        .content(input(owner, "-200.00", LocalDate.now().toString())))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.amount").value("-200.00"))
+                .andExpect(jsonPath("$.userId").value(owner.toString()));
+        agios.flush();
+        var ownerEntries = agios.findAll().stream().filter(a -> a.getUser().getId().equals(owner)).toList();
+        assertThat(ownerEntries).hasSize(4);
+        assertThat(ownerEntries.stream().map(Agio::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add))
+                .isEqualByComparingTo("100.00");
+        assertThat(ownerEntries.stream().filter(a -> a.getAmount().signum() > 0)).hasSize(3);
+        mvc.perform(get("/api/agios")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.entries.length()").value(5));
+    }
+
+    @Test
+    @WithMockUser(roles = "RECIPIENT")
+    void recipientCanRecordAndCorrectWithdrawalsForEitherPersonIncludingFractionalAmounts() throws Exception {
+        for (Role role : Role.values()) {
+            UUID userId = account(role);
+            mvc.perform(post("/api/agios").contentType("application/json")
+                            .content(input(userId, "25.00", LocalDate.now().toString())))
+                    .andExpect(status().isCreated());
+            mvc.perform(post("/api/agios").contentType("application/json")
+                            .content(input(userId, "-0.50", LocalDate.now().toString())))
+                    .andExpect(status().isCreated()).andExpect(jsonPath("$.amount").value("-0.50"));
+        }
+        Agio withdrawal = agios.findAll().stream().filter(a -> a.getAmount().signum() < 0).findFirst().orElseThrow();
+        mvc.perform(put("/api/agios/" + withdrawal.getId()).contentType("application/json")
+                        .content(input(withdrawal.getUser().getId(), "-5.25", LocalDate.now().toString())))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.amount").value("-5.25"));
+        mvc.perform(delete("/api/agios/" + withdrawal.getId())).andExpect(status().isNoContent());
+        assertThat(agios.findAll().stream().filter(a -> a.getAmount().signum() > 0)).hasSize(2);
+        assertThat(agios.count()).isEqualTo(3);
     }
 
     @Test

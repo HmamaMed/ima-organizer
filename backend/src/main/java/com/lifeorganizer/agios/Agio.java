@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/** A savings-interest credit belonging to one of the two shared accounts. */
+/** An interest credit (positive) or withdrawal (negative) belonging to a shared account. */
 @Entity
 @Table(name = "agios", indexes = @Index(name = "agios_user_date_idx", columnList = "user_id,credit_date"))
 public class Agio {

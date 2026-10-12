@@ -8,7 +8,7 @@ const source = await readFile(new URL('../src/modules/agios/agiosUtils.ts', impo
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
 });
-const { amountInCents, creditDate, localDate, normalizeAmount, sortAgios } = await import(
+const { amountInCents, creditDate, localDate, normalizeAmount, sortAgios, summarizeAgios, formatEntryAmount } = await import(
   `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
 );
 
@@ -23,6 +23,27 @@ test('interest input preserves cents and accepts dot or comma decimals', () => {
   }
   assert.equal(amountInCents('0.10') + amountInCents('0.20'), 30);
   assert.equal(amountInCents('75.40') + amountInCents('20.05'), 9545);
+  assert.equal(amountInCents('-0.50'), -50);
+  assert.equal(amountInCents('-200.25'), -20025);
+});
+
+test('withdrawals reduce the remaining balance while earned interest stays intact', () => {
+  const entries = [
+    { amount: '100.00', date: '2025-12-31' },
+    { amount: '100.00', date: '2026-03-31' },
+    { amount: '100.00', date: '2026-06-30' },
+    { amount: '-200.00', date: '2026-07-01' },
+  ];
+  assert.deepEqual(summarizeAgios(entries, 2026), {
+    balance: 10000, earned: 30000, withdrawn: 20000, yearEarned: 20000,
+  });
+  assert.deepEqual(summarizeAgios([], 2026), { balance: 0, earned: 0, withdrawn: 0, yearEarned: 0 });
+  assert.deepEqual(summarizeAgios([{ amount: '0.30', date: '2026-01-01' }, { amount: '-0.50', date: '2026-01-02' }], 2026), {
+    balance: -20, earned: 30, withdrawn: 50, yearEarned: 30,
+  });
+  assert.ok(formatEntryAmount('-200.00').startsWith('−'));
+  assert.ok(formatEntryAmount('100.00').startsWith('+'));
+  assert.ok(!formatEntryAmount('-200.00').startsWith('+'));
 });
 
 test('credit dates remain calendar days across timezones and year boundaries', () => {

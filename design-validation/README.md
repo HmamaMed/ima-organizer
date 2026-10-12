@@ -121,3 +121,11 @@ The savings-interest module uses the existing warm surfaces, plum controls and a
 Validation is recorded in [agios-checks.json](agios-checks.json). The production build, lint, three monetary/date utility tests and all twelve backend tests pass. Browser checks use a real local backend with an isolated in-memory H2 database and synthetic accounts. They cover shared persistence, account switching, add/edit/delete, correct all-time and yearly totals, date ordering, failed-write and failed-refresh recovery, duplicate-submit prevention and accessible modal closure. Content fits at 320, 390 and 768px, including 200% root text at 320px; the entry modal also fits at 200%. Native Android behavior and production deployment were not checked.
 
 Previews: [My agios](screenshots/agios-my-interest.png), [Your agios](screenshots/agios-partner-interest.png), [Add agios](screenshots/agios-add-interest.png).
+
+### Withdrawals and remaining balance
+
+The updated tracker records withdrawals as negative entries and displays **Remaining agios**, **Total earned** and **Withdrawn** separately. Earned interest stays in history when money is withdrawn. Deleting a mistaken withdrawal restores its amount to the balance.
+
+[agios-withdrawals-checks.json](agios-withdrawals-checks.json) records the isolated backend and browser checks: three 100 credits followed by a 200 withdrawal leave 100 with all four entries present; editing the withdrawal to 200.25 leaves 99.75; deleting it restores 300 without deleting credits. Both accounts can record withdrawals, and their balances stay separate. Failed saves retain the entered amount. Build, lint, all 14 backend tests and 4 utility tests pass. Layout checks pass at 320, 390 and 768px, including 200% root text at 320px. The money fields wrap at enlarged text sizes.
+
+Previews: [Remaining balance](screenshots/agios-remaining-balance.png), [Activity history](screenshots/agios-withdrawal-history.png), [Record a withdrawal](screenshots/agios-withdrawal-form.png).

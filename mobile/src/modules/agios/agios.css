@@ -38,10 +38,15 @@
 .agios-mark { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; color: var(--lo-success); background: #ffffff99; font-size: 24px; }
 .agios-total__amount { margin: 18px 0 10px; font: 500 clamp(1.8rem, 8vw, 3rem)/1.15 var(--font-display); color: var(--lo-ink); letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
 .agios-total__person { margin: 0; color: var(--lo-success); font-size: 0.8125rem; line-height: 1.6; }
-.agios-total__stats { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #366a5526; }
-.agios-total__stats > div { display: grid; align-content: start; gap: 8px; }
+.agios-total__stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #366a5526; }
+.agios-total__stats > div { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; overflow-wrap: anywhere; align-content: start; gap: 8px; }
 .agios-total__stats span { font-size: 0.75rem; color: var(--lo-success); line-height: 1.5; }
 .agios-total__stats strong { font-size: 1rem; font-weight: 600; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.agios-total__year { margin: 18px 0 0; color: var(--lo-success); font-size: 0.75rem; line-height: 1.5; }
+.agios-total__amount--negative { color: var(--lo-danger); }
+.agios-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.agios-actions .lo-button { min-width: 0; padding-inline: 12px; }
+.agios-actions .lo-button > span { white-space: normal; }
 
 .agios-history-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; }
 .agios-history-heading > div { flex: 1 1 170px; }
@@ -54,10 +59,14 @@
 .agios-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--lo-line); }
 .agios-entry:last-child { border-bottom: 0; }
 .agios-entry__icon { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 12px; color: var(--lo-success); background: var(--lo-success-soft); font-size: 19px; }
-.agios-entry__detail { flex: 1 1 120px; min-width: 0; display: grid; gap: 8px; }
+.agios-entry__detail { flex: 1 1 120px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); overflow-wrap: anywhere; gap: 8px; }
 .agios-entry__detail strong { font-size: 1rem; font-weight: 600; line-height: 1.4; font-variant-numeric: tabular-nums; }
 .agios-entry__detail > span { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; line-height: 1.5; color: var(--lo-muted); }
 .agios-entry__detail ion-icon { flex-shrink: 0; font-size: 14px; }
+.agios-entry__detail time { min-width: 0; }
+.agios-entry__kind { color: var(--lo-muted); font-size: 0.75rem; line-height: 1.4; }
+.agios-entry--withdrawal .agios-entry__icon, .agios-editor__heading .agios-mark.agios-mark--withdrawal { color: var(--lo-rose); background: var(--lo-rose-soft); }
+.agios-entry--withdrawal .agios-entry__detail strong { color: var(--lo-rose); }
 .agios-entry__actions { display: flex; margin-left: auto; }
 .agios-entry__actions .icon-btn { width: 48px; height: 48px; font-size: 19px; }
 .agios-entry__delete { color: var(--lo-danger); }
