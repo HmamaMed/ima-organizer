@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <color name="lo_icon_background">#F8F6F3</color>
-  <color name="lo_splash_background">#F8F6F3</color>
-  <color name="lo_splash_background_dark">#34102E</color>
-  <color name="lo_notification_accent">#AA4566</color>
-</resources>
