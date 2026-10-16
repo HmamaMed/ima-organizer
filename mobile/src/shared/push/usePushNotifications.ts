@@ -1,63 +1,47 @@
 import { useEffect, useRef } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 
-/**
- * Registers the device for push notifications and surfaces the FCM token.
- *
- * The token is handed back via the onToken callback so the caller can send it
- * to the backend (e.g. attached to the login request). Incoming notifications
- * are logged for now — module-specific handling (deep-linking to a feed) comes
- * later.
- */
-export function usePushNotifications(onToken: (token: string) => void) {
+/** Listen before registering; remove only this hook's listeners when it unmounts. */
+export function usePushNotifications(onToken: (token: string) => void, onOpen?: (route: string) => void) {
   const onTokenRef = useRef(onToken);
+  const onOpenRef = useRef(onOpen);
   onTokenRef.current = onToken;
+  onOpenRef.current = onOpen;
 
   useEffect(() => {
-    // Push registration only makes sense on a real device (or emulator).
-    if (!Capacitor.isNativePlatform()) {
-      return;
-    }
-
+    if (!Capacitor.isNativePlatform()) return;
     let cancelled = false;
-
-    const register = async () => {
+    const handles: PluginListenerHandle[] = [];
+    async function keep(listener: Promise<PluginListenerHandle>) {
+      const handle = await listener;
+      if (cancelled) await handle.remove();
+      else handles.push(handle);
+    }
+    async function register() {
       try {
-        const permission = await PushNotifications.requestPermissions();
-        if (permission.receive !== 'granted') {
-          console.warn('Push notification permission not granted');
-          return;
+        await keep(PushNotifications.addListener('registration', token => {
+          if (!cancelled) onTokenRef.current(token.value);
+        }));
+        await keep(PushNotifications.addListener('registrationError', () => {
+          console.warn('Push registration failed.');
+        }));
+        await keep(PushNotifications.addListener('pushNotificationActionPerformed', action => {
+          const route = action.notification.data?.route;
+          if (!cancelled && typeof route === 'string') onOpenRef.current?.(route);
+        }));
+        if (cancelled) return;
+        let permission = await PushNotifications.checkPermissions();
+        if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') {
+          permission = await PushNotifications.requestPermissions();
         }
-
-        await PushNotifications.register();
-
-        PushNotifications.addListener('registration', (token) => {
-          if (!cancelled) {
-            onTokenRef.current(token.value);
-          }
-        });
-
-        PushNotifications.addListener('registrationError', (err) => {
-          console.error('Push registration error', err);
-        });
-
-        PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          console.log('Push received', notification);
-        });
-
-        PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-          console.log('Push action performed', action);
-        });
-      } catch (err) {
-        console.error('Failed to set up push notifications', err);
-      }
-    };
-
-    register();
-
+        if (!cancelled && permission.receive === 'granted') await PushNotifications.register();
+      } catch { console.warn('Could not register this device for push notifications.'); }
+    }
+    void register();
     return () => {
       cancelled = true;
+      for (const handle of handles) void handle.remove();
     };
   }, []);
 }

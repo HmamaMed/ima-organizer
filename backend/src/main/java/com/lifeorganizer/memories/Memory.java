@@ -8,14 +8,15 @@ import jakarta.persistence.Table;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import com.lifeorganizer.media.MediaAsset;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * A memory in the timeline. The photo is uploaded directly to media storage
- * from the client; the backend only stores the resulting URL plus metadata.
+ * A temporary memory. New files reference tracked private R2 assets; the URL
+ * columns retain legacy cleanup references or an internal r2:// marker.
  */
 @Entity
 @Table(name = "memories")
@@ -28,7 +29,7 @@ public class Memory {
     @Column(nullable = false)
     private String photoUrl;
 
-    @Column
+    @Column(length = 4000)
     private String caption;
 
     /** Optional audio URL in media storage. */
@@ -46,6 +47,13 @@ public class Memory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private MemoryGroup group;
+
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "photo_asset_id") private MediaAsset photoAsset;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "audio_asset_id") private MediaAsset audioAsset;
+    public MediaAsset getPhotoAsset() { return photoAsset; }
+    public MediaAsset getAudioAsset() { return audioAsset; }
+    public void setPhotoAsset(MediaAsset asset) { photoAsset = asset; }
+    public void setAudioAsset(MediaAsset asset) { audioAsset = asset; }
 
     protected Memory() {
         // for JPA

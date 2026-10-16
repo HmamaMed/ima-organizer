@@ -6,7 +6,7 @@ import {
   useState,
   type CSSProperties,
 } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useHistory, useParams, useLocation } from 'react-router-dom';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { VoiceRecorder } from 'capacitor-voice-recorder';
 import {
@@ -37,6 +37,7 @@ import {
   chevronBackOutline,
   closeOutline,
   imagesOutline,
+  timeOutline,
   micOutline,
   playOutline,
   pauseOutline,
@@ -50,16 +51,24 @@ import AppScreen from '../../shared/ui/AppScreen';
 import { uploadToStorage } from '../../shared/storage/mediaStorage';
 import FeedbackState from '../../shared/ui/FeedbackState';
 import AppButton from '../../shared/ui/AppButton';
+import ConfirmSheet from '../../shared/ui/ConfirmSheet';
+import { moroccoFormat } from '../../shared/utils/moroccoTime';
 import { useInView } from '../../shared/utils/useInView';
 import {
   createMemory,
   fetchMemories,
   createMemoryGroup,
+  deleteMemoryGroup,
   fetchMemoryGroups,
   type Memory,
   type MemoryGroup,
 } from './memoriesApi';
 import './memories.css';
+
+function remainingTime(expiresAt: string, now: number): string {
+  const hours = Math.max(0, Math.ceil((Date.parse(expiresAt) - now) / 3_600_000));
+  return hours > 24 ? `${Math.ceil(hours / 24)} days left` : hours > 1 ? `${hours} hours left` : 'Less than an hour left';
+}
 
 function monthLabel(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
@@ -327,11 +336,15 @@ function MemoryGroupCard({
   name,
   description,
   memories,
+  expiresAt,
+  now,
   onOpen,
 }: {
   name: string;
   description: string | null;
   memories: Memory[];
+  expiresAt: string;
+  now: number;
   onOpen: () => void;
 }) {
   const [brokenCover, setBrokenCover] = useState<string | null>(null);
@@ -370,6 +383,7 @@ function MemoryGroupCard({
               ? 'Open this chapter of our story.'
               : 'Ready for its first memory.')}
         </span>
+        <span className="memory-collection__expiry"><IonIcon icon={timeOutline} aria-hidden="true" />{remainingTime(expiresAt, now)}</span>
         <span className="memory-collection__open">
           Open collection{' '}
           <IonIcon icon={chevronForwardOutline} aria-hidden="true" />
@@ -484,6 +498,13 @@ function PhotoLightbox({
 
 export default function MemoriesPage() {
   const history = useHistory();
+  const location = useLocation();
+  const [now, setNow] = useState(() => Date.now());
+  const [removing, setRemoving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+  const groupSavingRef = useRef(false);
   const { groupId } = useParams<{ groupId?: string }>();
   const { token, user } = useAuth();
   const isOwner = user?.role === 'OWNER';
@@ -516,14 +537,11 @@ export default function MemoriesPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<Memory | null>(null);
 
-  const legacyMemories = memories.filter((memory) => !memory.groupId);
-  const activeGroup = memoryGroups.find((group) => group.id === groupId);
-  const isLegacy = groupId === 'ungrouped';
+  const activeGroups = memoryGroups.filter(group => Date.parse(group.expiresAt) > now);
+  const activeGroup = activeGroups.find((group) => group.id === groupId);
   const isTimeline = !!groupId;
-  const groupExists = isLegacy || !!activeGroup;
-  const visibleMemories = isLegacy
-    ? legacyMemories
-    : memories.filter((memory) => memory.groupId === groupId);
+  const groupExists = !!activeGroup;
+  const visibleMemories = groupExists ? memories.filter(memory => memory.groupId === groupId) : [];
   const timelineGroups = groupByMonth(visibleMemories);
   const order = new Map(
     timelineGroups
@@ -534,7 +552,7 @@ export default function MemoriesPage() {
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
-    // Keep the original memories available even if the groups endpoint is unavailable.
+    // Expiry is also enforced by the API; cached data never extends a category's life.
     const [memoryResult, groupResult] = await Promise.allSettled([
       fetchMemories(token),
       fetchMemoryGroups(token),
@@ -551,14 +569,35 @@ export default function MemoriesPage() {
       setGroupsLoaded(true);
       setGroupsError(null);
     } else {
-      setGroupsError('Could not load memory groups.');
+      setGroupsError('Could not load memory categories.');
     }
+    setNow(Date.now());
     setLoading(false);
   }, [token]);
 
-  useIonViewWillEnter(() => {
-    void load();
-  });
+  useIonViewWillEnter(() => { setNow(Date.now()); void load(); });
+  useEffect(() => {
+    if (!location.pathname.startsWith('/memories')) return;
+    const interval = window.setInterval(() => { setNow(Date.now()); }, 60_000);
+    const refresh = window.setInterval(() => { void load(); }, 5 * 60_000);
+    const visible = () => { if (!document.hidden) { setNow(Date.now()); void load(); } };
+    document.addEventListener('visibilitychange', visible);
+    return () => { clearInterval(interval); clearInterval(refresh); document.removeEventListener('visibilitychange', visible); };
+  }, [load, location.pathname]);
+  useEffect(() => {
+    const deadline = Math.min(...memoryGroups.map(group => Date.parse(group.expiresAt)).filter(value => value > now));
+    if (!Number.isFinite(deadline)) return;
+    const timeout = window.setTimeout(() => {
+      setNow(Date.now());
+      const current = memoryGroups.find(group => group.id === groupId);
+      if (current && Date.parse(current.expiresAt) <= Date.now()) {
+        setLightbox(null); setShowComposer(false);
+        window.dispatchEvent(new CustomEvent('lo-audio-play', { detail: null }));
+      }
+      void load();
+    }, Math.min(Math.max(deadline - Date.now() + 20, 0), 2_147_483_647));
+    return () => clearTimeout(timeout);
+  }, [memoryGroups, now, load, groupId]);
 
   useIonViewDidLeave(() => {
     window.dispatchEvent(new CustomEvent('lo-audio-play', { detail: null }));
@@ -594,7 +633,8 @@ export default function MemoriesPage() {
 
   const handleCreateGroup = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!token || !isOwner || groupSaving || !groupName.trim()) return;
+    if (!token || !isOwner || groupSavingRef.current || !groupName.trim()) return;
+    groupSavingRef.current = true;
     setGroupSaving(true);
     setGroupSaveError(null);
     try {
@@ -605,13 +645,14 @@ export default function MemoriesPage() {
       setMemoryGroups((groups) => [...groups, group]);
       setGroupSaving(false);
       closeGroupComposer();
-      setToast('Group created. Add your first memory.');
+      setToast('Category created. Add your first memory.');
       history.push(`/memories/groups/${group.id}`);
     } catch {
       setGroupSaveError(
-        'Could not create this group. Your details are still here. Try again.',
+        'Could not create this category. Your details are still here. Try again.',
       );
     } finally {
+      groupSavingRef.current = false;
       setGroupSaving(false);
     }
   };
@@ -621,54 +662,54 @@ export default function MemoriesPage() {
       !token ||
       !isOwner ||
       !photoDataUrl ||
-      saving ||
+      savingRef.current ||
+      !groupId ||
       !isTimeline ||
       !groupExists
     )
       return;
+    savingRef.current = true;
     setSaving(true);
     try {
-      // Upload the photo (and voice note, if recorded) to Supabase Storage, then persist the metadata.
+      // Each file is uploaded to private R2 storage and tracked against this category.
       const photoBlob = await (await fetch(photoDataUrl)).blob();
-      const photoUrl = await uploadToStorage(
-        `memories/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`,
-        photoBlob,
-      );
-
-      let audioUrl: string | null = null;
+      const photoAsset = await uploadToStorage(groupId!, photoBlob, token);
+      let audioAssetId: string | null = null;
       if (noteMode === 'audio' && recordedAudio) {
-        const extension = recordedAudio.mimeType.includes('mp4')
-          ? 'm4a'
-          : recordedAudio.mimeType.includes('aac')
-            ? 'aac'
-            : recordedAudio.mimeType.includes('ogg')
-              ? 'ogg'
-              : 'webm';
-        audioUrl = await uploadToStorage(
-          `memories/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`,
-          recordedAudio.blob,
-        );
+        audioAssetId = (await uploadToStorage(groupId!, recordedAudio.blob, token)).id;
       }
 
       await createMemory(token, {
-        photoUrl,
+        photoAssetId: photoAsset.id,
         caption: noteMode === 'caption' ? caption.trim() || null : null,
-        audioUrl,
+        audioAssetId,
         memoryDate: memoryDate.slice(0, 10),
-        groupId: isLegacy ? null : groupId,
+        groupId: groupId!,
       });
 
       setToast('Memory added.');
       setSaving(false);
       closeComposer();
       await load();
-    } catch {
-      setToast(
-        'Could not save the memory. Check your connection and try again.',
-      );
+    } catch (cause) {
+      setToast(cause instanceof Error ? cause.message : 'Could not save the memory. Check your connection and try again.');
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
+  };
+
+  const removeCategory = async () => {
+    if (!token || !activeGroup || removing) return;
+    setRemoving(true); setDeleteError(null);
+    try {
+      await deleteMemoryGroup(token, activeGroup.id);
+      setConfirmDelete(false); setLightbox(null);
+      setMemoryGroups(previous => previous.filter(group => group.id !== activeGroup.id));
+      window.dispatchEvent(new CustomEvent('lo-audio-play', { detail: null }));
+      history.replace('/memories');
+    } catch { setDeleteError('Could not remove this category. Please try again.'); }
+    finally { setRemoving(false); }
   };
 
   return (
@@ -684,11 +725,7 @@ export default function MemoriesPage() {
       <AppScreen
         className="memories-screen"
         title={
-          isTimeline
-            ? isLegacy
-              ? 'Our story.'
-              : activeGroup?.name || 'Memory group'
-            : 'Our memories.'
+          isTimeline ? activeGroup?.name || 'Memory category' : 'Our memories.'
         }
         eyebrow={isTimeline ? 'Memory timeline' : 'Collections'}
         subtitle={
@@ -697,18 +734,14 @@ export default function MemoriesPage() {
               'A slow walk through the moments we’ve kept.'
             : 'Little chapters of our story, each with a place of its own.'
         }
-        action={
-          isOwner &&
-          !isTimeline && (
-            <AppButton
-              onClick={() => setShowGroupComposer(true)}
-              disabled={!groupsLoaded}
-            >
-              <IonIcon icon={addOutline} aria-hidden="true" /> Create a group
-            </AppButton>
-          )
-        }
+        action={isOwner ? (!isTimeline ? (
+          <AppButton onClick={() => setShowGroupComposer(true)} disabled={!groupsLoaded} icon={addOutline}>Create a category</AppButton>
+        ) : activeGroup ? (
+          <AppButton variant="quiet" icon={trashOutline} onClick={() => { setDeleteError(null); setConfirmDelete(true); }}>Delete category</AppButton>
+        ) : null) : null}
       >
+        {!isTimeline && <p className="memory-retention-note"><IonIcon icon={timeOutline} aria-hidden="true" />A little chapter, here for 3 days. Its photos and voice notes are deleted with it.</p>}
+        {activeGroup && <p className="memory-retention-note"><IonIcon icon={timeOutline} aria-hidden="true" /><span>{remainingTime(activeGroup.expiresAt, now)} · Until {moroccoFormat(new Date(activeGroup.expiresAt), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. Photos and voice notes expire with this category.</span></p>}
         {loading && !loaded && (
           <FeedbackState kind="loading" heading="Finding your memories…" />
         )}
@@ -726,25 +759,19 @@ export default function MemoriesPage() {
           <FeedbackState
             kind="failure"
             heading={groupsError}
-            detail="Your existing memories are still available in Our story."
+            detail="Please try again to find your active categories."
             onRetry={load}
           />
         )}
         {!isTimeline && loaded && (
           <div className="memory-collections">
-            {legacyMemories.length > 0 && (
-              <MemoryGroupCard
-                name="Our story"
-                description="The memories we’ve already kept."
-                memories={legacyMemories}
-                onOpen={() => history.push('/memories/groups/ungrouped')}
-              />
-            )}
-            {memoryGroups.map((group) => (
+            {activeGroups.map((group) => (
               <MemoryGroupCard
                 key={group.id}
                 name={group.name}
                 description={group.description}
+                expiresAt={group.expiresAt}
+                now={now}
                 memories={memories.filter(
                   (memory) => memory.groupId === group.id,
                 )}
@@ -755,21 +782,21 @@ export default function MemoriesPage() {
         )}
         {loaded &&
           ((!isTimeline &&
-            legacyMemories.length === 0 &&
-            memoryGroups.length === 0) ||
+            activeGroups.length === 0) ||
             (isTimeline && groupExists && visibleMemories.length === 0)) && (
             <FeedbackState
               kind="empty"
+              illustration="memories"
               heading={
                 isTimeline
                   ? 'A new chapter starts here.'
-                  : 'Our story starts here.'
+                  : 'Our story is just beginning.'
               }
               detail={
                 isOwner
                   ? isTimeline
                     ? 'Add the first photo, with a caption or a voice note.'
-                    : 'Create a group—Birthdays, Trips, or Everyday moments—then fill it with memories.'
+                    : 'Create a category—Birthdays, Trips, or Everyday moments—then fill it with memories.'
                   : 'The moments we keep will appear here.'
               }
             />
@@ -777,8 +804,8 @@ export default function MemoriesPage() {
         {isTimeline && groupsLoaded && !groupExists && (
           <FeedbackState
             kind="empty"
-            heading="This group could not be found."
-            detail="Go back to Memories and choose another collection."
+            heading="This category has expired or was removed."
+            detail="Temporary categories disappear after 3 days, along with their photos and voice notes."
           />
         )}
         {loaded && isTimeline && groupExists && visibleMemories.length > 0 && (
@@ -828,20 +855,21 @@ export default function MemoriesPage() {
               <IonButton
                 onClick={closeGroupComposer}
                 disabled={groupSaving}
-                aria-label="Close group creation"
+                aria-label="Close category creation"
               >
                 <IonIcon icon={closeOutline} />
               </IonButton>
             </IonButtons>
-            <IonTitle>Create a group</IonTitle>
+            <IonTitle>Create a category</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
           <form className="memory-group-form" onSubmit={handleCreateGroup}>
             <p className="memory-group-form__intro">
-              Give a chapter of our story a name. You can add its memories next.
+              Give a chapter of our story a name. It will be available for 3 days.
             </p>
-            <label htmlFor="memory-group-name">Group name</label>
+            <p className="memory-retention-note">Automatically deleted 72 hours after creation, including every photo and voice note. Adding more memories does not extend this time.</p>
+            <label htmlFor="memory-group-name">Category name</label>
             <input
               id="memory-group-name"
               value={groupName}
@@ -873,7 +901,7 @@ export default function MemoriesPage() {
               busy={groupSaving}
               disabled={!groupName.trim()}
             >
-              Create group
+              Create category
             </AppButton>
           </form>
         </IonContent>
@@ -901,7 +929,7 @@ export default function MemoriesPage() {
         <IonContent className="ion-padding">
           <p className="memory-composer-group">
             Adding to{' '}
-            <strong>{isLegacy ? 'Our story' : activeGroup?.name}</strong>
+            <strong>{activeGroup?.name}</strong>
           </p>
           {photoDataUrl ? (
             <div className="memory-preview">
@@ -954,6 +982,7 @@ export default function MemoriesPage() {
               label="Caption (optional)"
               labelPlacement="stacked"
               placeholder="Add a caption…"
+              maxlength={4000}
               autoGrow
               rows={3}
             />
@@ -1002,6 +1031,10 @@ export default function MemoriesPage() {
         </IonContent>
       </IonModal>
 
+      <ConfirmSheet open={confirmDelete} title="Delete this category?"
+        detail={deleteError ?? 'This removes the category now and permanently deletes all its photos and voice notes. This cannot be undone.'}
+        confirmLabel="Delete category" busy={removing} onConfirm={() => { void removeCategory(); }}
+        onClose={() => setConfirmDelete(false)} />
       <IonToast
         isOpen={!!toast}
         message={toast ?? ''}

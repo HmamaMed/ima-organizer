@@ -1,16 +1,1 @@
-<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <clipPath id="heartClip">
-      <path d="M100 172
-               C 44 128, 14 90, 14 58
-               C 14 26, 38 8, 64 8
-               C 82 8, 94 18, 100 32
-               C 106 18, 118 8, 136 8
-               C 162 8, 186 26, 186 58
-               C 186 90, 156 128, 100 172 Z"/>
-    </clipPath>
-  </defs>
-  <rect x="0" y="0" width="200" height="200" rx="44" fill="#E14F73"/>
-  <rect x="0" y="0" width="100" height="200" fill="#FDF4F6" clip-path="url(#heartClip)"/>
-  <rect x="100" y="0" width="100" height="200" fill="#EAA857" clip-path="url(#heartClip)"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="592" viewBox="0 0 640 592" role="img" aria-label="Life Organizer — symbole"><title>Life Organizer — symbole</title><g transform="translate(20 20) scale(1)"><path fill="#AA4566" d="M290 552 L91 388 C25 343 0 296 0 230 V82 C0 18 44 -10 92 8 L217 59 C263 79 290 105 290 139 Z"/><path fill="#B8935A" d="M310 552 V139 C310 105 337 79 383 59 L508 8 C556 -10 600 18 600 82 V230 C600 296 575 343 509 388 Z"/></g></svg>

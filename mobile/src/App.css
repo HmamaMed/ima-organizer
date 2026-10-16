@@ -345,11 +345,48 @@ ion-tab-button.tab-selected {
   font-weight: 600;
 }
 
-.login-brand svg,
-.home-brand svg {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
+.brand-mark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8%;
+}
+
+.brand-logo {
+  display: block;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-brand {
+  justify-content: center;
+}
+
+.login-brand .brand-logo {
+  width: 160px;
+  max-width: 100%;
+}
+
+.home-brand .brand-logo {
+  width: min(224px, 70%);
+  flex-shrink: 1;
+}
+
+.mod-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.lo-feedback:has(.lo-feedback__illustration) {
+  flex-direction: column;
+}
+
+.lo-feedback__illustration {
+  width: 180px;
+  max-width: 100%;
+  height: auto;
 }
 
 .login-title {
@@ -358,7 +395,7 @@ ion-tab-button.tab-selected {
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.035em;
-  margin: 64px 0 20px;
+  margin: 32px 0 20px;
 }
 
 .login-subtitle {
@@ -708,6 +745,7 @@ ion-tab-button.tab-selected {
 
 .compose-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 }
 
@@ -767,6 +805,7 @@ ion-tab-button.tab-selected {
 
 .schedule-picker {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 
@@ -1192,3 +1231,6 @@ ion-tab-button.tab-selected {
     transition-duration: 0.01ms !important;
   }
 }
+
+.home-clock { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 10px 0 20px; color: var(--lo-muted); font-size: 0.75rem; line-height: 1.5; }
+.home-clock time { font-size: 1rem; color: var(--lo-plum); font-variant-numeric: tabular-nums; }

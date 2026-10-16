@@ -30,6 +30,7 @@ import {
   type WorkoutLog,
 } from './gymApi';
 import './gym.css';
+import gymEmpty from '../../assets/empty-states/gym.svg';
 
 function WeekStrip({ logs }: { logs: WorkoutLog[] }) {
   const days = buildWeekdayStrip(logs.map((l) => l.completedAt));
@@ -228,6 +229,7 @@ export default function GymPage() {
               </>
             ) : (
               <div className="gym-empty">
+                <img className="gym-empty__illustration" src={gymEmpty} alt="" aria-hidden="true" />
                 <p className="gym-empty__text">
                   {isOwner
                     ? 'No programme yet. Build the first one — pick from your exercise library.'

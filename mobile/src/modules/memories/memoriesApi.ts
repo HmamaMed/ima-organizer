@@ -8,6 +8,7 @@ export interface Memory {
   memoryDate: string;
   createdAt: string;
   groupId?: string | null;
+  expiresAt?: string;
 }
 
 export interface MemoryGroup {
@@ -15,14 +16,15 @@ export interface MemoryGroup {
   name: string;
   description: string | null;
   createdAt: string;
+  expiresAt: string;
 }
 
 export interface CreateMemoryInput {
-  photoUrl: string;
+  photoAssetId: string;
   caption?: string | null;
-  audioUrl?: string | null;
+  audioAssetId?: string | null;
   memoryDate: string;
-  groupId?: string | null;
+  groupId: string;
 }
 
 export function fetchMemoryGroups(token: string): Promise<MemoryGroup[]> {
@@ -53,4 +55,8 @@ export function createMemory(
     token,
     body: input,
   });
+}
+
+export function deleteMemoryGroup(token: string, id: string): Promise<void> {
+  return apiRequest(`/api/memories/groups/${id}`, { method: 'DELETE', token });
 }

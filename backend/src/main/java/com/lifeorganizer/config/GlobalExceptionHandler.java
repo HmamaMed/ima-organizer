@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import com.lifeorganizer.media.MediaStorageException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * Translates exceptions thrown by service-layer code into clean JSON error
@@ -18,6 +20,20 @@ import java.util.NoSuchElementException;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleBadInput(IllegalArgumentException e) {
+        return body(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(MediaStorageException.class)
+    public ResponseEntity<Map<String, Object>> handleStorage(MediaStorageException e) {
+        return body(HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleUploadLimit(MaxUploadSizeExceededException e) {
+        return body(HttpStatus.PAYLOAD_TOO_LARGE, "Files must be 25 MB or smaller.");
+    }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(NoSuchElementException e) {

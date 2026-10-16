@@ -1,0 +1,20 @@
+{
+  "canonicalCopiesCompared": 36,
+  "canonicalCopiesMatch": true,
+  "frontendBuild": "passed",
+  "lint": "passed with existing warnings",
+  "androidDebugBuild": "passed",
+  "browserViewports": [
+    320,
+    390,
+    430
+  ],
+  "homeAt200PercentText": {
+    "width": 320,
+    "rootFontSize": 32,
+    "overflow": false,
+    "brokenImages": 0
+  },
+  "emptyScreenFixtureRole": "RECIPIENT",
+  "nativeRuntime": "not checked; no connected device or emulator"
+}

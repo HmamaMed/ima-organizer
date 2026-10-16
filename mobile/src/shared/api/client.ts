@@ -66,9 +66,22 @@ export async function apiRequest<T>(
     throw new ApiError(response.status, message);
   }
 
-  if (response.status === 204) {
-    return undefined as T;
-  }
+  const payload = await response.text();
+  return payload ? JSON.parse(payload) as T : undefined as T;
+}
 
-  return (await response.json()) as T;
+/** Multipart uploads use the same authentication and error handling as JSON calls. */
+export async function apiUpload<T>(path: string, blob: Blob, token: string): Promise<T> {
+  const form = new FormData();
+  form.append('file', blob, 'memory-media');
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
+  });
+  if (!response.ok) {
+    let message = 'Could not upload this file. Please try again.';
+    try { const data = await response.json(); if (data?.message) message = data.message; } catch { /* Keep the readable fallback. */ }
+    if (response.status === 401) onUnauthorized?.();
+    throw new ApiError(response.status, message);
+  }
+  return response.json() as Promise<T>;
 }

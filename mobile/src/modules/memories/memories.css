@@ -334,3 +334,7 @@
   max-width: 100%;
   flex-wrap: wrap;
 }
+
+.memory-retention-note { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 24px; padding: 16px; border-radius: 16px; background: var(--lo-plum-soft); color: var(--lo-plum); font-size: .8125rem; line-height: 1.6; }
+.memory-retention-note ion-icon { flex: 0 0 18px; font-size: 18px; margin-top: 2px; }
+.memory-collection__expiry { display: flex; gap: 6px; align-items: center; color: var(--lo-rose); font-size: .75rem; font-weight: 600; line-height: 1.5; }

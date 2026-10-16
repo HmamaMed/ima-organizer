@@ -2,6 +2,8 @@ package com.lifeorganizer.auth;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.UUID;
 
 /**
  * Handles login. There is deliberately no registration — the two users are
@@ -22,6 +24,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByName(request.username())
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
@@ -30,14 +33,31 @@ public class AuthService {
             throw new InvalidCredentialsException("Invalid username or password");
         }
 
-        // Persist the recipient's push token on login so the backend can reach
-        // her device. (OWNER may also set one, but it's not required.)
+        // Both accounts can receive their own private birthday reminders.
         if (request.fcmToken() != null && !request.fcmToken().isBlank()) {
-            user.setFcmToken(request.fcmToken());
-            userRepository.save(user);
+            assignPushToken(user, request.fcmToken());
         }
 
         String token = jwtService.generateToken(user);
         return new LoginResponse(token, user.getId(), user.getRole(), user.getName());
+    }
+
+    @Transactional
+    public void updatePushToken(UUID userId, String token) {
+        User user = userRepository.findById(userId).orElseThrow();
+        assignPushToken(user, token);
+    }
+
+    private void assignPushToken(User user, String token) {
+        // A shared phone must stop receiving the previous account's private reminders.
+        for (User other : userRepository.findByFcmToken(token)) {
+            if (!other.getId().equals(user.getId())) other.setFcmToken(null);
+        }
+        user.setFcmToken(token);
+    }
+
+    @Transactional
+    public void clearPushToken(UUID userId) {
+        userRepository.findById(userId).orElseThrow().setFcmToken(null);
     }
 }

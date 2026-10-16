@@ -15,15 +15,10 @@ import AppScreen from '../../shared/ui/AppScreen';
 import AppButton from '../../shared/ui/AppButton';
 import FeedbackState from '../../shared/ui/FeedbackState';
 import useUnsavedChanges from '../../shared/navigation/useUnsavedChanges';
-import { localDateKey } from '../../shared/utils/date';
+import { moroccoDateKey, moroccoFormat, addCalendarDays, scheduledNoteInstant, MOROCCO_TIME_LABEL } from '../../shared/utils/moroccoTime';
 import { createNote, fetchNotes } from './notesApi';
 
 const NOTE_LIMIT = 4000;
-
-function scheduledInstant(dateStr: string, hour: number): string {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day, hour, 0, 0, 0).toISOString();
-}
 
 export default function ComposeNotePage() {
   const { token, user } = useAuth();
@@ -31,7 +26,7 @@ export default function ComposeNotePage() {
   const location = useLocation();
   const [content, setContent] = useState('');
   const [sendMode, setSendMode] = useState<'now' | 'schedule'>('now');
-  const [scheduleDate, setScheduleDate] = useState(localDateKey());
+  const [scheduleDate, setScheduleDate] = useState(moroccoDateKey());
   const [scheduleHour, setScheduleHour] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,15 +76,14 @@ export default function ComposeNotePage() {
   });
 
   const dates = Array.from({ length: 21 }, (_, i) => {
-    const date = new Date(now);
-    date.setDate(date.getDate() + i);
-    return { date, iso: localDateKey(date) };
+    const iso = addCalendarDays(moroccoDateKey(now), i);
+    return { date: new Date(`${iso}T12:00:00Z`), iso };
   });
   const hours = Array.from({ length: 24 }, (_, h) => h).filter(
-    (hour) => Date.parse(scheduledInstant(scheduleDate, hour)) > now.getTime(),
+    (hour) => Date.parse(scheduledNoteInstant(scheduleDate, hour)) > now.getTime(),
   );
   const selectedInstant =
-    scheduleHour === null ? null : scheduledInstant(scheduleDate, scheduleHour);
+    scheduleHour === null ? null : scheduledNoteInstant(scheduleDate, scheduleHour);
   const validSlot =
     !!selectedInstant &&
     dates.some((d) => d.iso === scheduleDate) &&
@@ -97,7 +91,6 @@ export default function ComposeNotePage() {
     !occupied.has(selectedInstant);
   const canSubmit =
     !!content.trim() && content.length <= NOTE_LIMIT && (sendMode === 'now' || validSlot);
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   if (user?.role !== 'OWNER') return <Redirect to="/notes" />;
 
@@ -202,7 +195,7 @@ export default function ComposeNotePage() {
                       type="button"
                       className={`chip ${scheduleDate === iso ? 'chip--active' : ''}`}
                       aria-pressed={scheduleDate === iso}
-                      aria-label={date.toLocaleDateString(undefined, {
+                      aria-label={moroccoFormat(date, {
                         weekday: 'long',
                         month: 'long',
                         day: 'numeric',
@@ -216,11 +209,11 @@ export default function ComposeNotePage() {
                       <span className="chip__top">
                         {i === 0
                           ? 'Today'
-                          : date.toLocaleDateString(undefined, { weekday: 'short' })}
+                          : moroccoFormat(date, { weekday: 'short' })}
                       </span>
-                      <span className="chip__day">{date.getDate()}</span>
+                      <span className="chip__day">{date.getUTCDate()}</span>
                       <span className="chip__month">
-                        {date.toLocaleDateString(undefined, { month: 'short' })}
+                        {moroccoFormat(date, { month: 'short' })}
                       </span>
                     </button>
                   ))}
@@ -228,13 +221,13 @@ export default function ComposeNotePage() {
               </div>
               <div className="schedule-field">
                 <span className="schedule-field__label" id="schedule-hour-label">
-                  Choose an hour
+                  Choose an hour · {MOROCCO_TIME_LABEL}
                 </span>
                 <div className="schedule-hours" role="group" aria-labelledby="schedule-hour-label">
                   {hours.map((hour) => {
-                    const taken = occupied.has(scheduledInstant(scheduleDate, hour));
-                    const label = new Date(scheduledInstant(scheduleDate, hour)).toLocaleTimeString(
-                      undefined,
+                    const taken = occupied.has(scheduledNoteInstant(scheduleDate, hour));
+                    const label = moroccoFormat(
+                      new Date(scheduledNoteInstant(scheduleDate, hour)),
                       {
                         hour: 'numeric',
                         minute: '2-digit',
@@ -262,7 +255,7 @@ export default function ComposeNotePage() {
               </div>
               {selectedInstant && (
                 <p className="schedule-summary">
-                  {new Date(selectedInstant).toLocaleString(undefined, {
+                  {moroccoFormat(new Date(selectedInstant), {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -270,7 +263,7 @@ export default function ComposeNotePage() {
                     minute: '2-digit',
                   })}
                   <br />
-                  Local time · {timezone}
+                  {MOROCCO_TIME_LABEL}
                 </p>
               )}
               {slotsError && (

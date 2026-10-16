@@ -1,0 +1,630 @@
+{
+  "version": "1.0",
+  "date": "2026-10-13",
+  "app": "Life Organizer",
+  "assets": [
+    {
+      "file": "INTEGRATION-IDE.md",
+      "bytes": 9189
+    },
+    {
+      "file": "README.md",
+      "bytes": 3813
+    },
+    {
+      "file": "android-res/drawable/lo_launcher_foreground.xml",
+      "bytes": 670
+    },
+    {
+      "file": "android-res/drawable/lo_launcher_monochrome.xml",
+      "bytes": 670
+    },
+    {
+      "file": "android-res/drawable/lo_notification.xml",
+      "bytes": 664
+    },
+    {
+      "file": "android-res/drawable/lo_splash_icon.xml",
+      "bytes": 670
+    },
+    {
+      "file": "android-res/drawable/lo_splash_icon_dark.xml",
+      "bytes": 670
+    },
+    {
+      "file": "android-res/drawable-hdpi/lo_notification.png",
+      "bytes": 452,
+      "width": 36,
+      "height": 36,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/drawable-mdpi/lo_notification.png",
+      "bytes": 338,
+      "width": 24,
+      "height": 24,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/drawable-xhdpi/lo_notification.png",
+      "bytes": 590,
+      "width": 48,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/drawable-xxhdpi/lo_notification.png",
+      "bytes": 848,
+      "width": 72,
+      "height": 72,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/drawable-xxxhdpi/lo_notification.png",
+      "bytes": 1141,
+      "width": 96,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-anydpi-v26/lo_launcher.xml",
+      "bytes": 262
+    },
+    {
+      "file": "android-res/mipmap-anydpi-v26/lo_launcher_round.xml",
+      "bytes": 262
+    },
+    {
+      "file": "android-res/mipmap-anydpi-v33/lo_launcher.xml",
+      "bytes": 331
+    },
+    {
+      "file": "android-res/mipmap-anydpi-v33/lo_launcher_round.xml",
+      "bytes": 331
+    },
+    {
+      "file": "android-res/mipmap-hdpi/lo_launcher.png",
+      "bytes": 1095,
+      "width": 72,
+      "height": 72,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-hdpi/lo_launcher_round.png",
+      "bytes": 1880,
+      "width": 72,
+      "height": 72,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-mdpi/lo_launcher.png",
+      "bytes": 769,
+      "width": 48,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-mdpi/lo_launcher_round.png",
+      "bytes": 1265,
+      "width": 48,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-xhdpi/lo_launcher.png",
+      "bytes": 1484,
+      "width": 96,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-xhdpi/lo_launcher_round.png",
+      "bytes": 2524,
+      "width": 96,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-xxhdpi/lo_launcher.png",
+      "bytes": 2324,
+      "width": 144,
+      "height": 144,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-xxhdpi/lo_launcher_round.png",
+      "bytes": 3899,
+      "width": 144,
+      "height": 144,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-xxxhdpi/lo_launcher.png",
+      "bytes": 3328,
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/mipmap-xxxhdpi/lo_launcher_round.png",
+      "bytes": 5421,
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    {
+      "file": "android-res/values/lo_brand_colors.xml",
+      "bytes": 281
+    },
+    {
+      "file": "brand/adaptive-background.svg",
+      "bytes": 204
+    },
+    {
+      "file": "brand/adaptive-foreground.svg",
+      "bytes": 461
+    },
+    {
+      "file": "brand/adaptive-monochrome.svg",
+      "bytes": 461
+    },
+    {
+      "file": "brand/app-icon-square.svg",
+      "bytes": 509
+    },
+    {
+      "file": "brand/logo-horizontal-color.svg",
+      "bytes": 4357
+    },
+    {
+      "file": "brand/logo-horizontal-white.svg",
+      "bytes": 4357
+    },
+    {
+      "file": "brand/logo-stacked-color.svg",
+      "bytes": 4359
+    },
+    {
+      "file": "brand/logo-stacked-plum.svg",
+      "bytes": 4359
+    },
+    {
+      "file": "brand/logo-stacked-white.svg",
+      "bytes": 4359
+    },
+    {
+      "file": "brand/mark-color.svg",
+      "bytes": 475
+    },
+    {
+      "file": "brand/mark-currentcolor.svg",
+      "bytes": 485
+    },
+    {
+      "file": "brand/mark-plum.svg",
+      "bytes": 475
+    },
+    {
+      "file": "brand/mark-white.svg",
+      "bytes": 475
+    },
+    {
+      "file": "brand/notification-white.svg",
+      "bytes": 481
+    },
+    {
+      "file": "brand/pwa-maskable.svg",
+      "bytes": 503
+    },
+    {
+      "file": "brand/splash-icon-white.svg",
+      "bytes": 454
+    },
+    {
+      "file": "brand/splash-icon.svg",
+      "bytes": 454
+    },
+    {
+      "file": "brand/wordmark-plum.svg",
+      "bytes": 4060
+    },
+    {
+      "file": "brand/wordmark-white.svg",
+      "bytes": 4060
+    },
+    {
+      "file": "capacitor-source/icon-background.png",
+      "bytes": 23062,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "file": "capacitor-source/icon-foreground.png",
+      "bytes": 17923,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "file": "capacitor-source/icon-only.png",
+      "bytes": 39304,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "file": "capacitor-source/splash-dark.png",
+      "bytes": 165172,
+      "width": 2732,
+      "height": 2732,
+      "mode": "RGBA"
+    },
+    {
+      "file": "capacitor-source/splash.png",
+      "bytes": 168119,
+      "width": 2732,
+      "height": 2732,
+      "mode": "RGBA"
+    },
+    {
+      "file": "chapters/calendar-color.svg",
+      "bytes": 345
+    },
+    {
+      "file": "chapters/calendar.svg",
+      "bytes": 350
+    },
+    {
+      "file": "chapters/gym-color.svg",
+      "bytes": 291
+    },
+    {
+      "file": "chapters/gym.svg",
+      "bytes": 296
+    },
+    {
+      "file": "chapters/little-plans-color.svg",
+      "bytes": 315
+    },
+    {
+      "file": "chapters/little-plans.svg",
+      "bytes": 320
+    },
+    {
+      "file": "chapters/memories-color.svg",
+      "bytes": 397
+    },
+    {
+      "file": "chapters/memories.svg",
+      "bytes": 402
+    },
+    {
+      "file": "chapters/notes-color.svg",
+      "bytes": 331
+    },
+    {
+      "file": "chapters/notes.svg",
+      "bytes": 336
+    },
+    {
+      "file": "chapters/shopping-color.svg",
+      "bytes": 339
+    },
+    {
+      "file": "chapters/shopping.svg",
+      "bytes": 344
+    },
+    {
+      "file": "colors.css",
+      "bytes": 331
+    },
+    {
+      "file": "colors.json",
+      "bytes": 246
+    },
+    {
+      "file": "empty-states/gym.svg",
+      "bytes": 448
+    },
+    {
+      "file": "empty-states/memories.svg",
+      "bytes": 554
+    },
+    {
+      "file": "empty-states/notes.svg",
+      "bytes": 488
+    },
+    {
+      "file": "licenses/WORDMARK-TYPEFACE-LICENSE.txt",
+      "bytes": 3859
+    },
+    {
+      "file": "png/chapter-calendar-128.png",
+      "bytes": 1896,
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/chapter-gym-128.png",
+      "bytes": 692,
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/chapter-little-plans-128.png",
+      "bytes": 2161,
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/chapter-memories-128.png",
+      "bytes": 2380,
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/chapter-notes-128.png",
+      "bytes": 2053,
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/chapter-shopping-128.png",
+      "bytes": 1742,
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/empty-gym-768.png",
+      "bytes": 12781,
+      "width": 768,
+      "height": 576,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/empty-memories-768.png",
+      "bytes": 17561,
+      "width": 768,
+      "height": 576,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/empty-notes-768.png",
+      "bytes": 15947,
+      "width": 768,
+      "height": 576,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/logo-horizontal-color-3000.png",
+      "bytes": 60009,
+      "width": 3000,
+      "height": 760,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/logo-horizontal-white-3000.png",
+      "bytes": 43307,
+      "width": 3000,
+      "height": 760,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/logo-stacked-color-2400.png",
+      "bytes": 95808,
+      "width": 2400,
+      "height": 2240,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/logo-stacked-plum-2400.png",
+      "bytes": 93872,
+      "width": 2400,
+      "height": 2240,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/logo-stacked-white-2400.png",
+      "bytes": 64840,
+      "width": 2400,
+      "height": 2240,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-color-1024.png",
+      "bytes": 36257,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-color-2048.png",
+      "bytes": 101215,
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-color-512.png",
+      "bytes": 13155,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-plum-1024.png",
+      "bytes": 34198,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-plum-2048.png",
+      "bytes": 98635,
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-plum-512.png",
+      "bytes": 12995,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-white-1024.png",
+      "bytes": 19839,
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-white-2048.png",
+      "bytes": 49964,
+      "width": 2048,
+      "height": 2048,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/mark-white-512.png",
+      "bytes": 8777,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/splash-icon-864.png",
+      "bytes": 14754,
+      "width": 864,
+      "height": 864,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/splash-icon-white-864.png",
+      "bytes": 10338,
+      "width": 864,
+      "height": 864,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/wordmark-plum-2400.png",
+      "bytes": 41588,
+      "width": 2400,
+      "height": 468,
+      "mode": "RGBA"
+    },
+    {
+      "file": "png/wordmark-white-2400.png",
+      "bytes": 31540,
+      "width": 2400,
+      "height": 468,
+      "mode": "RGBA"
+    },
+    {
+      "file": "previews/asset-overview.png",
+      "bytes": 173407,
+      "width": 1800,
+      "height": 1140,
+      "mode": "RGBA"
+    },
+    {
+      "file": "previews/launcher-circle.png",
+      "bytes": 26988,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "file": "previews/launcher-rounded.png",
+      "bytes": 24115,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "file": "source/brand-geometry.json",
+      "bytes": 4525
+    },
+    {
+      "file": "source/build_vectors.py",
+      "bytes": 8578
+    },
+    {
+      "file": "source/export_pngs.cjs",
+      "bytes": 5757
+    },
+    {
+      "file": "source/splash-dark-master.svg",
+      "bytes": 430
+    },
+    {
+      "file": "source/splash-light-master.svg",
+      "bytes": 430
+    },
+    {
+      "file": "web/favicon-16.png",
+      "bytes": 326,
+      "width": 16,
+      "height": 16,
+      "mode": "RGBA"
+    },
+    {
+      "file": "web/favicon-32.png",
+      "bytes": 533,
+      "width": 32,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "file": "web/favicon-48.png",
+      "bytes": 769,
+      "width": 48,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "file": "web/favicon.ico",
+      "bytes": 3262
+    },
+    {
+      "file": "web/favicon.svg",
+      "bytes": 509
+    },
+    {
+      "file": "web/icon-192.png",
+      "bytes": 3328,
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    {
+      "file": "web/icon-512.png",
+      "bytes": 13101,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "file": "web/icon-maskable-192.png",
+      "bytes": 3304,
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    {
+      "file": "web/icon-maskable-512.png",
+      "bytes": 12728,
+      "width": 512,
+      "height": 512,
+      "mode": "RGBA"
+    }
+  ]
+}

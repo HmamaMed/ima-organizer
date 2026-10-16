@@ -5,37 +5,41 @@ import {
   arrowForwardOutline,
   barbellOutline,
   chatbubbleEllipsesOutline,
-  imagesOutline,
   leafOutline,
+  giftOutline,
   personOutline,
   sparklesOutline,
 } from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
 import AppScreen from '../../shared/ui/AppScreen';
-import HeartMark from '../../shared/ui/HeartMark';
+import BrandLogo from '../../shared/ui/BrandLogo';
+import notesChapter from '../../assets/chapters/notes-color.svg';
+import memoriesChapter from '../../assets/chapters/memories-color.svg';
+import gymChapter from '../../assets/chapters/gym-color.svg';
 import { fetchNotes, type Note } from '../notes/notesApi';
 import { fetchMemories } from '../memories/memoriesApi';
 import { isMemoriesLocked } from '../memories/BirthdayCountdownPage';
 import { fetchLogs } from '../gym/gymApi';
 import { buildWeekdayStrip } from '../../shared/utils/date';
+import { moroccoFormat, moroccoHour, MOROCCO_TIME_LABEL } from '../../shared/utils/moroccoTime';
 
 const CHAPTERS = [
   {
-    icon: chatbubbleEllipsesOutline,
+    artwork: notesChapter,
     label: 'Notes',
     accent: 'rose',
     path: '/notes',
     description: 'Words to keep close',
   },
   {
-    icon: imagesOutline,
+    artwork: memoriesChapter,
     label: 'Memories',
     accent: 'plum',
     path: '/memories',
     description: 'Our moments, kept',
   },
   {
-    icon: barbellOutline,
+    artwork: gymChapter,
     label: 'Gym Coach',
     accent: 'gold',
     path: '/gym',
@@ -48,11 +52,18 @@ const CHAPTERS = [
     path: '/agios',
     description: 'Little gains, kept together',
   },
+  {
+    icon: giftOutline,
+    label: 'Birthday Reminders',
+    accent: 'rose',
+    path: '/birthdays',
+    description: 'Their day, remembered',
+  },
 ];
 
 function greeting(now: Date): string {
-  if (now.getHours() < 12) return 'Good morning';
-  if (now.getHours() < 18) return 'Good afternoon';
+  if (moroccoHour(now) < 12) return 'Good morning';
+  if (moroccoHour(now) < 18) return 'Good afternoon';
   return 'Good evening';
 }
 
@@ -114,8 +125,7 @@ export default function HomePage() {
       <AppScreen className="content-safe-top">
         <div className="home-screen">
           <div className="home-brand">
-            <HeartMark />
-            <span>Life Organizer</span>
+            <BrandLogo />
             <button
               type="button"
               className="icon-btn"
@@ -127,12 +137,13 @@ export default function HomePage() {
           </div>
           <div className="home-greeting">
             <p className="lo-eyebrow">
-              {now.toLocaleDateString(undefined, {
+              {moroccoFormat(now, {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',
               })}
             </p>
+            <p className="home-clock"><time dateTime={now.toISOString()}>{moroccoFormat(now, { hour: '2-digit', minute: '2-digit', hour12: false })}</time><span>{MOROCCO_TIME_LABEL}</span></p>
             <h1 className="home-greeting__hi">
               {greeting(now)}
               {user ? `, ${user.name}.` : '.'}
@@ -148,7 +159,7 @@ export default function HomePage() {
               <span className="home-note__quote">{latestNote.content}</span>
               <span className="home-note__foot">
                 <span>
-                  {new Date(latestNote.sentAt ?? latestNote.createdAt).toLocaleString(undefined, {
+                  {moroccoFormat(new Date(latestNote.sentAt ?? latestNote.createdAt), {
                     month: 'short',
                     day: 'numeric',
                     hour: 'numeric',
@@ -172,7 +183,11 @@ export default function HomePage() {
                   onClick={() => history.push(locked ? '/memories/countdown' : chapter.path)}
                 >
                   <span className={`mod-icon mod-icon--${chapter.accent}`}>
-                    <IonIcon icon={chapter.icon} />
+                    {'artwork' in chapter ? (
+                      <img src={chapter.artwork} alt="" aria-hidden="true" />
+                    ) : (
+                      <IonIcon icon={chapter.icon} />
+                    )}
                   </span>
                   <span>
                     <span className="mod-row__title" style={{ display: 'block' }}>

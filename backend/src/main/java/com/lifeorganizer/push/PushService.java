@@ -9,6 +9,7 @@ import com.lifeorganizer.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import java.util.Map;
 
 /**
  * Sends push notifications via the Firebase Admin SDK.
@@ -29,17 +30,25 @@ public class PushService {
      *         (no token, or Firebase not initialized).
      */
     public boolean sendToUser(User user, String title, String body) {
+        return sendToUser(user, title, body, Map.of());
+    }
+
+    public boolean sendToUser(User user, String title, String body, Map<String, String> data) {
         if (user.getFcmToken() == null || user.getFcmToken().isBlank()) {
             log.warn("No fcmToken for user '{}' — skipping push", user.getName());
             return false;
         }
-        return sendToToken(user.getFcmToken(), title, body);
+        return sendToToken(user.getFcmToken(), title, body, data);
     }
 
     /**
      * Sends a notification to a raw device token.
      */
     public boolean sendToToken(String token, String title, String body) {
+        return sendToToken(token, title, body, Map.of());
+    }
+
+    private boolean sendToToken(String token, String title, String body, Map<String, String> data) {
         if (FirebaseApp.getApps().isEmpty()) {
             log.warn("Firebase not initialized — skipping push to token");
             return false;
@@ -47,6 +56,7 @@ public class PushService {
 
         Message message = Message.builder()
                 .setToken(token)
+                .putAllData(data)
                 .setNotification(Notification.builder()
                         .setTitle(title)
                         .setBody(body)

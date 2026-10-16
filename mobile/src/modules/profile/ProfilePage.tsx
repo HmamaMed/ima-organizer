@@ -92,9 +92,9 @@ export default function ProfilePage() {
             <IonIcon icon={personOutline} /> Edit profile
             <span className="tag-soon">Soon</span>
           </button>
-          <button className="settings-row" onClick={() => setToast('Coming soon.')}>
+          <button className="settings-row" onClick={() => history.push('/notifications')}>
             <IonIcon icon={notificationsOutline} /> Notifications
-            <span className="tag-soon">Soon</span>
+            <IonIcon icon={chevronForwardOutline} className="settings-row__chevron" />
           </button>
           <button
             className="settings-row"

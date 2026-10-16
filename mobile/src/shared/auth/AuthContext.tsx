@@ -58,8 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    const currentToken = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    if (currentToken) {
+      void apiRequest('/api/auth/push-token', { method: 'DELETE', token: currentToken }).catch(() => {});
+    }
     setToken(null);
     setUser(null);
   }, []);

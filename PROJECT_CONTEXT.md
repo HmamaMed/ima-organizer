@@ -4,6 +4,12 @@
 >
 > Snapshot: October 7, 2026. Based on repository documentation and source-code inspection. “Implemented” means present in the code; it does not certify deployment or real-device testing. No private credentials are included.
 
+## October 16, 2026 implementation update
+
+Memory categories are now temporary: 72 hours from creation, then hidden immediately and their photos/audio physically removed by a retryable backend cleanup worker. New uploads use private Cloudflare R2 through the authenticated backend, with temporary signed read URLs. The Supabase frontend SDK is removed. The owner explicitly requested erasure of all previous memories; there is no media migration. Deployment and R2/legacy-Supabase deletion credentials are still required for live cutover. See [the storage guide](backend/R2-SETUP.md) and [validation report](design-validation/temporary-memories/README.md).
+
+Birthday Reminders is also implemented: private annual dates per user, 3-day and 1-day alerts at 19:00 Moroccan GMT. See [the birthday report](design-validation/birthday-reminders/README.md). Home/notes account for Morocco's September 2026 return to GMT even with stale runtime timezone data.
+
 ## 1. The whole idea
 
 Life Organizer is a private mobile app created by the owner as a birthday gift for his partner. It is built for one specific person, with content, language, and experiences chosen for her. The emotional purpose is as important as the practical functionality: the app should make her feel remembered, supported, and cared for in everyday life.
@@ -54,7 +60,7 @@ Only **Home** and **Profile** are permanent bottom tabs. Modules open as additio
 
 Home contains a time-sensitive greeting with the user's name, the current date/time, module rows with their own accents, a conditional workout-streak summary, and a “More / Coming soon” entry.
 
-Profile displays the user's name and role, basic content/activity counts, an about message, and logout. Edit-profile and notification-settings entries currently show “Coming soon.” “Forgot password?” on login displays a personal instruction to ask the owner; there is no automated password-reset workflow.
+Profile displays the user's name and role, basic content/activity counts, an about message, and logout. Notifications opens a private birthday reminder inbox with individual deletion; edit profile remains “Coming soon.” Birthday messages are saved at the 3-day and 1-day thresholds from 7pm, even without successful phone push delivery. Removing a message preserves the birthday and future reminders. “Forgot password?” on login displays a personal instruction to ask the owner; there is no automated password-reset workflow.
 
 ### Notes: care that arrives at the right time
 
@@ -80,7 +86,7 @@ Note delivery and push delivery are separate. A note can be saved as `SENT` even
 
 The owner attaches a photo from the camera or gallery, selects the date the memory happened, and adds a caption or records a voice note. The current composer switches between caption and audio modes; although the data model supports both fields, this interface saves one mode at a time.
 
-Photos and recordings upload directly to **Supabase Storage**. The app then sends their URLs and metadata to the backend as JSON. The backend stores the memory record without receiving the raw media bytes.
+Photos and recordings upload through the authenticated backend to **private Cloudflare R2**. The app saves tracked asset IDs with the memory metadata. Categories expire 72 hours after creation; the backend hides them at expiry and deletes their photos, audio and records with retries.
 
 The timeline is ordered by memory date, newest first, grouped by month, and uses alternating photo cards with reveal animations. Photos open in a full-screen lightbox. Audio has playback controls and can also be played from the lightbox.
 
@@ -153,7 +159,7 @@ This is a single repository with a mobile frontend and one Spring Boot backend. 
 | Persistence | PostgreSQL, Spring Data JPA / Hibernate | Users, notes, memory metadata, programmes, and progress. |
 | Authentication | Spring Security, BCrypt, JJWT | Password verification and stateless JWT authorization. |
 | Push | Firebase Cloud Messaging, Firebase Admin SDK, Capacitor push plugin | Sending notifications to the recipient's registered device. |
-| Media | Supabase JS client and Storage | Direct photo/audio uploads to the `media` bucket. |
+| Media | Private Cloudflare R2, AWS SDK S3 client on the backend | Authenticated multipart uploads, tracked files, signed reads and automatic deletion. |
 | Device features | Capacitor Camera, Haptics, Keyboard, App; community voice recorder | Photo selection/capture, feedback, keyboard/back handling, recording. |
 
 Versions above are repository declarations, not claims about the latest available releases. `capacitor-voice-recorder` is currently declared at major version 7 while the main Capacitor packages are major version 8; native compatibility still needs device validation.
@@ -165,14 +171,15 @@ flowchart LR
     Users[Owner and recipient] --> App[React / Ionic app inside Capacitor Android]
     App -->|JSON API + Bearer JWT| API[Spring Boot backend]
     API --> DB[(PostgreSQL)]
-    App -->|Direct photo/audio upload| Storage[Supabase Storage]
-    Storage -->|Public media URLs| App
+    App -->|Authenticated media upload| API
+    API -->|S3-compatible API| Storage[Private Cloudflare R2]
+    API -->|Temporary signed media URLs| App
     Scheduler[Hourly note scheduler] --> API
     API -->|Firebase Admin SDK| FCM[Firebase Cloud Messaging]
     FCM -->|Push notification| App
 ```
 
-Supabase currently handles media only. It does not replace Spring Boot authentication or the application's JPA database.
+Cloudflare R2 handles media only. Spring Boot authentication and the JPA database remain. Supabase access is retained server-side only to erase previous memory files, not to migrate or upload new content.
 
 ### Frontend organization
 
@@ -192,7 +199,7 @@ mobile/
       auth/          AuthContext and LoginPage
       navigation/    Android back handling
       push/          native push registration hook
-      storage/       Supabase upload helper
+      storage/       authenticated R2 upload helper
       ui/            HeartMark and BrandHeader
       utils/         date/progress helpers and visibility hook
     theme/           Ionic theme variables

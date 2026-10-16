@@ -10,8 +10,21 @@ spring:
       ddl-auto: update
     show-sql: false
     open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
 
 app:
+  media:
+    r2:
+      endpoint: ${R2_ENDPOINT:}
+      bucket: ${R2_BUCKET:}
+      access-key-id: ${R2_ACCESS_KEY_ID:}
+      secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+    legacy-supabase:
+      url: ${LEGACY_SUPABASE_URL:}
+      service-role-key: ${LEGACY_SUPABASE_SERVICE_ROLE_KEY:}
   jwt:
     # Secret for signing JWTs (raw string, must be >= 32 chars / 256 bits).
     # Override via JWT_SECRET in production.

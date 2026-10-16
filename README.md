@@ -14,8 +14,10 @@ architected so more modules can be added after launch without a rewrite.
 | Backend | Spring Boot (Java) | Your daily backend tool, zero new learning |
 | Database | PostgreSQL (via JPA/Hibernate) | Same territory as your Cosy work |
 | Push notifications | Firebase Cloud Messaging + `@capacitor/push-notifications` | Native-level delivery on Android, free tier |
-| Media storage | Firebase Storage | Photos/audio for the Memory Timeline module; free tier, same Firebase project as push |
+| Media storage | Private Cloudflare R2 | Authenticated backend uploads, temporary signed reads, 72-hour memory categories and automatic file deletion |
 | Auth | Spring Security + JWT, 2 seeded users | Only two users ever (OWNER = you, RECIPIENT = her) — no need for open registration |
+
+> Current storage setup and existing-memory erasure: [Cloudflare R2 setup](backend/R2-SETUP.md).
 
 ## Modules — v1 (birthday launch)
 

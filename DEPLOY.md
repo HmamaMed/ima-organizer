@@ -73,3 +73,7 @@ npx cap sync android
 ```
 
 Then continue with the normal Android Studio signed-APK steps from `SETUP.md`.
+
+## Temporary memories and Cloudflare R2
+
+Follow [backend/R2-SETUP.md](backend/R2-SETUP.md) before deploying the updated backend/mobile pair. The new backend queues previous memories for erasure on startup; it does not migrate them. R2 and the old Supabase deletion credentials must be server-only. Use a private R2 bucket; no public domain is required.

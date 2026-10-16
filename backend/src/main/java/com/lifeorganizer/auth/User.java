@@ -32,7 +32,7 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
-    /** The recipient's device push token, set on login. Nullable. */
+    /** Last registered device push token for this account. Nullable. */
     @Column
     private String fcmToken;
 

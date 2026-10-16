@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import { ApiError } from '../api/client';
 import { usePushNotifications } from '../push/usePushNotifications';
 import HeartMark from '../ui/HeartMark';
+import BrandLogo from '../ui/BrandLogo';
 import AppButton from '../ui/AppButton';
 import FeedbackState from '../ui/FeedbackState';
 
@@ -49,8 +50,7 @@ export default function LoginPage() {
       <IonContent className="ion-padding content-safe-top">
         <div className="login-screen">
           <div className="login-brand">
-            <HeartMark />
-            <span>Life Organizer</span>
+            <BrandLogo variant="stacked" />
           </div>
           <h1 className="login-title">Your little corner.</h1>
           <p className="login-subtitle">

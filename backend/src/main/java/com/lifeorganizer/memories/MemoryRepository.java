@@ -1,12 +1,13 @@
 package com.lifeorganizer.memories;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
-import java.util.UUID;
+import org.springframework.data.jpa.repository.*;
+import java.time.Instant;
+import java.util.*;
 
 public interface MemoryRepository extends JpaRepository<Memory, UUID> {
-
-    /** Timeline ordered by memory date, newest first. */
-    List<Memory> findAllByOrderByMemoryDateDesc();
+    @Query("select m from Memory m join m.group g where g.deletedAt is null and g.expiresAt > :now order by m.memoryDate desc")
+    List<Memory> findVisible(Instant now);
+    List<Memory> findByGroupId(UUID groupId);
+    List<Memory> findByGroupIsNull();
+    void deleteByGroupId(UUID groupId);
 }

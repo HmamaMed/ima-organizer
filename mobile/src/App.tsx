@@ -18,7 +18,10 @@ import ProgrammesPage from './modules/gym/ProgrammesPage';
 import ProgrammeEditorPage from './modules/gym/ProgrammeEditorPage';
 import ProgressPage from './modules/gym/ProgressPage';
 import ProfilePage from './modules/profile/ProfilePage';
+import NotificationsPage from './modules/notifications/NotificationsPage';
 import AgiosPage from './modules/agios/AgiosPage';
+import BirthdaysPage from './modules/birthdays/BirthdaysPage';
+import PushRegistration from './shared/push/PushRegistration';
 import ComingSoonPage from './modules/coming-soon/ComingSoonPage';
 import BackButtonHandler from './shared/navigation/BackButtonHandler';
 import './App.css';
@@ -30,6 +33,7 @@ function AuthenticatedTabs() {
   return (
     <IonTabs>
       <BackButtonHandler />
+      <PushRegistration />
       <IonRouterOutlet>
         <Route exact path="/home">
           <HomePage />
@@ -72,8 +76,14 @@ function AuthenticatedTabs() {
         <Route exact path="/profile">
           <ProfilePage />
         </Route>
+        <Route exact path="/notifications">
+          <NotificationsPage />
+        </Route>
         <Route exact path="/agios">
           <AgiosPage />
+        </Route>
+        <Route exact path="/birthdays">
+          <BirthdaysPage />
         </Route>
         <Route exact path="/more">
           <ComingSoonPage />

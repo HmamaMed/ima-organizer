@@ -1,0 +1,69 @@
+{
+  "backend": "isolated H2 with synthetic accounts",
+  "checks": [
+    {
+      "name": "Create through UI and retain after reload",
+      "passed": true
+    },
+    {
+      "name": "Failed edit preserves input; retry persists correct label/date",
+      "passed": true
+    },
+    {
+      "name": "Partner sees an empty private list and cannot edit/delete owner birthday",
+      "passed": true
+    },
+    {
+      "name": "Confirmed UI delete removes persisted birthday",
+      "passed": true
+    },
+    {
+      "name": "List at 320px",
+      "passed": true,
+      "viewport": 320,
+      "overflow": false,
+      "broken": 0
+    },
+    {
+      "name": "List at 390px",
+      "passed": true,
+      "viewport": 390,
+      "overflow": false,
+      "broken": 0
+    },
+    {
+      "name": "List at 768px",
+      "passed": true,
+      "viewport": 768,
+      "overflow": false,
+      "broken": 0
+    },
+    {
+      "name": "List at 320px with 200% text",
+      "passed": true,
+      "viewport": 320,
+      "overflow": false,
+      "broken": 0
+    },
+    {
+      "name": "Editor fits at 200% text; February 29 policy is visible",
+      "passed": true
+    },
+    {
+      "name": "Home clock shows Moroccan GMT while the device uses Tokyo",
+      "passed": true,
+      "zone": "Asia/Tokyo",
+      "clock": "22:35",
+      "expected": "22:35"
+    },
+    {
+      "name": "Note date/hour picker fits the phone with horizontally scrolling date chips",
+      "passed": true
+    },
+    {
+      "name": "7pm note selection posts exactly 19:00Z despite Tokyo device timezone",
+      "passed": true,
+      "scheduledFor": "2026-10-17T19:00:00Z"
+    }
+  ]
+}

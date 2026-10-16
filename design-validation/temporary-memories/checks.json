@@ -1,0 +1,53 @@
+{
+  "environment": "Synthetic accounts, isolated H2, real AWS SDK with local S3 test server",
+  "checks": [
+    {
+      "name": "Create a category with exactly 72-hour expiry and visible deletion notice",
+      "passed": true
+    },
+    {
+      "name": "Real authenticated multipart upload, R2 PUT/HEAD verification, signed image read, and failed-upload retry without losing draft",
+      "passed": true
+    },
+    {
+      "name": "Photo and synthetic browser voice recording both reach R2 and are linked to their category",
+      "passed": true
+    },
+    {
+      "name": "Recipient can browse the shared category but cannot delete or run cleanup",
+      "passed": true
+    },
+    {
+      "name": "Category cards at 320px",
+      "passed": true,
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "Category cards at 390px",
+      "passed": true,
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "name": "Category cards at 768px",
+      "passed": true,
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "name": "Category cards at 320px with 200% text",
+      "passed": true,
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "name": "An already-open category list removes expired cards at the deadline",
+      "passed": true
+    },
+    {
+      "name": "Confirmed deletion immediately hides records; failed storage cleanup stays queued; retry deletes every photo/audio object and DB row",
+      "passed": true
+    }
+  ]
+}

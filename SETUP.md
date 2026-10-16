@@ -5,7 +5,7 @@
 - Node.js 18+ and npm
 - JDK 21
 - Android Studio (for the emulator + building the APK)
-- A Firebase account (free) — for push notifications + media storage
+- A Firebase account — for push notifications, plus a private Cloudflare R2 bucket for media
 - A Postgres database — local via Docker, or a free hosted one (Neon.tech)
 
 ---
@@ -56,18 +56,19 @@ npx cap open android
 
 ---
 
-## 2. Firebase Project (push notifications + media storage)
+## 2. Firebase Project (push notifications)
 
 1. Go to the Firebase Console → Create a new project (e.g. "life-organizer")
 2. Add an Android app inside the project, using the same package id you used in
    `npx cap init` above (e.g. `com.lifeorganizer.app`)
 3. Download `google-services.json` → place it in `mobile/android/app/`
 4. Enable **Cloud Messaging** (on by default for new projects)
-5. Enable **Storage** → note the bucket name, you'll need it in the backend config
-6. Project Settings → Service Accounts → Generate new private key → this JSON is
+5. Project Settings → Service Accounts → Generate new private key → this JSON is
    what the **backend** uses to send pushes. Keep it out of git.
 
 ---
+
+For memory photos/audio, follow [the R2 setup and old-file erasure guide](backend/R2-SETUP.md). Firebase Storage and Supabase are not used for new uploads.
 
 ## 3. Backend: Spring Boot
 
@@ -150,6 +151,14 @@ Build in the browser as much as possible (fast refresh) — only sync to Android
 when you need to test something native-specific (push, camera, audio recording).
 
 ---
+
+## Birthday notification inbox
+
+Profile → Notifications opens the signed-in user's birthday reminders. The backend saves an inbox message 3 days before and 1 day before each birthday, from 7pm in the birthday's saved timezone. Messages are saved even when Firebase or the phone's push permission is unavailable. Tapping a new birthday push opens this inbox.
+
+Each message can be deleted with confirmation. This keeps the saved birthday and its future reminders active. Deleted messages stay out of the inbox during delivery retries. Existing messages retain their original wording and arrival date when a birthday is edited or removed.
+
+Deploy both the backend and mobile build. The existing Hibernate `ddl-auto: update` setting creates `birthday_notifications` automatically; no new service credentials are needed. The list and delete endpoints (`GET /api/notifications`, `DELETE /api/notifications/{id}`) require authentication and enforce account ownership. This inbox contains birthday alerts; note pushes retain their existing behavior. See [checks and screenshots](design-validation/notification-inbox/README.md).
 
 ## 6. Producing the final APK (week 8)
 

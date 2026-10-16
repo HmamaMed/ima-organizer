@@ -1,13 +1,10 @@
-import HeartMark from '../../shared/ui/HeartMark';
+import BrandLogo from '../../shared/ui/BrandLogo';
 import './SplashPage.css';
 
 export default function SplashPage() {
   return (
     <div className="splash-screen">
-      <div className="splash-screen__mark">
-        <HeartMark />
-      </div>
-      <p className="splash-screen__word font-display-italic">Life Organizer</p>
+      <BrandLogo variant="white" className="splash-screen__logo" />
       <p className="splash-screen__tag">made just for you</p>
     </div>
   );

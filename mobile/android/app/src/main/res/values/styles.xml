@@ -17,6 +17,9 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <!-- Explicit dark launch matches the React splash; the app remains light. -->
+        <item name="windowSplashScreenBackground">@color/lo_splash_background_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/lo_splash_icon_dark</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

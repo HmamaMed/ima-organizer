@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "Profile opens inbox; Morocco 7pm timestamp stays correct with device timezone set to Tokyo.",
+    "No horizontal overflow at 320px, 390px, 768px, or 200% text.",
+    "Recipient inbox is private; cross-account delete returns 404.",
+    "Cancel preserves message; failed delete stays retryable; successful deletion persists after reload.",
+    "Empty inbox links to saved birthdays; deleting messages preserves birthday and partner inbox."
+  ]
+}

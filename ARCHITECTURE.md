@@ -47,20 +47,16 @@ Spring Boot pattern — nothing new to learn here.
 ```
 Memory
 - id: UUID
-- photoUrl: string                 -- Firebase Storage URL
+- photoUrl: string                 -- legacy URL; new files reference a private R2 MediaAsset
 - caption: text (nullable)
-- audioUrl: string (nullable)      -- Firebase Storage URL
+- audioUrl: string (nullable)      -- legacy URL; new files reference a private R2 MediaAsset
 - memoryDate: date                 -- date the memory happened (for ordering)
 - createdAt: timestamp
 ```
 
-**API:**
-- `POST /api/memories` — multipart upload (photo required, audio optional) + caption + date
-- `GET /api/memories` — feed ordered by `memoryDate`
+**API and media:** Create a category with `POST /api/memories/groups`. Its lifetime is exactly 72 hours. Upload each photo/audio file to authenticated owner-only `POST /api/memories/groups/{id}/media` as multipart `file`; the backend validates and stores it in private Cloudflare R2 and returns an asset ID. `POST /api/memories` accepts `photoAssetId`, optional `audioAssetId`, caption, memoryDate and groupId. Reads return signed URLs lasting at most 15 minutes and never beyond category expiry.
 
-**Media handling:** upload photo/audio directly from the mobile app to Firebase
-Storage (client SDK), then send just the resulting URL + metadata to the Spring Boot
-API. Keeps the backend lean — it never touches raw file bytes.
+Expired/deleted categories are excluded from every feed immediately. A minute worker deletes the exact R2 category prefix, then the memory/asset/category rows. Failed deletion retains hidden DB references for retry. Abandoned uploads are swept after 24 hours. Owner-only category DELETE can remove a category before its expiry. Existing pre-rollout memories are explicitly queued for erasure, including their old Supabase files; no migration is performed. See [R2 setup](backend/R2-SETUP.md).
 
 **Audio recording on-device:** Capacitor doesn't have an official first-party
 recording plugin. Use the community plugin `capacitor-voice-recorder`, or the

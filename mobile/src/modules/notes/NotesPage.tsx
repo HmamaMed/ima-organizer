@@ -13,14 +13,15 @@ import AppScreen from '../../shared/ui/AppScreen';
 import AppButton from '../../shared/ui/AppButton';
 import ConfirmSheet from '../../shared/ui/ConfirmSheet';
 import FeedbackState from '../../shared/ui/FeedbackState';
+import { moroccoDateKey, moroccoFormat } from '../../shared/utils/moroccoTime';
 import { cancelNote, fetchNotes, type Note } from './notesApi';
 
 function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  return new Date(`${moroccoDateKey(d)}T00:00:00Z`);
 }
 
 function formatTime(d: Date): string {
-  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return moroccoFormat(d, { hour: 'numeric', minute: '2-digit' });
 }
 
 /** "Today · 9:00 PM", "Tomorrow · ...", a weekday name within a week, else a short date. */
@@ -35,8 +36,8 @@ function formatRelativeDay(iso: string, base: Date, futureTense: boolean): strin
   if (diffDays === 0) return `Today · ${time}`;
   if (diffDays === 1) return `${futureTense ? 'Tomorrow' : 'Yesterday'} · ${time}`;
   if (diffDays > 1 && diffDays < 7)
-    return `${date.toLocaleDateString(undefined, { weekday: 'long' })} · ${time}`;
-  return `${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${time}`;
+    return `${moroccoFormat(date, { weekday: 'long' })} · ${time}`;
+  return `${moroccoFormat(date, { month: 'short', day: 'numeric' })} · ${time}`;
 }
 
 function NoteCard({
@@ -198,6 +199,7 @@ export default function NotesPage() {
             {sent.length === 0 && (!isOwner || scheduled.length === 0) && (
               <FeedbackState
                 kind="empty"
+                illustration="notes"
                 heading={
                   isOwner ? 'Your first note starts here.' : 'A little note will find you here.'
                 }

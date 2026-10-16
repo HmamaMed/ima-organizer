@@ -1,19 +1,13 @@
 package com.lifeorganizer.memories;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * Payload for creating a memory. The photo is uploaded to media storage by
- * the client first; this endpoint receives just the resulting URL + metadata.
- */
+/** Media IDs are issued by the authenticated R2 upload endpoint; arbitrary URLs are not accepted. */
 public record MemoryRequest(
-        @NotBlank String photoUrl,
-        String caption,
-        String audioUrl,
+        @NotNull UUID photoAssetId,
+        @Size(max = 4000) String caption,
+        UUID audioAssetId,
         @NotNull LocalDate memoryDate,
-        UUID groupId) {
-}
+        @NotNull UUID groupId) {}
