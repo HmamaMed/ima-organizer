@@ -1,0 +1,11 @@
+.watch-reviews { display: grid; gap: 12px; }
+.watch-opinion { display: grid; gap: 8px; padding: 14px; background: var(--lo-bg); border-radius: 14px; }
+.watch-opinion__heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: .75rem; line-height: 1.5; color: var(--lo-plum); }
+.watch-opinion__heading span { display: inline-flex; align-items: center; gap: 6px; color: var(--lo-plum); }
+.watch-opinion__heading ion-icon { color: var(--lo-gold); }
+.watch-review-hint { margin: 0; color: var(--lo-muted); font-size: .75rem; line-height: 1.6; }
+.watch-rating { display: grid; gap: 12px; font-size: .875rem; font-weight: 600; }
+.watch-stars { display: flex; flex-wrap: wrap; gap: 8px; }
+.watch-stars button { display: grid; place-items: center; width: 44px; height: 48px; padding: 0; background: var(--lo-surface); border: 1px solid var(--lo-control-border); border-radius: 12px; color: var(--lo-gold); font-size: 25px; cursor: pointer; }
+.watch-stars button[aria-pressed="true"] { border-color: var(--lo-plum); background: var(--lo-gold-soft); }
+.watch-rating__caption { font-size: .75rem; font-weight: 400; color: var(--lo-muted); }

@@ -11,12 +11,14 @@ export default function FeedbackState({
   heading,
   detail,
   onRetry,
+  retryLabel = 'Try again',
   illustration,
 }: {
   kind: 'loading' | 'empty' | 'failure' | 'success';
   heading: string;
   detail?: string;
   onRetry?: () => void;
+  retryLabel?: string;
   illustration?: keyof typeof illustrations;
 }) {
   return (
@@ -34,7 +36,7 @@ export default function FeedbackState({
       </div>
       {onRetry && (
         <AppButton variant="secondary" onClick={onRetry}>
-          Try again
+          {retryLabel}
         </AppButton>
       )}
     </div>

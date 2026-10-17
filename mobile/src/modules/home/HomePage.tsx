@@ -7,6 +7,8 @@ import {
   chatbubbleEllipsesOutline,
   leafOutline,
   giftOutline,
+  filmOutline,
+  restaurantOutline,
   personOutline,
   sparklesOutline,
 } from 'ionicons/icons';
@@ -54,10 +56,31 @@ const CHAPTERS = [
   },
   {
     icon: giftOutline,
+    label: 'Mes envies',
+    accent: 'rose',
+    path: '/wishes',
+    description: 'Objets, livres et petits rêves',
+  },
+  {
+    icon: giftOutline,
     label: 'Birthday Reminders',
     accent: 'rose',
     path: '/birthdays',
     description: 'Their day, remembered',
+  },
+  {
+    icon: filmOutline,
+    label: 'On regarde quoi ?',
+    accent: 'plum',
+    path: '/watchlist',
+    description: 'Nos films, nos séries, nos avis',
+  },
+  {
+    icon: restaurantOutline,
+    label: 'Nos recettes',
+    accent: 'gold',
+    path: '/recipes',
+    description: 'Nos plats et petits secrets',
   },
 ];
 

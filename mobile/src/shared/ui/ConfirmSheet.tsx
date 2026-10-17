@@ -6,6 +6,7 @@ export default function ConfirmSheet({
   title,
   detail,
   confirmLabel,
+  cancelLabel = 'Cancel',
   busy,
   destructive = true,
   onConfirm,
@@ -15,6 +16,7 @@ export default function ConfirmSheet({
   title: string;
   detail: string;
   confirmLabel: string;
+  cancelLabel?: string;
   busy?: boolean;
   destructive?: boolean;
   onConfirm: () => void;
@@ -36,7 +38,7 @@ export default function ConfirmSheet({
             {confirmLabel}
           </AppButton>
           <AppButton variant="secondary" onClick={onClose} disabled={busy}>
-            Cancel
+            {cancelLabel}
           </AppButton>
         </div>
       </IonContent>

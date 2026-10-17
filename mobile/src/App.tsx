@@ -19,6 +19,9 @@ import ProgrammeEditorPage from './modules/gym/ProgrammeEditorPage';
 import ProgressPage from './modules/gym/ProgressPage';
 import ProfilePage from './modules/profile/ProfilePage';
 import NotificationsPage from './modules/notifications/NotificationsPage';
+import WishesPage from './modules/wishes/WishesPage';
+import WatchlistPage from './modules/watchlist/WatchlistPage';
+import RecipesPage from './modules/recipes/RecipesPage';
 import AgiosPage from './modules/agios/AgiosPage';
 import BirthdaysPage from './modules/birthdays/BirthdaysPage';
 import PushRegistration from './shared/push/PushRegistration';
@@ -78,6 +81,15 @@ function AuthenticatedTabs() {
         </Route>
         <Route exact path="/notifications">
           <NotificationsPage />
+        </Route>
+        <Route exact path="/wishes">
+          <WishesPage />
+        </Route>
+        <Route exact path="/watchlist">
+          <WatchlistPage />
+        </Route>
+        <Route exact path="/recipes">
+          <RecipesPage />
         </Route>
         <Route exact path="/agios">
           <AgiosPage />
