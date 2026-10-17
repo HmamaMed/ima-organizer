@@ -70,6 +70,10 @@ npx cap open android
 
 For memory photos/audio, follow [the R2 setup and old-file erasure guide](backend/R2-SETUP.md). Firebase Storage and Supabase are not used for new uploads.
 
+**Mes envies** uses the same private R2 bucket for optional photos (JPEG/PNG/WebP, 10 MiB maximum), with no additional credentials. The recipient manages this shared gift list and the owner can consult it. Wishes stay until removed; the memory categories' 72-hour expiry does not apply. Deploy the updated backend and mobile build to enable it. [Module details](mobile/src/modules/wishes/README.md).
+
+**On regarde quoi ?** and **Nos recettes** use the current database and authentication; both accounts can manage these shared notebooks. No additional API keys or Cloudflare configuration are required. The backend's Hibernate update creates their tables automatically. Deploy the updated backend and mobile build together. [Cinema details](mobile/src/modules/watchlist/README.md) · [Recipe details](mobile/src/modules/recipes/README.md).
+
 ## 3. Backend: Spring Boot
 
 ```bash

@@ -1,8 +1,8 @@
 # Life Organizer
 
 A private, modular mobile app built as a birthday gift. Not a generic utility app —
-every module is written for one specific person. v1 ships 3 modules; the app is
-architected so more modules can be added after launch without a rewrite.
+every module is written for one specific person. The initial three modules now
+sit alongside shared everyday notebooks, with more chapters added over time.
 
 ## Tech Stack
 
@@ -18,6 +18,24 @@ architected so more modules can be added after launch without a rewrite.
 | Auth | Spring Security + JWT, 2 seeded users | Only two users ever (OWNER = you, RECIPIENT = her) — no need for open registration |
 
 > Current storage setup and existing-memory erasure: [Cloudflare R2 setup](backend/R2-SETUP.md).
+
+## Mes envies 🎁
+
+A shared gift-idea notebook: she adds, edits and removes objects, books and experiences; you can browse her list. Each wish has a title and category, with an optional photo, HTTP/HTTPS link and short details. The French interface includes category filters, photo previews and deletion confirmation, using the existing Life Organizer design.
+
+Wishes stay until she removes them. Photos use the same private Cloudflare R2 bucket under `wishes/`, separately from the 72-hour memory categories. Replaced/deleted photos are removed by a retryable backend worker; unused uploads are cleaned after 24 hours. No new credentials are needed beyond the existing R2 configuration. Both updated backend and mobile builds must be deployed.
+
+[Module/API details](mobile/src/modules/wishes/README.md) · [Screenshots and verification](design-validation/wishes/README.md)
+
+## On regarde quoi ? 🎬
+
+A shared film and series selection that both accounts can manage. Titles move between **À voir**, **En cours** and **Vu**, with optional notes, search and format/status filters. Once a title is marked Vu, each person can leave their own 1–5 star rating and comment, edit it or remove it. One person's review never replaces the other's. Removing a title removes its reviews after confirmation.
+
+## Nos recettes 🍝
+
+A shared recipe notebook that both accounts can manage, with **À essayer** and **Nos favoris**. Each recipe stores servings, optional duration, ordered ingredients with separate quantities, ordered preparation steps and personal tips. A reading sheet keeps the ingredients and steps easy to follow; search includes ingredient names. These structured ingredients can support a future shopping-list feature.
+
+Both modules use the current database and authentication, with no extra API key or storage setup. Deploy the updated backend and mobile build together. [Cinema API](mobile/src/modules/watchlist/README.md) · [Recipe API](mobile/src/modules/recipes/README.md) · [Verification and screenshots](design-validation/shared-notebooks/README.md)
 
 ## Modules — v1 (birthday launch)
 

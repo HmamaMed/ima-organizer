@@ -1,0 +1,9 @@
+{
+  "checks": [
+    "Home chapter opens the French wishlist with a useful empty state.",
+    "Real backend/SDK image upload and private signed read work; failed save retries reuse the uploaded photo.",
+    "Category filters, text editing with photo retention, 320/390/768px layouts and 200% text pass.",
+    "Owner sees shared wishes and safe external links, with server-enforced read-only permissions.",
+    "Delete cancellation and failure recovery pass; detached R2 photo is erased by the retryable cleanup worker."
+  ]
+}

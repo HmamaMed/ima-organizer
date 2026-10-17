@@ -19,6 +19,10 @@ Use the endpoint shown by Cloudflare for your account/jurisdiction. The backend 
 
 No Cloudflare secrets belong in `mobile/.env` or a `VITE_*` variable. The mobile app needs only `VITE_API_URL`. Uploads are authenticated multipart requests through the backend, so browser PUT CORS rules on R2 are not required. Images/audio are read using short-lived signed GET URLs, rather than public bucket URLs.
 
+## Mes envies photos
+
+The wishlist uses these same four R2 variables and the same private bucket; no additional Cloudflare service is needed. Photos are stored under `wishes/`, independently of `memories/`. Wishes remain until the recipient removes them: the 72-hour memory deadline does not apply. JPEG/PNG/WebP uploads are limited to 10 MiB. Removed/replaced photos are queued for deletion by a separate worker (every minute); unused and failed uploads are swept after 24 hours. Keep bucket-wide expiry rules disabled so they do not erase active wishlist photos. See [the wishlist module](../mobile/src/modules/wishes/README.md).
+
 ## Erase the old Supabase files
 
 The old Supabase project URL was copied locally from the existing mobile configuration without exposing it. Add the **server-only service_role key** from that same Supabase project:

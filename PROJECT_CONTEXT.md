@@ -4,7 +4,13 @@
 >
 > Snapshot: October 7, 2026. Based on repository documentation and source-code inspection. “Implemented” means present in the code; it does not certify deployment or real-device testing. No private credentials are included.
 
+## October 17, 2026 implementation update
+
+Two shared French notebooks are implemented. **On regarde quoi ?** lets both accounts manage films/series with À voir/En cours/Vu statuses, notes, filters and search; after Vu, each user can manage their own 1–5 star review/comment while seeing both opinions. **Nos recettes** stores À essayer/Nos favoris recipes with servings, optional duration, ordered ingredient/amount fields, preparation steps and tips. Both accounts can author recipes. Ingredient structure supports a later shopping-list feature; that integration remains future work. These modules require the updated backend/mobile deployment and no new external service credentials. See [cinema](mobile/src/modules/watchlist/README.md) and [recipes](mobile/src/modules/recipes/README.md).
+
 ## October 16, 2026 implementation update
+
+Mes envies is implemented: the recipient manages a shared list of gift ideas (objects, books, experiences), and the owner can read it. Each wish has a title/category and optional private R2 photo, HTTP/HTTPS link and details. Wishes persist until removed; only memory categories expire after 72 hours. Replaced/deleted wishlist photos are removed by a retryable worker, and abandoned uploads are cleaned after 24 hours. See [module details](mobile/src/modules/wishes/README.md).
 
 Memory categories are now temporary: 72 hours from creation, then hidden immediately and their photos/audio physically removed by a retryable backend cleanup worker. New uploads use private Cloudflare R2 through the authenticated backend, with temporary signed read URLs. The Supabase frontend SDK is removed. The owner explicitly requested erasure of all previous memories; there is no media migration. Deployment and R2/legacy-Supabase deletion credentials are still required for live cutover. See [the storage guide](backend/R2-SETUP.md) and [validation report](design-validation/temporary-memories/README.md).
 

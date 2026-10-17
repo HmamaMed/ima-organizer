@@ -1,0 +1,8 @@
+{
+  "checks": [
+    "Watchlist: Home navigation, failed-save retry, shared titles, film/series and status filters, independent reviews and own-review removal.",
+    "Watchlist deletion supports cancellation/retry and persists for both accounts; layouts pass at 320/390/768px and 200% text.",
+    "Recipes: recipient creates ordered ingredient/quantity rows and steps, detail shows tips, favorites/search work, owner edits are shared and retain ingredients.",
+    "Recipe deletion persists across accounts; 320/390/768px and 200% text layouts fit without horizontal overflow."
+  ]
+}
