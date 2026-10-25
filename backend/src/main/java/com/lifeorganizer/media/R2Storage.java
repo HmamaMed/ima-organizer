@@ -78,11 +78,6 @@ public class R2Storage {
         initialize();
         client.deleteObject(DeleteObjectRequest.builder().bucket(properties.bucket()).key(key).build());
     }
-    /** Read-only metadata check for existing uploads during the personal-data upgrade. */
-    public long objectSize(String key) {
-        initialize();
-        return client.headObject(HeadObjectRequest.builder().bucket(properties.bucket()).key(key).build()).contentLength();
-    }
     public static String groupPrefix(UUID groupId) { return "memories/" + groupId + "/"; }
     public void deleteGroup(UUID groupId) {
         initialize();

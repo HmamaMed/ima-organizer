@@ -1,5 +1,5 @@
 # Activate together: SPRING_PROFILES_ACTIVE=couples,couples-production.
-# Provision the two database roles and grants before startup.
+# Keep the existing runtime and migration database credentials.
 spring:
   flyway:
     url: ${COUPLES_DB_URL:${DB_URL}}

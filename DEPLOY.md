@@ -1,68 +1,70 @@
-# Deploy the existing app on Render
+# Deploy Life Organizer
 
-The app uses the normal commands: `npm run dev` and `npm run build` from `mobile`. The Render service runs the updated backend and serves the built web app using the repository-root `Dockerfile`.
+The one-time database import is complete. Normal updates follow **edit → validate → push → deploy**. The existing Neon database and account passwords stay in use; the app reads and writes the `couples_app` schema.
 
-**No SMTP provider is required for the current private app.** Only the two approved existing email addresses can sign in, using their existing app passwords. Verification emails, public registration and password recovery are disabled. Account email addresses remain unverified in the database; private access is explicitly approved through configuration instead.
+## Render configuration
 
-## One-time upgrade of the existing database
+Keep the current settings in the existing Render service. The private, Git-ignored `.render.env` contains the ongoing settings; credentials have not changed. It can be imported through **Environment → Add from .env** if needed. Keep the existing `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `R2_*` and `FIREBASE_SERVICE_ACCOUNT_PATH` settings too.
 
-Use the prepared private files at the repository root:
-
-- `.render-upgrade.env`: ready-to-import Render settings, including the two supplied email addresses.
-- `.render-upgrade.sql`: the matching database role and SQL that makes the old tables read-only during cutover.
-
-Keep these files private and keep their generated credentials matched. `.couples-dev.env` belongs to the optional local Docker stack and is not the Render configuration.
-
-1. Back up the existing Neon database. Disable Render automatic deployment while preparing the upgrade, then push the reviewed changes.
-2. In the **existing Render service**, import `.render-upgrade.env` through **Environment → Add from .env** and choose **Save only**. Keep the existing `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `R2_*` credentials and Firebase secret-file setting. Remove stale `COUPLES_*` database/storage/Firebase overrides that point at local services; the private upgrade file provides the current overrides you need.
-3. In the existing Neon database's SQL console, as the database owner, execute `.render-upgrade.sql` once. The old app becomes read-only during the upgrade; its rows are retained.
-4. Apply the Render Docker settings below, then deploy the latest commit.
-5. Confirm successful import/startup in the logs, sign in with each existing account, and check the saved content. After validation set `COUPLES_IMPORT_PERSONAL=false`; keep `COUPLES_DB_SCHEMA=couples_app` permanently.
-
-| Render setting | Value |
+| Setting | Value |
 | --- | --- |
-| Root Directory | Empty: use the repository root |
+| Root Directory | Empty: repository root |
 | Runtime | Docker |
 | Dockerfile Path | `./Dockerfile` |
 | Docker Build Context Directory | `.` |
-| Health Check Path, after the updated app starts | `/api/privacy/policy` |
+| Health Check Path | `/api/privacy/policy` |
 
-The old backend returns 401 for the new public endpoints. The database copy and new backend configuration must be deployed together. The importer keeps original account IDs/password hashes and copies content into `couples_app`; the original `public` tables stay available for rollback. Follow [the detailed upgrade and rollback guide](backend/RENDER_UPGRADE.md) for the full cutover procedure and supported data shapes.
-
-## Current account settings
-
-The private settings file already contains the actual approved addresses:
+Keep these application settings:
 
 ```dotenv
 SPRING_PROFILES_ACTIVE=couples,couples-production
+COUPLES_DB_SCHEMA=couples_app
 COUPLES_EMAIL_ENABLED=false
 COUPLES_REGISTRATION_ENABLED=false
-COUPLES_PRIVATE_ACCOUNT_EMAILS=OWNER_EMAIL,RECIPIENT_EMAIL
+COUPLES_PRIVATE_ACCOUNT_EMAILS=medhmama4@gmail.com,imane.abdenaimm2001@gmail.com
 ```
 
-Keep the private account list after the import is disabled. It restricts login and active sessions while email delivery is off. SMTP credentials and `COUPLES_MAIL_FROM` are not required in this configuration; old `COUPLES_SMTP_*` settings can be removed. Existing R2/Firebase configuration still applies to media and push notifications.
+Keep `COUPLES_DB_USERNAME`, `COUPLES_DB_PASSWORD` and `COUPLES_TOKEN_SECRET` at their existing values. The runtime database role uses `COUPLES_DB_USERNAME`/`COUPLES_DB_PASSWORD`; Flyway uses the existing schema-owner credentials in `DB_USERNAME`/`DB_PASSWORD`. Keep the current public URL, support address, retention and CORS settings. [Configuration reference](backend/.env.production.example).
 
-## Verify and use the app
+Remove all six obsolete import settings from Render:
 
-Open `https://ima-organizer.onrender.com`. These public API checks should return HTTP 200:
-
-```sh
-curl -fsS https://ima-organizer.onrender.com/api/identity/config
-# {"emailEnabled":false,"registrationEnabled":false}
-curl -fsS https://ima-organizer.onrender.com/api/privacy/policy
+```text
+COUPLES_IMPORT_PERSONAL
+COUPLES_IMPORT_SOURCE_SCHEMA
+COUPLES_IMPORT_OWNER_EMAIL
+COUPLES_IMPORT_RECIPIENT_EMAIL
+COUPLES_IMPORT_SHARED_AUTHOR
+COUPLES_IMPORT_TIME_ZONE
 ```
 
-Sign in with the supplied email and the existing **app password**. No verification email is needed. The current login API is `POST /api/identity/login` with `email`, `password` and `deviceName`; `/api/auth/login` belongs to the previous app.
+The one-time importer, generator and cutover SQL files have been removed. No upgrade SQL needs to be run again. Keep the versioned Flyway SQL files in the repository: they define the schema and are validated at startup. Future migrations and runtime table permissions are applied automatically.
 
-For local frontend development, keep `mobile/.env`'s `VITE_API_URL` pointed at the Render service:
+The original `public` tables remain a frozen snapshot in Neon. This code cleanup does not delete or modify them. New app changes are saved only in `couples_app`.
+
+## Normal updates
+
+1. Make and review the changes, then commit and push.
+2. Deploy the latest commit in the existing Render service, or let automatic deployment handle it if enabled.
+3. Check successful startup in Render logs and open `https://ima-organizer.onrender.com`.
+4. Sign in with either approved email and its existing app password, then check the changed feature.
+
+`GET /api/identity/config` should return HTTP 200 with `{"emailEnabled":false,"registrationEnabled":false}`. `GET /api/privacy/policy` should also return HTTP 200. Protected APIs require sign-in.
+
+No SMTP provider is required. Public registration, verification emails and email-based password recovery are disabled. Addresses remain unverified in the database; private access is approved through configuration.
+
+## Local frontend and Android
+
+Keep `mobile/.env`'s `VITE_API_URL` pointed at the Render backend:
 
 ```sh
 cd mobile
 npm run dev
 ```
 
-For an Android update, build the frontend with the hosted API URL, run `npx cap sync android`, then rebuild/sign/install the APK using the existing Android project. Credentials currently stay in memory, so reopening/reloading requires sign-in.
+Restart Vite after changing its environment settings. Local development uses the same hosted API and database.
 
-## SMTP at official launch
+For an Android update, run `npm run build`, then `npx cap sync android`, and rebuild/sign/install the APK using the existing Android project. A backend deployment does not update an installed APK. Sign-in currently stays in memory, so reloading/reopening requires login.
 
-When ready, configure your chosen SMTP provider in Render, set `COUPLES_EMAIL_ENABLED=true`, and validate delivery/verification/password recovery. Real email verification will then apply to the existing accounts too. Enable `COUPLES_REGISTRATION_ENABLED=true` only when you are ready for public signups. No email provider is selected by the current deployment configuration.
+## Email at official launch
+
+When ready, configure your chosen SMTP provider and verified sender on Render, set `COUPLES_EMAIL_ENABLED=true`, and validate verification and password recovery. Existing accounts will then require real email verification. Enable public registration separately when ready.

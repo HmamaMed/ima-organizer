@@ -1,4 +1,4 @@
-# Updated app. Import personal data into a separate schema; never baseline its source.
+# Updated app. Flyway manages the configured application schema.
 spring:
   datasource:
     url: ${COUPLES_DB_URL:${DB_URL}}
@@ -38,13 +38,6 @@ app:
     closed-retention-days: ${COUPLES_CLOSED_RETENTION_DAYS:30}
   support-email: ${COUPLES_SUPPORT_EMAIL:}
   public-url: ${COUPLES_PUBLIC_URL:${RENDER_EXTERNAL_URL:http://localhost:5173}}
-  personal-import:
-    enabled: ${COUPLES_IMPORT_PERSONAL:false}
-    source-schema: ${COUPLES_IMPORT_SOURCE_SCHEMA:public}
-    owner-email: ${COUPLES_IMPORT_OWNER_EMAIL:}
-    recipient-email: ${COUPLES_IMPORT_RECIPIENT_EMAIL:}
-    shared-author: ${COUPLES_IMPORT_SHARED_AUTHOR:}
-    time-zone: ${COUPLES_IMPORT_TIME_ZONE:Africa/Casablanca}
   identity:
     email-enabled: ${COUPLES_EMAIL_ENABLED:true}
     private-account-emails: ${COUPLES_PRIVATE_ACCOUNT_EMAILS:}

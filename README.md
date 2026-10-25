@@ -2,7 +2,7 @@
 
 The updated app uses the normal commands: `cd mobile && npm run dev` for development and `npm run build` for deployment or Android packaging. Accounts, pairing, two-way notes/memories, shared notebooks and privacy flows are part of this app; there is no separate frontend mode.
 
-Keep `VITE_API_URL` pointed at the backend you are validating. [Deploy the existing Render app](DEPLOY.md) with the prepared data-preserving import and private account settings; SMTP is deferred until official launch. [Local setup and implementation](backend/COUPLES_FOUNDATION.md) describes the development stack. Changes follow the usual edit, validate, then push workflow. Android updates also require rebuilding/installing the APK.
+Keep `VITE_API_URL` pointed at the backend you are validating. [Deploy to Render](DEPLOY.md) using the existing database and private account settings; SMTP is deferred until official launch. [Local setup and implementation](backend/COUPLES_FOUNDATION.md) describes the development stack. Changes follow the usual edit, validate, then push workflow. Android updates also require rebuilding/installing the APK.
 
 See the [architecture and launch roadmap](COUPLES_PRODUCT_ROADMAP.md) for the public release plan.
 
