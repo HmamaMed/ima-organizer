@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Link } from 'react-router-dom';
-import { IonPage } from '@ionic/react';
-import { personOutline } from 'ionicons/icons';
+import { IonIcon, IonPage } from '@ionic/react';
+import { chevronForwardOutline, personOutline, shieldCheckmarkOutline } from 'ionicons/icons';
 import BrandHeader from '../shared/ui/BrandHeader';
 import AppScreen from '../shared/ui/AppScreen';
 import AppButton from '../shared/ui/AppButton';
@@ -20,7 +20,7 @@ export default function CoupleAccountPage() {
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [message, setMessage] = useState('');
   useEffect(() => { let active = true; void apiRequest<Preferences>('/api/inbox/preferences', { token }).then(value => { if (active) setPreferences(value); }).catch(() => { if (active) setError('Impossible de charger vos préférences.'); }); return () => { active = false; }; }, [token]);
   async function perform(task: () => Promise<void>) { if (busy) return; setBusy(true); setError(''); setMessage(''); try { await task(); } catch (failure) { setError(failure instanceof ApiError ? failure.message : 'Connexion impossible. Réessayez.'); } finally { setBusy(false); } }
-  return <IonPage lang="fr"><BrandHeader icon={personOutline} title="Mon compte" accent="muted" showBack /><AppScreen title="Votre compte, vos choix." subtitle={user?.email}>
+  return <IonPage lang="fr"><BrandHeader icon={personOutline} title="Mon compte" accent="muted" /><AppScreen title="Votre compte, vos choix." subtitle={user?.email}>
     <form className="couple-card couple-form" onSubmit={e => { e.preventDefault(); void perform(async () => { await apiRequest('/api/identity/me', { token, method: 'PUT', body: { name, locale: 'fr', timeZone: zone } }); await refreshState(); setMessage('Compte mis à jour.'); }); }}>
       <label>Votre prénom<input required maxLength={100} value={name} onChange={e => setName(e.target.value)} /></label><label>Fuseau horaire IANA<input required maxLength={100} value={zone} onChange={e => setZone(e.target.value)} placeholder="Africa/Casablanca" /></label><AppButton type="submit" busy={busy}>Enregistrer</AppButton>
     </form>
@@ -51,7 +51,7 @@ export default function CoupleAccountPage() {
       await apiRequest('/api/privacy/reports', { token, method: 'POST', body: { kind: reportKind, message: report } }); setReport(''); await refreshState(); setMessage('Signalement enregistré.');
     }); }}><h2>Aide et signalement</h2><label>Votre demande<select value={reportKind} onChange={e => setReportKind(e.target.value as typeof reportKind)}><option value="PROBLEM">Signaler un problème</option><option value="UNWANTED_PARTNER">Signaler et arrêter les échanges avec mon partenaire</option></select></label><label>Votre message<textarea required maxLength={2000} value={report} onChange={e => setReport(e.target.value)} /></label>{reportKind === 'UNWANTED_PARTNER' && <p>Votre couple sera déconnecté. Confirmez votre mot de passe dans la section « Mes données » avant d’envoyer.</p>}<AppButton type="submit" variant="secondary" busy={busy}>Envoyer mon signalement</AppButton></form>
     <section className="couple-card"><h2>Mes connexions</h2><p className="couple-meta">Les identifiants restent en mémoire. Après fermeture complète de l’application, reconnectez-vous pour retrouver votre espace.</p><AppButton variant="secondary" onClick={() => { void logout(); }}>Me déconnecter</AppButton><AppButton variant="quiet" busy={busy} onClick={() => { void perform(async () => { await apiRequest('/api/identity/logout-all', { token, method: 'POST' }); await logout(); }); }}>Déconnecter tous mes appareils</AppButton></section>
-    <Link to="/privacy">Votre espace et vos données</Link>
+    <Link className="couple-settings-link" to={{ pathname: '/privacy', state: { privacyReturnTo: '/profile' } }}><IonIcon icon={shieldCheckmarkOutline} aria-hidden="true" /><span><strong>Confidentialité</strong><span>Votre espace et vos données</span></span><IonIcon icon={chevronForwardOutline} aria-hidden="true" /></Link>
     {error && <p className="couple-error" role="alert">{error}</p>}{message && <p className="couple-message" role="status">{message}</p>}
   </AppScreen></IonPage>;
 }

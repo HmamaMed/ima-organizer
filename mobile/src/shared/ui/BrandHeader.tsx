@@ -12,6 +12,7 @@ interface BrandHeaderProps {
   showBack?: boolean;
   /** Where the back button goes; defaults to Home. Sub-pages point at their parent screen. */
   backTo?: string;
+  backLabel?: string;
   onBack?: () => void;
 }
 
@@ -22,6 +23,7 @@ export default function BrandHeader({
   accent,
   showBack,
   backTo = '/home',
+  backLabel = 'Back',
   onBack,
 }: BrandHeaderProps) {
   const history = useHistory();
@@ -35,7 +37,7 @@ export default function BrandHeader({
               type="button"
               className="brand-header__back"
               onClick={onBack ?? (() => history.push(backTo, { direction: 'back' }))}
-              aria-label="Back"
+              aria-label={backLabel}
             >
               <IonIcon icon={chevronBackOutline} />
             </button>
