@@ -1,79 +1,68 @@
-# Deploying the backend (Render + Neon, free)
+# Deploy the existing app on Render
 
-Fly.io no longer has a usable free tier (2-hour/7-day trial, then card + billing).
-This uses Render (web service) + Neon (Postgres), both free with no card required.
-Cold start after 15 min idle is fine for a 2-user app.
+The app uses the normal commands: `npm run dev` and `npm run build` from `mobile`. The Render service runs the updated backend and serves the built web app using the repository-root `Dockerfile`.
 
-`backend/Dockerfile` and `backend/.dockerignore` are already in the repo — Render
-builds straight from them.
+**No SMTP provider is required for the current private app.** Only the two approved existing email addresses can sign in, using their existing app passwords. Verification emails, public registration and password recovery are disabled. Account email addresses remain unverified in the database; private access is explicitly approved through configuration instead.
 
-## 1. Neon — free Postgres
+## One-time upgrade of the existing database
 
-1. Go to neon.tech → sign up → **Create a project** (name it `lifeorganizer`).
-2. Copy the connection string from the dashboard, e.g.:
-   `postgresql://user:password@ep-xxx.region.aws.neon.tech/lifeorganizer?sslmode=require`
-3. Convert to JDBC form for later:
-   `jdbc:postgresql://ep-xxx.region.aws.neon.tech/lifeorganizer?sslmode=require`
-   Keep the username and password from the connection string separately.
+Use the prepared private files at the repository root:
 
-## 2. Push the repo to GitHub
+- `.render-upgrade.env`: ready-to-import Render settings, including the two supplied email addresses.
+- `.render-upgrade.sql`: the matching database role and SQL that makes the old tables read-only during cutover.
 
-Render deploys from GitHub. `origin` is already `github.com/HmamaMed/ima-organizer.git`.
-Commit and push whatever you want deployed — Render builds whatever's on the
-branch you point it at.
+Keep these files private and keep their generated credentials matched. `.couples-dev.env` belongs to the optional local Docker stack and is not the Render configuration.
 
-## 3. Render — the web service
+1. Back up the existing Neon database. Disable Render automatic deployment while preparing the upgrade, then push the reviewed changes.
+2. In the **existing Render service**, import `.render-upgrade.env` through **Environment → Add from .env** and choose **Save only**. Keep the existing `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `R2_*` credentials and Firebase secret-file setting. Remove stale `COUPLES_*` database/storage/Firebase overrides that point at local services; the private upgrade file provides the current overrides you need.
+3. In the existing Neon database's SQL console, as the database owner, execute `.render-upgrade.sql` once. The old app becomes read-only during the upgrade; its rows are retained.
+4. Apply the Render Docker settings below, then deploy the latest commit.
+5. Confirm successful import/startup in the logs, sign in with each existing account, and check the saved content. After validation set `COUPLES_IMPORT_PERSONAL=false`; keep `COUPLES_DB_SCHEMA=couples_app` permanently.
 
-1. render.com → sign up (no card) → **New +** → **Web Service**.
-2. Connect GitHub, pick the `ima-organizer` repo.
-3. Settings:
-   - **Root Directory**: `backend`
-   - **Runtime**: Docker (auto-detects `backend/Dockerfile`)
-   - **Instance Type**: Free
-4. Environment variables:
+| Render setting | Value |
+| --- | --- |
+| Root Directory | Empty: use the repository root |
+| Runtime | Docker |
+| Dockerfile Path | `./Dockerfile` |
+| Docker Build Context Directory | `.` |
+| Health Check Path, after the updated app starts | `/api/privacy/policy` |
 
-   | Key | Value |
-   |---|---|
-   | `DB_URL` | `jdbc:postgresql://ep-xxx....neon.tech/lifeorganizer?sslmode=require` |
-   | `DB_USERNAME` | your Neon username |
-   | `DB_PASSWORD` | your Neon password |
-   | `JWT_SECRET` | output of `openssl rand -base64 48` |
-   | `JWT_EXPIRATION_MS` | `604800000` (optional, this is the default) |
-   | `SEED_OWNER_USERNAME` / `SEED_OWNER_PASSWORD` | real credentials, not the repo defaults |
-   | `SEED_RECIPIENT_USERNAME` / `SEED_RECIPIENT_PASSWORD` | same |
-   | `CORS_ALLOWED_ORIGINS` | `https://localhost` (Capacitor's WebView origin); add `http://localhost:5173` too if also testing from a browser |
+The old backend returns 401 for the new public endpoints. The database copy and new backend configuration must be deployed together. The importer keeps original account IDs/password hashes and copies content into `couples_app`; the original `public` tables stay available for rollback. Follow [the detailed upgrade and rollback guide](backend/RENDER_UPGRADE.md) for the full cutover procedure and supported data shapes.
 
-5. Firebase push notifications are optional at boot — the app logs a warning and
-   keeps running if the service-account file is missing (`FirebaseConfig.java`).
-   Add it later via Render's **Secret Files** (mount the JSON, point
-   `FIREBASE_SERVICE_ACCOUNT_PATH` at the mounted path).
-6. **Create Web Service** and wait for the first build (Maven build inside the
-   container takes a few minutes).
+## Current account settings
 
-## 4. Verify
+The private settings file already contains the actual approved addresses:
 
-Render gives a URL like `https://ima-organizer.onrender.com`.
-
-```bash
-curl -X POST https://ima-organizer.onrender.com/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"<seed owner username>","password":"<seed owner password>"}'
+```dotenv
+SPRING_PROFILES_ACTIVE=couples,couples-production
+COUPLES_EMAIL_ENABLED=false
+COUPLES_REGISTRATION_ENABLED=false
+COUPLES_PRIVATE_ACCOUNT_EMAILS=OWNER_EMAIL,RECIPIENT_EMAIL
 ```
 
-Should return a JWT.
+Keep the private account list after the import is disabled. It restricts login and active sessions while email delivery is off. SMTP credentials and `COUPLES_MAIL_FROM` are not required in this configuration; old `COUPLES_SMTP_*` settings can be removed. Existing R2/Firebase configuration still applies to media and push notifications.
 
-## 5. Point the mobile app at it
+## Verify and use the app
 
-`mobile/src/shared/api/client.ts` reads `VITE_API_URL`, defaulting to
-`localhost:8080`. Build for Capacitor with the Render URL:
+Open `https://ima-organizer.onrender.com`. These public API checks should return HTTP 200:
 
-```bash
-VITE_API_URL=https://ima-organizer.onrender.com npm run build
-npx cap sync android
+```sh
+curl -fsS https://ima-organizer.onrender.com/api/identity/config
+# {"emailEnabled":false,"registrationEnabled":false}
+curl -fsS https://ima-organizer.onrender.com/api/privacy/policy
 ```
 
-Then continue with the normal Android Studio signed-APK steps from `SETUP.md`.
+Sign in with the supplied email and the existing **app password**. No verification email is needed. The current login API is `POST /api/identity/login` with `email`, `password` and `deviceName`; `/api/auth/login` belongs to the previous app.
 
-## Temporary memories and Cloudflare R2
+For local frontend development, keep `mobile/.env`'s `VITE_API_URL` pointed at the Render service:
 
-Follow [backend/R2-SETUP.md](backend/R2-SETUP.md) before deploying the updated backend/mobile pair. The new backend queues previous memories for erasure on startup; it does not migrate them. R2 and the old Supabase deletion credentials must be server-only. Use a private R2 bucket; no public domain is required.
+```sh
+cd mobile
+npm run dev
+```
+
+For an Android update, build the frontend with the hosted API URL, run `npx cap sync android`, then rebuild/sign/install the APK using the existing Android project. Credentials currently stay in memory, so reopening/reloading requires sign-in.
+
+## SMTP at official launch
+
+When ready, configure your chosen SMTP provider in Render, set `COUPLES_EMAIL_ENABLED=true`, and validate delivery/verification/password recovery. Real email verification will then apply to the existing accounts too. Enable `COUPLES_REGISTRATION_ENABLED=true` only when you are ready for public signups. No email provider is selected by the current deployment configuration.

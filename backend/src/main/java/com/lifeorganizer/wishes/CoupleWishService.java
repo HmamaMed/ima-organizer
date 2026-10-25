@@ -52,6 +52,6 @@ public class CoupleWishService {
     /** Called outside a DB transaction by a durable cleanup job or account deletion. */
     public void cleanup(UUID id,UUID scope){
         var photos=jdbc.queryForList("select object_key from wish_photos p where p.id=? and p.couple_id=? and not exists(select 1 from wishes w where w.photo_id=p.id) and (p.upload_state='DELETING' or p.created_at<=current_timestamp-interval '24 hours') and not(p.upload_state='UPLOADING' and p.created_at>current_timestamp-interval '10 minutes')",String.class,id,scope);
-        for(String object:photos){if(!object.equals(key(scope,id)))throw new IllegalStateException("Photo ownership could not be confirmed");storage.deleteObject(object);jdbc.update("delete from wish_photos where id=? and couple_id=? and not exists(select 1 from wishes where photo_id=?)",id,scope,id);}
+        for(String object:photos){boolean imported=Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from imported_wish_photos i join wish_photos p on p.id=i.id where i.id=? and i.object_key=? and p.object_key=i.object_key and p.couple_id=?)",Boolean.class,id,object,scope));if(!object.equals(key(scope,id))&&!imported)throw new IllegalStateException("Photo ownership could not be confirmed");storage.deleteObject(object);jdbc.update("delete from wish_photos where id=? and couple_id=? and not exists(select 1 from wishes where photo_id=?)",id,scope,id);}
     }
 }

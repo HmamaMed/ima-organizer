@@ -26,12 +26,14 @@ public class IdentityService {
     private final JdbcTemplate jdbc;
     private final JobStore jobs;
     private final boolean registrationEnabled;
+    private final AccountAccessPolicy access;
 
     public IdentityService(UserRepository users, PasswordEncoder passwords, JwtService jwt, SessionStore sessions,
                            SecretTokens tokens, JdbcTemplate jdbc, JobStore jobs,
-                           @Value("${app.identity.registration-enabled:false}") boolean registrationEnabled) {
+                           @Value("${app.identity.registration-enabled:false}") boolean registrationEnabled, AccountAccessPolicy access) {
         this.users = users; this.passwords = passwords; this.jwt = jwt; this.sessions = sessions;
         this.tokens = tokens; this.jdbc = jdbc; this.jobs = jobs; this.registrationEnabled = registrationEnabled;
+        this.access = access;
     }
     public record Register(@NotBlank @Email @Size(max=320) String email, @NotBlank @Size(max=100) String name,
                            @NotBlank @Size(min=12,max=72) String password, @NotBlank @Size(max=20) String locale, @NotBlank @Size(max=100) String timeZone) {}
@@ -41,9 +43,13 @@ public class IdentityService {
     public record Reset(@NotBlank @Size(max=512) String token, @NotBlank @Size(min=12,max=72) String password) {}
     public record PasswordInput(@NotBlank @Size(max=72) String password) {}
     public record Settings(@NotBlank @Size(max=100) String name, @NotBlank @Size(max=20) String locale, @NotBlank @Size(max=100) String timeZone) {}
-    public record Account(UUID userId, String name, String email, boolean emailVerified, String locale, String timeZone) {
-        public static Account from(User user) { return new Account(user.getId(), user.getName(), user.getEmail(), user.isEmailVerified(), user.getLocale(), user.getTimeZone()); }
+    public record Account(UUID userId, String name, String email, boolean emailVerified, String locale, String timeZone, boolean emailVerificationRequired) {
+        public static Account from(User user, boolean verificationRequired) { return new Account(user.getId(), user.getName(), user.getEmail(), user.isEmailVerified(), user.getLocale(), user.getTimeZone(), verificationRequired); }
     }
+    public record Configuration(boolean emailEnabled, boolean registrationEnabled) {}
+    public Configuration configuration() { return new Configuration(access.emailEnabled(), registrationEnabled && access.emailEnabled()); }
+    public Account account(User user) { return Account.from(user, access.requiresEmailVerification(user)); }
+    public void requireVerified(User user) { access.requireVerified(user); }
     public record Credentials(String token, String refreshToken, Account user) {}
     public static String normalize(String email) { return email.trim().toLowerCase(Locale.ROOT); }
     private void passwordLength(String value) {
@@ -51,7 +57,7 @@ public class IdentityService {
     }
     @Transactional
     public void register(Register request) {
-        if (!registrationEnabled) throw new AccessDeniedException("Registration is not open in this environment");
+        if (!configuration().registrationEnabled()) throw new AccessDeniedException("Registration is not open in this environment");
         passwordLength(request.password());
         String email = normalize(request.email());
         Optional<User> existing = users.findByEmail(email);
@@ -67,7 +73,7 @@ public class IdentityService {
         UUID id = UUID.randomUUID(); String raw = id + "." + tokens.random();
         Instant now = Instant.now();
         jdbc.update("insert into refresh_sessions (id, user_id, token_hash, device_name, authenticated_at, expires_at) values (?, ?, ?, ?, ?, ?)", id, user.getId(), SecretTokens.hash(raw), request.deviceName(), Timestamp.from(now), Timestamp.from(now.plus(Duration.ofDays(30))));
-        return new Credentials(jwt.generateToken(user, id), raw, Account.from(user));
+        return new Credentials(jwt.generateToken(user, id), raw, account(user));
     }
     @Transactional(noRollbackFor = InvalidCredentialsException.class)
     public Credentials refresh(String raw) {
@@ -87,10 +93,11 @@ public class IdentityService {
         String next = id + "." + tokens.random();
         jdbc.update("insert into refresh_token_history (token_hash, session_id) values (?, ?)", hash, id);
         jdbc.update("update refresh_sessions set token_hash = ? where id = ?", SecretTokens.hash(next), id);
-        return new Credentials(jwt.generateToken(user, id), next, Account.from(user));
+        return new Credentials(jwt.generateToken(user, id), next, account(user));
     }
     @Transactional
     public void emailAction(String email, String kind) {
+        access.requireEmailDelivery();
         users.findByEmail(normalize(email)).filter(u -> !u.isDeletionRequested()).filter(u -> !kind.equals("VERIFY") || !u.isEmailVerified())
                 .ifPresent(u -> { if(sessions.allowedAccount(u.getId())) { users.lockById(u.getId()); challenge(u, kind); } });
     }
@@ -112,12 +119,14 @@ public class IdentityService {
     }
     @Transactional
     public void verify(String raw) {
+        access.requireEmailDelivery();
         User user = users.lockById(consume(raw, "VERIFY")).orElseThrow();
         if (!sessions.allowedAccount(user.getId())) throw new IllegalArgumentException("Account is unavailable");
         user.verifyEmail();
     }
     @Transactional
     public void reset(Reset request) {
+        access.requireEmailDelivery();
         passwordLength(request.password());
         User user = users.lockById(consume(request.token(), "RESET")).orElseThrow();
         if (!sessions.allowedAccount(user.getId())) throw new IllegalArgumentException("Account is unavailable");
@@ -127,15 +136,12 @@ public class IdentityService {
     @Transactional
     public Account settings(User caller, Settings request) {
         User user = users.lockById(caller.getId()).orElseThrow();
-        user.updateSettings(request.name(), request.locale(), request.timeZone()); return Account.from(user);
+        user.updateSettings(request.name(), request.locale(), request.timeZone()); return account(user);
     }
     @Transactional
     public void reauthenticate(User caller, UUID session, String password) {
         User user = users.findById(caller.getId()).orElseThrow();
         if (!passwords.matches(password, user.getPasswordHash())) throw new AccessDeniedException("Incorrect password. Try again.");
         jdbc.update("update refresh_sessions set authenticated_at = current_timestamp where id = ? and user_id = ? and revoked_at is null", session, user.getId());
-    }
-    public static void requireVerified(User user) {
-        if (!user.isEmailVerified() || user.isDeletionRequested()) throw new AccessDeniedException("Verify your email before pairing");
     }
 }

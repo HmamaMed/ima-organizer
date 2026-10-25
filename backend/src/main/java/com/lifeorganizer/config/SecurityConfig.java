@@ -59,6 +59,11 @@ public class SecurityConfig {
                         .accessDeniedHandler(forbiddenHandler()))
                 .authorizeHttpRequests(auth -> {
                     if (couplesMode) {
+                        auth.requestMatchers(HttpMethod.GET, "/api/identity/config").permitAll();
+                        auth.requestMatchers(HttpMethod.GET, "/", "/home", "/join", "/verify", "/reset", "/delete-account", "/privacy",
+                                "/profile", "/notes", "/memories", "/watchlist", "/recipes", "/wishes", "/inbox", "/birthdays", "/notifications",
+                                "/index.html", "/assets/**", "/fonts/**", "/favicon.ico", "/favicon.svg", "/favicon-*.png", "/icon.svg").permitAll();
+                        auth.requestMatchers(HttpMethod.HEAD, "/", "/index.html", "/assets/**").permitAll();
                         auth.requestMatchers(HttpMethod.GET, "/api/privacy/policy").permitAll();
                         auth.requestMatchers(HttpMethod.POST, "/api/identity/register", "/api/identity/login", "/api/identity/refresh",
                                 "/api/identity/verification-email", "/api/identity/password-email", "/api/identity/verify", "/api/identity/reset-password").permitAll();

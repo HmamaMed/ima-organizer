@@ -48,7 +48,7 @@ function Routes() {
     return { action, actionToken } as { action: 'verify' | 'reset' | null; actionToken: string };
   });
   if (pathname === '/privacy') return <CouplesPrivacyPage />;
-  if (!user || !user.emailVerified || link.action) return <CouplesAccessPage action={link.action} actionToken={link.actionToken} onActionDone={() => { setLink({ action: null, actionToken: '' }); window.history.replaceState(null, '', '/home'); }} />;
+  if (!user || (!user.emailVerified && user.emailVerificationRequired !== false) || link.action) return <CouplesAccessPage action={link.action} actionToken={link.actionToken} onActionDone={() => { setLink({ action: null, actionToken: '' }); window.history.replaceState(null, '', '/home'); }} />;
   if (!space) return <IonPage><AppScreen><FeedbackState kind={error ? 'failure' : 'loading'} heading={error || 'On retrouve votre espace…'} onRetry={error ? () => { void refreshState(); } : undefined} />{!loading && !error && <AppButton onClick={() => { void refreshState(); }}>Retrouver mon espace</AppButton>}</AppScreen></IonPage>;
   return <IonRouterOutlet key={space.coupleId ?? 'unpaired'}>
     <Route exact path="/home"><Home /></Route>

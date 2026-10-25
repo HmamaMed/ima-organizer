@@ -15,14 +15,17 @@ public class IdentityEmailHandler implements DurableJobHandler {
     private final SecretTokens tokens;
     private final JavaMailSender mail;
     private final String publicUrl, from;
+    private final AccountAccessPolicy access;
     public IdentityEmailHandler(JdbcTemplate jdbc, SecretTokens tokens, JavaMailSender mail,
-                               @Value("${app.public-url}") String publicUrl, @Value("${app.identity.mail-from}") String from) {
+                               @Value("${app.public-url}") String publicUrl, @Value("${app.identity.mail-from}") String from, AccountAccessPolicy access) {
         this.jdbc=jdbc; this.tokens=tokens; this.mail=mail; this.publicUrl=publicUrl.replaceAll("/+$", ""); this.from=from;
+        this.access=access;
         var uri=java.net.URI.create(publicUrl);
         if (uri.getHost()==null || !java.util.List.of("http","https").contains(uri.getScheme())) throw new IllegalArgumentException("Public URL must be an HTTP(S) origin");
     }
     public String kind() { return "IDENTITY_EMAIL"; }
     public void process(JobStore.Job job) {
+        if (!access.emailEnabled()) return;
         var actions=jdbc.query("select a.kind, u.email from identity_actions a join users u on u.id = a.user_id where a.id = ? and a.consumed_at is null and a.expires_at > current_timestamp and not u.deletion_requested and not exists(select 1 from deletion_markers d where d.user_id=u.id)", (r,n) -> java.util.Map.entry(r.getString("kind"),r.getString("email")),job.resourceId());
         if (actions.isEmpty()) return;
         var action=actions.getFirst(); boolean reset=action.getKey().equals("RESET");

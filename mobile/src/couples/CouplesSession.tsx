@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { apiRequest, setAuthenticationRecovery, setCoupleScopeProvider, setUnauthorizedHandler, setScopeChangeHandler } from '../shared/api/client';
 import { AuthSessionProvider } from '../shared/auth/AuthContext';
 
-import { Context, type Account, type Credentials, type Session, type Space } from './sessionContext';
+import { Context, type Account, type AccessConfiguration, type Credentials, type Session, type Space } from './sessionContext';
 /** Credentials stay in memory. Restarting the app requires login until a Keystore-backed integration is shipped. */
 export function CouplesSession({ children }: { children: ReactNode }) {
   const [credentials, setCredentials] = useState<Credentials | null>(null);
@@ -14,6 +14,8 @@ export function CouplesSession({ children }: { children: ReactNode }) {
   const generation = useRef(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [access, setAccess] = useState<AccessConfiguration>({ emailEnabled: false, registrationEnabled: false });
+  useEffect(() => { void apiRequest<AccessConfiguration>('/api/identity/config').then(setAccess).catch(() => {}); }, []);
   const clear = useCallback(() => {
     generation.current++; current.current = null; scope.current = null; previousTokens.current.clear();
     setCredentials(null); setSpace(null); setError(''); setLoading(false);
@@ -73,7 +75,7 @@ export function CouplesSession({ children }: { children: ReactNode }) {
     document.addEventListener('visibilitychange', refresh);
     return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', refresh); };
   }, [refreshState]);
-  const value = useMemo<Session>(() => ({ token: credentials?.token ?? null, user: credentials?.user ?? null, space, loading, error, login, logout, refreshState }), [credentials, space, loading, error, login, logout, refreshState]);
+  const value = useMemo<Session>(() => ({ token: credentials?.token ?? null, user: credentials?.user ?? null, space, loading, error, access, login, logout, refreshState }), [credentials, space, loading, error, access, login, logout, refreshState]);
   const legacy = useMemo(() => ({ token: value.token, user: value.user ? { userId: value.user.userId, name: value.user.name, timeZone: value.user.timeZone, role: 'MEMBER' as const } : null, isAuthenticated: !!value.token, login, logout: () => { void logout(); } }), [value.token, value.user, login, logout]);
   return <Context.Provider value={value}><AuthSessionProvider value={legacy}>{children}</AuthSessionProvider></Context.Provider>;
 }

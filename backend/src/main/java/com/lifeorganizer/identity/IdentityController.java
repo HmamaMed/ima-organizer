@@ -36,7 +36,8 @@ public class IdentityController {
     public void verify(@Valid @RequestBody IdentityService.TokenInput body, HttpServletRequest request) { limits.check("verify:"+request.getRemoteAddr(),30,900); identity.verify(body.token()); }
     @PostMapping("/reset-password") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reset(@Valid @RequestBody IdentityService.Reset body, HttpServletRequest request) { limits.check("reset:"+request.getRemoteAddr(),30,900); identity.reset(body); }
-    @GetMapping("/me") public IdentityService.Account me(@AuthenticationPrincipal User user) { return IdentityService.Account.from(user); }
+    @GetMapping("/config") public IdentityService.Configuration configuration() { return identity.configuration(); }
+    @GetMapping("/me") public IdentityService.Account me(@AuthenticationPrincipal User user) { return identity.account(user); }
     @PutMapping("/me") public IdentityService.Account settings(@AuthenticationPrincipal User user, @Valid @RequestBody IdentityService.Settings body) { return identity.settings(user,body); }
     public UUID session(HttpServletRequest request) { return jwt.extractSessionId(request.getHeader("Authorization").substring(7)); }
     @PostMapping("/reauthenticate") @ResponseStatus(HttpStatus.NO_CONTENT)

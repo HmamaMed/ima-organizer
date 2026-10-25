@@ -24,12 +24,14 @@ public class CoupleService {
     private final JdbcTemplate jdbc;
     private final SecretTokens tokens;
     private final JobStore jobs;
+    private final IdentityService identity;
     private final String publicUrl;
     private final int retentionDays;
     public CoupleService(UserRepository users, CoupleRepository couples, CoupleMembershipRepository memberships,
-                         CoupleAccess access, JdbcTemplate jdbc, SecretTokens tokens, JobStore jobs,
+                         CoupleAccess access, JdbcTemplate jdbc, SecretTokens tokens, JobStore jobs, IdentityService identity,
                          @Value("${app.public-url}") String publicUrl,@Value("${app.privacy.closed-retention-days:30}")int retentionDays) {
         this.users=users; this.couples=couples; this.memberships=memberships; this.access=access;
+        this.identity=identity;
         this.jdbc=jdbc; this.tokens=tokens; this.jobs=jobs; this.retentionDays=retentionDays; this.publicUrl=publicUrl.replaceAll("/+$", "");
     }
     public record Member(UUID userId, String name) {}
@@ -51,7 +53,7 @@ public class CoupleService {
     }
     @Transactional
     public Space create(User caller) {
-        User user=users.lockById(caller.getId()).orElseThrow(); IdentityService.requireVerified(user);
+        User user=users.lockById(caller.getId()).orElseThrow(); identity.requireVerified(user);
         if (memberships.findByUserIdAndLeftAtIsNull(user.getId()).isPresent()) return current(user);
         Couple couple=couples.saveAndFlush(new Couple(Instant.now()));
         memberships.saveAndFlush(new CoupleMembership(couple,user,1,Instant.now()));
@@ -59,7 +61,7 @@ public class CoupleService {
     }
     @Transactional
     public Invitation invite(User caller, String intendedEmail) {
-        User user=users.lockById(caller.getId()).orElseThrow(); IdentityService.requireVerified(user);
+        User user=users.lockById(caller.getId()).orElseThrow(); identity.requireVerified(user);
         UUID scope=access.requireScopeForWrite(user);
         if (couples.findById(scope).orElseThrow().getStatus()!=Couple.Status.WAITING) throw new IllegalStateException("Your couple already has two members");
         String email=intendedEmail==null || intendedEmail.isBlank() ? null : IdentityService.normalize(intendedEmail);
@@ -82,14 +84,14 @@ public class CoupleService {
         if (!memberships.existsByUserIdAndCoupleIdAndLeftAtIsNull(invite.inviter(),invite.couple())) throw new NoSuchElementException("Invitation is unavailable or expired");
     }
     public Preview preview(User caller, String raw) {
-        IdentityService.requireVerified(caller);
+        identity.requireVerified(caller);
         var invite=invitation(raw,false); validate(invite,caller);
         if (couples.findById(invite.couple()).orElseThrow().getStatus()!=Couple.Status.WAITING) throw new NoSuchElementException("Invitation is unavailable or expired");
         return new Preview(users.findById(invite.inviter()).orElseThrow().getName(),invite.expiry());
     }
     @Transactional
     public Space accept(User caller, String raw) {
-        User user=users.lockById(caller.getId()).orElseThrow(); IdentityService.requireVerified(user);
+        User user=users.lockById(caller.getId()).orElseThrow(); identity.requireVerified(user);
         if (memberships.findByUserIdAndLeftAtIsNull(user.getId()).isPresent()) throw new IllegalStateException("Disconnect from your current space before joining another");
         Invite initial=invitation(raw,false);
         Couple couple=couples.lockById(initial.couple()).orElseThrow();

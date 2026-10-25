@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** Real PostgreSQL is required: do not replace partial indexes/locking with H2 coverage. */
 @SpringBootTest(properties = {"app.jwt.secret=couples-test-signing-key-with-at-least-32-characters",
-    "app.identity.token-secret=couples-test-action-secret-with-at-least-32-characters", "app.jobs.enabled=false", "app.identity.registration-enabled=true"})
+    "app.identity.token-secret=couples-test-action-secret-with-at-least-32-characters", "app.jobs.enabled=false", "app.identity.registration-enabled=true", "app.couples-firebase-path="})
 @ActiveProfiles("couples")
 @AutoConfigureMockMvc
 @Testcontainers
@@ -102,7 +102,7 @@ class CouplesPostgresIntegrationTests {
 
     @Test void freshMigrationsValidateAndLegacyBackgroundWritersAreAbsent() {
         flyway.validate();
-        assertThat(flyway.info().applied()).hasSize(7);
+        assertThat(flyway.info().applied()).hasSize(8);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         for (String bean : List.of("dataSeeder", "gymPlanSeeder", "schemaFixups", "noteScheduler", "memoryCleanupScheduler", "wishPhotoCleanup", "birthdayScheduler", "firebaseConfig")) {
             assertThat(context.containsBean(bean)).as(bean).isFalse();
@@ -258,7 +258,7 @@ class CouplesPostgresIntegrationTests {
             assertThatThrownBy(latest::migrate).isInstanceOf(org.flywaydb.core.api.FlywayException.class);
             // Ownership must be explicitly classified before strict constraints can be installed.
             jdbc.update("update " + schema + ".watch_items set couple_id = ?, created_by_id = ? where id = ?", couple, member, item);
-            assertThat(latest.migrate().migrationsExecuted).isEqualTo(6);
+            assertThat(latest.migrate().migrationsExecuted).isEqualTo(7);
             latest.validate();
             assertThat(jdbc.queryForObject("select title from " + schema + ".watch_items where id = ?", String.class, item)).isEqualTo("Preserved title");
             assertThat(jdbc.queryForObject("select couple_id from " + schema + ".watch_items where id = ?", UUID.class, item)).isEqualTo(couple);

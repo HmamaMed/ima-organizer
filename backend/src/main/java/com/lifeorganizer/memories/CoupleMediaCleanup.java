@@ -24,7 +24,8 @@ public class CoupleMediaCleanup {
         return jdbc.query("select id,object_key from media_assets where group_id=? and couple_id=?",(r,n)->new ObjectRef(r.getObject("id",UUID.class),r.getString("object_key")),group,couple);
     }
     private void deleteObject(ObjectRef asset,UUID couple) {
-        if (!asset.key().equals("couples/"+couple+"/assets/"+asset.id())) throw new IllegalStateException("Object ownership could not be confirmed");
+        boolean imported = Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from imported_media_assets i join media_assets a on a.id=i.id where i.id=? and i.object_key=? and a.object_key=i.object_key and a.couple_id=?)",Boolean.class,asset.id(),asset.key(),couple));
+        if (!asset.key().equals("couples/"+couple+"/assets/"+asset.id()) && !imported) throw new IllegalStateException("Object ownership could not be confirmed");
         storage.deleteObject(asset.key());
     }
     public void group(UUID group,UUID couple) {

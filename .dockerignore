@@ -1,0 +1,14 @@
+.git
+.idea
+**/node_modules
+**/target
+**/dist
+mobile/android
+design-validation
+**/.env
+**/.env.*
+.*.env
+.render-upgrade.*
+**/firebase-service-account.json
+**/google-services.json
+**/*.log

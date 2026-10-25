@@ -16,6 +16,7 @@ class CouplesProductionGuardTests {
             .withProperty("app.jwt.secret","production-test-jwt-secret-with-more-than-32-bytes")
             .withProperty("app.identity.token-secret","production-test-action-secret-with-more-than-32-bytes")
             .withProperty("spring.mail.host","smtp.example.test").withProperty("spring.mail.properties.mail.smtp.starttls.enable","true")
+            .withProperty("spring.mail.properties.mail.smtp.auth","true").withProperty("spring.mail.username","test-login").withProperty("spring.mail.password","test-password")
             .withProperty("app.identity.mail-from","couples@example.test").withProperty("app.support-email","support@example.test")
             .withProperty("app.couples-firebase-path",credentials.toString()).withProperty("spring.jpa.hibernate.ddl-auto","validate")
             .withProperty("spring.flyway.enabled","true");
@@ -30,5 +31,21 @@ class CouplesProductionGuardTests {
     @Test void refusesDevelopmentSecretsAndMissingMediaConfiguration() throws Exception {
         var env=environment();env.setProperty("app.jwt.secret",env.getProperty("app.identity.token-secret"));assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate()).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(()->new CouplesProductionGuard(environment(),new R2Properties("","","","")).validate()).isInstanceOf(IllegalStateException.class);
+    }
+    @Test void refusesUnfilledSmtpCredentials() throws Exception {
+        var env=environment();env.setProperty("spring.mail.password","REPLACE_WITH_SMTP_PASSWORD");
+        assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate()).isInstanceOf(IllegalStateException.class).hasMessageContaining("SMTP placeholders");
+    }
+    @Test void acceptsPrivateDeploymentWithoutSmtpCredentials() throws Exception {
+        var env=environment();env.setProperty("app.identity.email-enabled","false");
+        env.setProperty("app.identity.private-account-emails","owner@example.test,recipient@example.test");
+        env.setProperty("spring.mail.host","");env.setProperty("spring.mail.username","");env.setProperty("spring.mail.password","");env.setProperty("app.identity.mail-from","");
+        assertThatCode(()->new CouplesProductionGuard(env,storage()).validate()).doesNotThrowAnyException();
+    }
+    @Test void emailDisabledRequiresApprovedAccountsAndClosedRegistration() throws Exception {
+        var env=environment();env.setProperty("app.identity.email-enabled","false");
+        assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate()).isInstanceOf(IllegalStateException.class).hasMessageContaining("private-account-emails");
+        env.setProperty("app.identity.private-account-emails","owner@example.test");env.setProperty("app.identity.registration-enabled","true");
+        assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate()).isInstanceOf(IllegalStateException.class).hasMessageContaining("registration requires email");
     }
 }

@@ -8,7 +8,7 @@ import AppButton from '../shared/ui/AppButton';
 import { useCouplesSession } from './sessionContext';
 
 export default function CouplesAccessPage({ action, actionToken, onActionDone }: { action: 'verify' | 'reset' | null; actionToken: string; onActionDone: () => void }) {
-  const { login, logout, user, refreshState } = useCouplesSession();
+  const { login, logout, user, refreshState, access } = useCouplesSession();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [name, setName] = useState('');
   const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [message, setMessage] = useState(() => new URLSearchParams(window.location.search).get('requested') === '1' ? 'Demande de suppression enregistrée. Vos connexions ont été révoquées. La suppression de vos données se poursuivra automatiquement.' : '');
@@ -27,10 +27,10 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
       } else { await apiRequest('/api/identity/password-email', { method: 'POST', body: { email } }); setMessage('Si un compte correspond, un lien de réinitialisation vous sera envoyé.'); }
     });
   }
-  const verificationNeeded = !!user && !user.emailVerified && !action;
+  const verificationNeeded = !!user && !user.emailVerified && user.emailVerificationRequired !== false && !action;
   return <IonPage lang="fr"><AppScreen title="Votre espace à deux." subtitle="Des mots, des moments et des projets à partager.">
     <div className="couple-access"><BrandLogo variant="stacked" />{window.location.pathname === '/delete-account' && <p>Pour supprimer votre compte sans l’application, connectez-vous ici puis confirmez la suppression dans « Mes données ».</p>}
-      {verificationNeeded ? <section className="couple-card"><h2>Confirmez votre adresse e-mail</h2><p>Un lien vous attend dans la boîte de {user.email}. Vérifiez aussi les courriers indésirables.</p>
+      {action && !access.emailEnabled ? <section className="couple-card"><p>Ce lien n’est pas disponible pour le moment.</p><AppButton onClick={onActionDone}>Retour à la connexion</AppButton></section> : verificationNeeded ? <section className="couple-card"><h2>Confirmez votre adresse e-mail</h2><p>Un lien vous attend dans la boîte de {user.email}. Vérifiez aussi les courriers indésirables.</p>
         <AppButton busy={busy} onClick={() => { void perform(async () => { await apiRequest('/api/identity/verification-email', { method: 'POST', body: { email: user.email } }); setMessage('Un nouveau lien a été demandé.'); }); }}>Renvoyer le lien</AppButton>
         <AppButton variant="secondary" onClick={() => { void refreshState(); }}>J’ai confirmé mon adresse</AppButton><AppButton variant="quiet" onClick={() => { void logout(); }}>Changer de compte</AppButton>
       </section> : <form onSubmit={submit} className="couple-form">
@@ -39,7 +39,7 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
         {!action && mode === 'register' && <label>Votre prénom<input autoComplete="given-name" value={name} onChange={e => setName(e.target.value)} required maxLength={100} /></label>}
         {(action === 'reset' || (!action && mode !== 'forgot')) && <label>Mot de passe<input type="password" autoComplete={action === 'reset' || mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} minLength={action === 'reset' || mode === 'register' ? 12 : 1} maxLength={72} required />{(action === 'reset' || mode === 'register') && <small>Au moins 12 caractères.</small>}</label>}
         <AppButton type="submit" busy={busy}>{action === 'verify' ? 'Confirmer mon adresse' : action === 'reset' ? 'Enregistrer le mot de passe' : mode === 'register' ? 'Créer mon compte' : mode === 'forgot' ? 'Recevoir un lien' : 'Entrer dans mon espace'}</AppButton>
-        {!action && <div className="couple-actions"><AppButton variant="quiet" onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}>{mode === 'register' ? 'J’ai déjà un compte' : 'Créer un compte'}</AppButton><AppButton variant="quiet" onClick={() => { setMode(mode === 'forgot' ? 'login' : 'forgot'); setError(''); }}>{mode === 'forgot' ? 'Retour à la connexion' : 'Mot de passe oublié'}</AppButton></div>}
+        {!action && <div className="couple-actions">{access.registrationEnabled && <AppButton variant="quiet" onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}>{mode === 'register' ? 'J’ai déjà un compte' : 'Créer un compte'}</AppButton>}{access.emailEnabled && <AppButton variant="quiet" onClick={() => { setMode(mode === 'forgot' ? 'login' : 'forgot'); setError(''); }}>{mode === 'forgot' ? 'Retour à la connexion' : 'Mot de passe oublié'}</AppButton>}</div>}
         {action && <AppButton variant="quiet" onClick={onActionDone}>Retour</AppButton>}
       </form>}
       <Link to="/privacy">Votre espace et vos données</Link>

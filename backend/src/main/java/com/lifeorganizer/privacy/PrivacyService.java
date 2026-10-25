@@ -18,6 +18,7 @@ import java.util.*;
 @Profile("couples")
 public class PrivacyService {
     private final UserRepository users;
+    private final com.lifeorganizer.identity.AccountAccessPolicy accountAccess;
     private final CoupleService couples;
     private final SessionStore sessions;
     private final JdbcTemplate jdbc;
@@ -26,7 +27,7 @@ public class PrivacyService {
     private final CoupleMemoryService memories;
     private final com.lifeorganizer.recipes.CoupleRecipeService recipes;
     private final com.lifeorganizer.wishes.CoupleWishService wishes;
-    public PrivacyService(UserRepository users,CoupleService couples,SessionStore sessions,JdbcTemplate jdbc,JobStore jobs,CoupleNoteService notes,CoupleMemoryService memories,com.lifeorganizer.recipes.CoupleRecipeService recipes,com.lifeorganizer.wishes.CoupleWishService wishes) { this.users=users;this.couples=couples;this.sessions=sessions;this.jdbc=jdbc;this.jobs=jobs;this.notes=notes;this.memories=memories;this.recipes=recipes;this.wishes=wishes; }
+    public PrivacyService(UserRepository users,CoupleService couples,SessionStore sessions,JdbcTemplate jdbc,JobStore jobs,CoupleNoteService notes,CoupleMemoryService memories,com.lifeorganizer.recipes.CoupleRecipeService recipes,com.lifeorganizer.wishes.CoupleWishService wishes, com.lifeorganizer.identity.AccountAccessPolicy accountAccess) { this.accountAccess=accountAccess; this.users=users;this.couples=couples;this.sessions=sessions;this.jdbc=jdbc;this.jobs=jobs;this.notes=notes;this.memories=memories;this.recipes=recipes;this.wishes=wishes; }
     @Transactional public UUID requestDeletion(User caller) {
         User user=users.lockById(caller.getId()).orElseThrow();
         var existing=jdbc.queryForList("select id from deletion_requests where user_id=?",UUID.class,user.getId());
@@ -40,7 +41,7 @@ public class PrivacyService {
         return id;
     }
     @Transactional(readOnly=true) public Map<String,Object> export(User user) {
-        Map<String,Object> data=new LinkedHashMap<>(); data.put("account",IdentityService.Account.from(user));data.put("exportedAt",Instant.now());data.put("personalBirthdays",jdbc.queryForList("select id,label,birthday_month,birthday_day,time_zone from birthday_reminders where user_id=?",user.getId()));
+        Map<String,Object> data=new LinkedHashMap<>(); data.put("account",IdentityService.Account.from(user,accountAccess.requiresEmailVerification(user)));data.put("exportedAt",Instant.now());data.put("personalBirthdays",jdbc.queryForList("select id,label,birthday_month,birthday_day,time_zone from birthday_reminders where user_id=?",user.getId()));
         var space=couples.current(user);
         if (space.coupleId()==null) return data;
         // Only the requester's own contributions; closed-space exports need a separately defined policy.

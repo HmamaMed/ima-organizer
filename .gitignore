@@ -12,3 +12,5 @@ google-services.json
 
 # Isolated local couples development secrets
 .couples-dev.env
+.render-upgrade.env
+.render-upgrade.sql

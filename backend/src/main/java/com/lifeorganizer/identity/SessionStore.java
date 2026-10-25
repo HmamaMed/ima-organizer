@@ -10,7 +10,8 @@ import java.util.*;
 @Profile("couples")
 public class SessionStore {
     private final JdbcTemplate jdbc;
-    public SessionStore(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+    private final AccountAccessPolicy access;
+    public SessionStore(JdbcTemplate jdbc, AccountAccessPolicy access) { this.jdbc = jdbc; this.access = access; }
     public record Session(UUID id, UUID userId, String hash, Instant authenticatedAt, Instant expiresAt, Instant revokedAt) {}
     public Optional<Session> lock(UUID id) {
         return jdbc.query("select * from refresh_sessions where id = ? for update", (r, n) -> new Session(
@@ -19,10 +20,10 @@ public class SessionStore {
                 r.getTimestamp("revoked_at") == null ? null : r.getTimestamp("revoked_at").toInstant()), id).stream().findFirst();
     }
     public boolean active(UUID id, UUID user) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from refresh_sessions where id = ? and user_id = ? and revoked_at is null and expires_at > current_timestamp and not exists(select 1 from deletion_markers where user_id = ?))", Boolean.class, id, user, user));
+        return allowedAccount(user) && Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from refresh_sessions where id = ? and user_id = ? and revoked_at is null and expires_at > current_timestamp and not exists(select 1 from deletion_markers where user_id = ?))", Boolean.class, id, user, user));
     }
     public boolean allowedAccount(UUID user) {
-        return Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from users u where u.id=? and not u.deletion_requested and not exists(select 1 from deletion_markers d where d.user_id=u.id))",Boolean.class,user));
+        return jdbc.query("select u.email from users u where u.id=? and not u.deletion_requested and not exists(select 1 from deletion_markers d where d.user_id=u.id)", (rows,n) -> access.allowsAccount(rows.getString(1)), user).stream().anyMatch(Boolean.TRUE::equals);
     }
     public void requireRecent(UUID session, UUID user) {
         boolean recent = Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from refresh_sessions where id = ? and user_id = ? and revoked_at is null and expires_at > current_timestamp and authenticated_at > current_timestamp - interval '10 minutes')", Boolean.class, session, user));
