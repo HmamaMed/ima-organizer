@@ -1,5 +1,7 @@
 package com.lifeorganizer.notes;
 
+import org.springframework.context.annotation.Profile;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,6 +18,7 @@ import java.util.UUID;
  * now}), so a delayed run still delivers an overdue note rather than losing it.
  */
 @Component
+@Profile("!couples")
 public class NoteScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(NoteScheduler.class);

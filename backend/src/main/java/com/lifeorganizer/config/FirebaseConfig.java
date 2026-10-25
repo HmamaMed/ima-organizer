@@ -1,5 +1,7 @@
 package com.lifeorganizer.config;
 
+import org.springframework.context.annotation.Profile;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -20,6 +22,7 @@ import java.io.IOException;
  * via an environment variable or a gitignored local file.
  */
 @Configuration
+@Profile("!couples")
 public class FirebaseConfig {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseConfig.class);

@@ -1,5 +1,7 @@
 package com.lifeorganizer.birthdays;
 
+import org.springframework.context.annotation.Profile;
+
 import org.slf4j.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -7,6 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Component
+@Profile("!couples")
 public class BirthdayScheduler {
     private static final Logger log = LoggerFactory.getLogger(BirthdayScheduler.class);
     private final BirthdayRepository reminders;

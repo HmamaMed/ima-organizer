@@ -7,6 +7,8 @@ export const WISH_CATEGORIES = [
 ] as const;
 export type WishCategory = typeof WISH_CATEGORIES[number]['value'];
 export interface Wish {
+  ownerId?: string;
+  ownerName?: string;
   id: string;
   title: string;
   category: WishCategory;
@@ -17,7 +19,7 @@ export interface Wish {
   createdAt: string;
 }
 export type WishInput = Pick<Wish, 'title' | 'category' | 'details' | 'link' | 'photoId'>;
-export const fetchWishes = (token: string) => apiRequest<Wish[]>('/api/wishes', { token });
+export const fetchWishes = (token: string, page = 0) => apiRequest<Wish[]>(`/api/wishes?page=${page}`, { token });
 export const saveWish = (token: string, body: WishInput, id?: string) =>
   apiRequest<Wish>(id ? `/api/wishes/${id}` : '/api/wishes', { token, method: id ? 'PUT' : 'POST', body });
 export const uploadWishPhoto = (token: string, file: File) => apiUpload<{ id: string }>('/api/wishes/photos', file, token);

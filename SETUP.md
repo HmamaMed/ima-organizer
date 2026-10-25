@@ -1,5 +1,7 @@
 # Setup — Exact Commands
 
+For the current app, use [the current setup and Render configuration](backend/COUPLES_FOUNDATION.md). The scaffold instructions below describe the original personal app; they do not configure the updated account system or its migrations.
+
 ## Prerequisites
 
 - Node.js 18+ and npm

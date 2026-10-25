@@ -1,5 +1,7 @@
 package com.lifeorganizer.seed;
 
+import org.springframework.context.annotation.Profile;
+
 import com.lifeorganizer.gym.DayExercise;
 import com.lifeorganizer.gym.LibraryExercise;
 import com.lifeorganizer.gym.LibraryExerciseRepository;
@@ -26,6 +28,7 @@ import java.util.Map;
  */
 @Component
 @Order(1)
+@Profile("!couples")
 public class GymPlanSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(GymPlanSeeder.class);

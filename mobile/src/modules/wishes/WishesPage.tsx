@@ -16,8 +16,10 @@ const ICONS = { OBJECT: giftOutline, BOOK: bookOutline, EXPERIENCE: sparklesOutl
 
 export default function WishesPage() {
   const { user, token } = useAuth();
-  const canEdit = user?.role === 'RECIPIENT';
+  const canEdit = user?.role === 'RECIPIENT' || user?.role === 'MEMBER';
   const [entries, setEntries] = useState<Wish[] | null>(null);
+  const [page, setPage] = useState(0);
+  const [more, setMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<WishCategory | 'ALL'>('ALL');
@@ -31,15 +33,15 @@ export default function WishesPage() {
   const version = useRef(0);
   const pending = useRef(false);
   const active = useRef(false);
-  const load = useCallback(async () => {
+  const load = useCallback(async (next = 0) => {
     if (!token) return;
     const request = ++version.current; setLoading(true);
     try {
-      const data = await fetchWishes(token);
-      if (request === version.current) { setEntries(data); setError(null); }
+      const data = await fetchWishes(token, next);
+      if (request === version.current) { setEntries(old => next ? [...new Map([...(old ?? []), ...data].map(entry => [entry.id, entry])).values()] : data); setPage(next); setMore(user?.role === 'MEMBER' && data.length === 50); setError(null); }
     } catch { if (request === version.current) setError('Impossible de charger les envies.'); }
     finally { if (request === version.current) setLoading(false); }
-  }, [token]);
+  }, [token, user?.role]);
   useIonViewWillEnter(() => { active.current = true; void load(); });
   useIonViewDidLeave(() => { active.current = false; });
   useEffect(() => {
@@ -70,7 +72,7 @@ export default function WishesPage() {
   }
   const visible = entries?.filter(entry => filter === 'ALL' || entry.category === filter);
   return <IonPage lang="fr">
-    <BrandHeader icon={giftOutline} title="Mes envies" accent="rose" showBack />
+    <BrandHeader icon={giftOutline} title={user?.role === 'MEMBER' ? 'Nos envies' : 'Mes envies'} accent="rose" showBack />
     <AppScreen eyebrow="Des idées à garder" title={canEdit ? 'Les petits « j’aimerais ».' : 'Ce qui lui ferait plaisir.'}
       subtitle={canEdit ? 'Un objet, un livre, une expérience… Une place pour tout ce qui vous fait envie.' : 'Ses envies, ses petits détails. De jolies pistes pour un prochain cadeau.'}
       fixedContent={<IonRefresher slot="fixed" onIonRefresh={event => { void load().finally(() => event.detail.complete()); }}><IonRefresherContent /></IonRefresher>}>
@@ -80,7 +82,7 @@ export default function WishesPage() {
         {loading && !entries && <FeedbackState kind="loading" heading="On retrouve les petites envies…" />}
         {error && <FeedbackState kind="failure" heading={error} onRetry={load} />}
         {!!entries?.length && <>
-          <div className="wish-list-heading"><h2>{canEdit ? 'Mon carnet d’envies' : 'Son carnet d’envies'}</h2><span>{entries.length} {entries.length === 1 ? 'idée' : 'idées'}</span></div>
+          <div className="wish-list-heading"><h2>{canEdit ? (user?.role === 'MEMBER' ? 'Nos carnets d’envies' : 'Mon carnet d’envies') : 'Son carnet d’envies'}</h2><span>{entries.length} {entries.length === 1 ? 'idée' : 'idées'}</span></div>
           <div className="wish-filters" role="group" aria-label="Filtrer les envies">
             {[{ value: 'ALL', label: 'Tout' }, ...WISH_CATEGORIES].map(item => <button key={item.value} type="button" aria-pressed={filter === item.value}
               onClick={() => setFilter(item.value as WishCategory | 'ALL')}>{item.label}</button>)}
@@ -90,15 +92,16 @@ export default function WishesPage() {
             {entry.photoUrl ? <img className="wish-card__photo" src={entry.photoUrl} alt={entry.title} loading="lazy" referrerPolicy="no-referrer" />
               : <div className="wish-card__placeholder" aria-hidden="true"><IonIcon icon={ICONS[entry.category]} /></div>}
             <div className="wish-card__body"><span className="wish-tag">{WISH_CATEGORIES.find(item => item.value === entry.category)?.label}</span>
-              <h3>{entry.title}</h3>{entry.details && <p className="wish-card__details">{entry.details}</p>}
+              {entry.ownerName && <p className="couple-meta">{entry.ownerId === user?.userId ? 'Mon envie' : `L’envie de ${entry.ownerName}`}</p>}<h3>{entry.title}</h3>{entry.details && <p className="wish-card__details">{entry.details}</p>}
               {entry.link && <a className="wish-link" href={entry.link} target="_blank" rel="noopener noreferrer"><span>Voir le lien</span><IonIcon icon={openOutline} aria-hidden="true" /><span className="wish-sr-only"> pour {entry.title} (nouvelle fenêtre)</span></a>}
-              {canEdit && <div className="wish-card__actions">
+              {canEdit && (user?.role !== 'MEMBER' || entry.ownerId === user.userId) && <div className="wish-card__actions">
                 <button type="button" className="icon-btn" aria-label={`Modifier ${entry.title}`} onClick={() => openEditor(entry)}><IonIcon icon={createOutline} /></button>
                 <button type="button" className="icon-btn wish-delete" aria-label={`Supprimer ${entry.title}`} onClick={() => { setSelected(entry); setDeleteError(null); }}><IonIcon icon={trashOutline} /></button>
               </div>}
             </div>
           </article>)}</div>
         </>}
+        {more && <AppButton variant="secondary" busy={loading} onClick={() => { void load(page + 1); }}>Voir plus d’envies</AppButton>}
         {entries?.length === 0 && !error && <section className="wish-empty"><span className="wish-symbol"><IonIcon icon={sparklesOutline} aria-hidden="true" /></span>
           <h2>Les belles idées commencent ici.</h2><p>{canEdit ? 'Ce livre repéré, ce joli objet, cette sortie à deux… Gardez votre première envie.' : 'Ses premières envies apparaîtront ici. Un peu de patience, les idées vont venir.'}</p></section>}
         <p className="wish-footnote">Un carnet à deux, pour les petites et les grandes attentions.</p>

@@ -47,7 +47,7 @@ class SharedNotebooksIntegrationTests {
         owner = users.findByRole(Role.OWNER).orElseThrow(); recipient = users.findByRole(Role.RECIPIENT).orElseThrow();
     }
     String auth(User user) { return "Bearer " + jwt.generateToken(user); }
-    UUID film() { return watch.create(new WatchRequest("Notre film",WatchItem.Kind.FILM,WatchItem.Status.TO_WATCH,"Pour dimanche")).id(); }
+    UUID film() { return watch.create(owner,new WatchRequest("Notre film",WatchItem.Kind.FILM,WatchItem.Status.TO_WATCH,"Pour dimanche")).id(); }
     UUID recipe() { return kitchen.create(new RecipeRequest("Nos pâtes",Recipe.Status.TO_TRY,2,25,
             List.of(new RecipeRequest.Ingredient("Pâtes","200 g"),new RecipeRequest.Ingredient("Citron","1")),List.of("Cuire.","Mélanger."),"Du citron à la fin.")).id(); }
 
@@ -84,35 +84,35 @@ class SharedNotebooksIntegrationTests {
         UUID id = film();
         mvc.perform(put("/api/watchlist/"+id+"/review").header("Authorization",auth(owner)).contentType("application/json").content("{\"rating\":4}"))
             .andExpect(status().isConflict());
-        watch.status(id,WatchItem.Status.WATCHED);
+        watch.status(id,owner,WatchItem.Status.WATCHED);
         for (String body : List.of("{}","{\"rating\":0}","{\"rating\":6}","{\"rating\":5,\"comment\":\""+"x".repeat(2001)+"\"}"))
             mvc.perform(put("/api/watchlist/"+id+"/review").header("Authorization",auth(owner)).contentType("application/json").content(body)).andExpect(status().isBadRequest());
         assertThat(reviews.count()).isZero();
     }
     @Test void eachAccountKeepsItsOwnReviewAndCanOnlyRemoveItsOwn() throws Exception {
-        UUID id = film(); watch.status(id,WatchItem.Status.WATCHED);
+        UUID id = film(); watch.status(id,owner,WatchItem.Status.WATCHED);
         for (User user : List.of(owner,recipient)) mvc.perform(put("/api/watchlist/"+id+"/review").header("Authorization",auth(user)).contentType("application/json").content("{\"rating\":4,\"comment\":\"  À revoir  \"}"))
             .andExpect(status().isOk());
         mvc.perform(put("/api/watchlist/"+id+"/review").header("Authorization",auth(recipient)).contentType("application/json").content("{\"rating\":5,\"comment\":\"Mon préféré\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.reviews.length()").value(2));
-        assertThat(reviews.findByItemIdAndUserId(id,owner.getId()).orElseThrow().getRating()).isEqualTo(4);
-        assertThat(reviews.findByItemIdAndUserId(id,recipient.getId()).orElseThrow().getRating()).isEqualTo(5);
+        assertThat(reviews.findByItemIdAndUserIdAndCoupleId(id,owner.getId(),null).orElseThrow().getRating()).isEqualTo(4);
+        assertThat(reviews.findByItemIdAndUserIdAndCoupleId(id,recipient.getId(),null).orElseThrow().getRating()).isEqualTo(5);
         mvc.perform(delete("/api/watchlist/"+id+"/review").header("Authorization",auth(recipient)))
             .andExpect(status().isOk()).andExpect(jsonPath("$.reviews.length()").value(1)).andExpect(jsonPath("$.reviews[0].userId").value(owner.getId().toString()))
             .andExpect(jsonPath("$.reviews[0].comment").value("À revoir"));
         mvc.perform(delete("/api/watchlist/"+id+"/review").header("Authorization",auth(recipient))).andExpect(status().isOk()).andExpect(jsonPath("$.reviews.length()").value(1));
     }
     @Test void statusChangesPreserveReviewsAndDeletingATitleRemovesBothOpinions() throws Exception {
-        UUID id = film(); watch.status(id,WatchItem.Status.WATCHED);
+        UUID id = film(); watch.status(id,owner,WatchItem.Status.WATCHED);
         watch.review(id,owner,new WatchRequest.ReviewRequest(4,"Bien")); watch.review(id,recipient,new WatchRequest.ReviewRequest(5,"Super"));
-        watch.status(id,WatchItem.Status.IN_PROGRESS); assertThat(watch.list().getFirst().reviews()).hasSize(2);
+        watch.status(id,owner,WatchItem.Status.IN_PROGRESS); assertThat(watch.list(owner).getFirst().reviews()).hasSize(2);
         mvc.perform(delete("/api/watchlist/"+id).header("Authorization",auth(recipient))).andExpect(status().isNoContent());
         assertThat(watchItems.count()).isZero(); assertThat(reviews.count()).isZero();
         mvc.perform(delete("/api/watchlist/"+id).header("Authorization",auth(owner))).andExpect(status().isNotFound());
         mvc.perform(put("/api/watchlist/"+id+"/review").header("Authorization",auth(owner)).contentType("application/json").content("{\"rating\":4}")).andExpect(status().isNotFound());
     }
     @Test void overlappingReviewWritesKeepOneReviewPerAccount() throws Exception {
-        UUID id = film(); watch.status(id,WatchItem.Status.WATCHED);
+        UUID id = film(); watch.status(id,owner,WatchItem.Status.WATCHED);
         try (var executor = Executors.newFixedThreadPool(3)) {
             var a = executor.submit(() -> watch.review(id,owner,new WatchRequest.ReviewRequest(3,"A")));
             var b = executor.submit(() -> watch.review(id,owner,new WatchRequest.ReviewRequest(4,"B")));
@@ -120,7 +120,7 @@ class SharedNotebooksIntegrationTests {
             a.get(10,TimeUnit.SECONDS); b.get(10,TimeUnit.SECONDS); c.get(10,TimeUnit.SECONDS);
         }
         assertThat(reviews.count()).isEqualTo(2);
-        assertThat(reviews.findByItemIdAndUserId(id,recipient.getId()).orElseThrow().getRating()).isEqualTo(5);
+        assertThat(reviews.findByItemIdAndUserIdAndCoupleId(id,recipient.getId(),null).orElseThrow().getRating()).isEqualTo(5);
     }
     @Test void bothAccountsShareRecipesWithOrderedIngredientsStepsAndTips() throws Exception {
         mvc.perform(post("/api/recipes").header("Authorization",auth(owner)).contentType("application/json").content(RECIPE_BODY))

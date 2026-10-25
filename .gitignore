@@ -9,3 +9,6 @@ Thumbs.db
 
 # Firebase client config (keep out of version control)
 google-services.json
+
+# Isolated local couples development secrets
+.couples-dev.env

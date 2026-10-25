@@ -1,5 +1,7 @@
 package com.lifeorganizer.notes;
 
+import org.springframework.context.annotation.Profile;
+
 import com.lifeorganizer.auth.User;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api/notes")
+@Profile("!couples")
 public class NoteController {
 
     private final NoteService noteService;

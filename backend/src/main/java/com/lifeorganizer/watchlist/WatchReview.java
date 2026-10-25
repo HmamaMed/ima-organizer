@@ -9,13 +9,14 @@ import java.util.UUID;
 @Table(name = "watch_reviews", uniqueConstraints = @UniqueConstraint(name = "watch_review_per_user", columnNames = {"item_id", "user_id"}))
 public class WatchReview {
     @Id @GeneratedValue private UUID id;
+    @Column(updatable = false) private UUID coupleId;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "item_id", nullable = false) private WatchItem item;
     @ManyToOne(fetch = FetchType.LAZY, optional = false) @JoinColumn(name = "user_id", nullable = false) private User user;
     @Column(nullable = false) private int rating;
     @Column(length = 2000) private String comment;
     @Column(nullable = false) private Instant updatedAt;
     protected WatchReview() {}
-    public WatchReview(WatchItem item, User user) { this.item = item; this.user = user; }
+    public WatchReview(WatchItem item, User user) { this.item = item; this.user = user; this.coupleId = item.getCoupleId(); }
     public void update(WatchRequest.ReviewRequest request) {
         rating = request.rating(); comment = request.comment() == null || request.comment().isBlank() ? null : request.comment().trim(); updatedAt = Instant.now();
     }

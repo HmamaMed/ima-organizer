@@ -1,11 +1,14 @@
 package com.lifeorganizer.wishes;
 
+import org.springframework.context.annotation.Profile;
+
 import org.slf4j.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import java.time.Instant;
 
 @Component
+@Profile("!couples")
 public class WishPhotoCleanup {
     private static final Logger log = LoggerFactory.getLogger(WishPhotoCleanup.class);
     private final WishPhotoRepository photos;

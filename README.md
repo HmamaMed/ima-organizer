@@ -1,5 +1,15 @@
 # Life Organizer
 
+The updated app uses the normal commands: `cd mobile && npm run dev` for development and `npm run build` for deployment or Android packaging. Accounts, pairing, two-way notes/memories, shared notebooks and privacy flows are part of this app; there is no separate frontend mode.
+
+Keep `VITE_API_URL` pointed at the backend you are validating. [Setup and Render configuration](backend/COUPLES_FOUNDATION.md) describes the backend settings and the database upgrade limitation. Changes follow the usual edit, validate, then push workflow. Android updates also require rebuilding/installing the APK.
+
+See the [architecture and launch roadmap](COUPLES_PRODUCT_ROADMAP.md) for the public release plan.
+
+## Original personal app reference
+
+The sections below describe the original app. The current account system and deployment requirements are documented in the setup guide linked above.
+
 A private, modular mobile app built as a birthday gift. Not a generic utility app —
 every module is written for one specific person. The initial three modules now
 sit alongside shared everyday notebooks, with more chapters added over time.

@@ -23,7 +23,7 @@ public class AgiosService {
     }
 
     public AgiosTrackerResponse tracker() {
-        var participants = Arrays.stream(Role.values())
+        var participants = java.util.stream.Stream.of(Role.OWNER, Role.RECIPIENT)
                 .flatMap(role -> users.findByRole(role).stream())
                 .map(AgiosTrackerResponse.Participant::from).toList();
         var entries = agios.findAllByOrderByDateDescCreatedAtDesc().stream()

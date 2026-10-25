@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { IonContent, IonIcon, IonModal, IonPage, IonRefresher, IonRefresherContent, IonToast } from '@ionic/react';
 import { addOutline, createOutline, filmOutline, star, trashOutline, tvOutline } from 'ionicons/icons';
 import { useAuth } from '../../shared/auth/AuthContext';
@@ -15,11 +15,12 @@ import '../../shared/notebooks/notebooks.css';
 import './watchlist.css';
 
 export default function WatchlistPage() {
-  const collection = useNotebookEntries(fetchWatchlist);
   const { user } = useAuth();
   const [filter, setFilter] = useState<WatchStatus | 'ALL'>('ALL');
   const [kind, setKind] = useState<WatchKind | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
+  const fetchEntries = useCallback((token: string, page = 0) => fetchWatchlist(token, page, { q: search, kind, status: filter }), [search, kind, filter]);
+  const collection = useNotebookEntries(fetchEntries);
   const [editor, setEditor] = useState<{ entry: WatchItem | null } | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [review, setReview] = useState<WatchItem | null>(null);
@@ -75,6 +76,7 @@ export default function WatchlistPage() {
           </article>)}</div>
         </>}
         {entries?.length === 0 && !collection.error && <section className="notebook-empty"><span className="notebook-symbol"><IonIcon icon={tvOutline} aria-hidden="true" /></span><h2>Le canapé vous attend.</h2><p>Gardez ce film conseillé par un ami ou cette série dont vous parlez depuis des semaines.</p></section>}
+        {collection.more && <AppButton variant="secondary" busy={collection.loading} onClick={() => { void collection.loadMore(); }}>Voir plus de titres</AppButton>}
         <p className="notebook-footnote">Une liste partagée. Des avis qui vous ressemblent.</p>
       </div>
     </AppScreen>

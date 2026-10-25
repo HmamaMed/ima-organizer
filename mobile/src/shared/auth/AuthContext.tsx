@@ -1,15 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { apiRequest, setUnauthorizedHandler } from '../api/client';
 
-export type Role = 'OWNER' | 'RECIPIENT';
+export type Role = 'OWNER' | 'RECIPIENT' | 'MEMBER';
 
 export interface AuthUser {
   userId: string;
   role: Role;
   name: string;
+  timeZone?: string;
 }
 
-interface AuthContextValue {
+export interface AuthContextValue {
   token: string | null;
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -99,4 +100,9 @@ export function useAuth(): AuthContextValue {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+/** Commercial sessions supply memory-only credentials to the existing scoped notebook components. */
+export function AuthSessionProvider({ value, children }: { value: AuthContextValue; children: ReactNode }) {
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

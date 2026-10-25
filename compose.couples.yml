@@ -1,0 +1,36 @@
+# Local couples development only. Named volumes and loopback ports are separate from the personal deployment.
+name: life-organizer-couples-local
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: couples_local
+      POSTGRES_USER: couples_local
+      POSTGRES_PASSWORD: ${COUPLES_DB_PASSWORD:?Run scripts/couples-dev.sh first}
+    ports:
+      - "127.0.0.1:5544:5432"
+    volumes:
+      - couples_database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U couples_local -d couples_local"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  mail:
+    image: axllent/mailpit:v1.27.4
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+  storage:
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    environment:
+      AWS_ACCESS_KEY_ID: ${COUPLES_R2_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${COUPLES_R2_SECRET_ACCESS_KEY}
+      S3_BUCKET: couples-local
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - couples_media:/data
+volumes:
+  couples_database:
+  couples_media:

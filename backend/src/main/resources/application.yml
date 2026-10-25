@@ -5,6 +5,9 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/lifeorganizer}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+  flyway:
+    # The personal deployment keeps its existing schema management.
+    enabled: false
   jpa:
     hibernate:
       ddl-auto: update

@@ -21,11 +21,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
  * Stateless JWT security. The login endpoint is public; everything else under
- * /api requires a valid Bearer token. Role-based access is enforced per-module
- * at the controller level.
+ * /api requires a valid Bearer token. The couples profile exposes only scoped
+ * modules; the personal deployment retains controller-level legacy roles.
  */
 @Configuration
 @EnableWebSecurity
@@ -33,12 +35,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final boolean couplesMode;
 
     @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, Environment environment) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.couplesMode = environment.acceptsProfiles(Profiles.of("couples"));
     }
 
     @Bean
@@ -53,10 +57,22 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(unauthorizedEntryPoint())
                         .accessDeniedHandler(forbiddenHandler()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll())
+                .authorizeHttpRequests(auth -> {
+                    if (couplesMode) {
+                        auth.requestMatchers(HttpMethod.GET, "/api/privacy/policy").permitAll();
+                        auth.requestMatchers(HttpMethod.POST, "/api/identity/register", "/api/identity/login", "/api/identity/refresh",
+                                "/api/identity/verification-email", "/api/identity/password-email", "/api/identity/verify", "/api/identity/reset-password").permitAll();
+                        // Deny unfinished modules, uploads and unknown routes even for authenticated members.
+                        auth.requestMatchers("/api/identity/me", "/api/identity/reauthenticate", "/api/identity/logout", "/api/identity/logout-all",
+                                "/api/birthdays", "/api/birthdays/**", "/api/notifications", "/api/notifications/**", "/api/recipes", "/api/recipes/**", "/api/wishes", "/api/wishes/**", "/api/privacy/**", "/api/identity/devices", "/api/couples", "/api/couples/**", "/api/watchlist", "/api/watchlist/**",
+                                "/api/notes", "/api/notes/**", "/api/memories", "/api/memories/groups", "/api/memories/groups/*",
+                                "/api/memories/groups/*/media", "/api/memories/*", "/api/inbox", "/api/inbox/**").authenticated()
+                                .anyRequest().denyAll();
+                    } else {
+                        auth.requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll();
+                        auth.requestMatchers("/api/**").authenticated().anyRequest().permitAll();
+                    }
+                })
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -74,11 +90,16 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "X-Couple-Id"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public org.springframework.security.core.userdetails.UserDetailsService userDetailsService() {
+        return username -> { throw new org.springframework.security.core.userdetails.UsernameNotFoundException("Use token authentication"); };
     }
 
     @Bean

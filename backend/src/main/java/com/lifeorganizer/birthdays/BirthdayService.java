@@ -13,26 +13,29 @@ public class BirthdayService {
     private final BirthdayRepository reminders;
     private final BirthdayDeliveryRepository deliveries;
     private final UserRepository users;
-    public BirthdayService(BirthdayRepository reminders, BirthdayDeliveryRepository deliveries, UserRepository users) {
+    private final boolean couplesMode;
+    public BirthdayService(BirthdayRepository reminders, BirthdayDeliveryRepository deliveries, UserRepository users,org.springframework.core.env.Environment environment) {
+        couplesMode=environment.acceptsProfiles(org.springframework.core.env.Profiles.of("couples"));
         this.reminders = reminders; this.deliveries = deliveries; this.users = users;
     }
     public List<BirthdayResponse> list(User user) {
         Instant now = Instant.now();
-        return reminders.findByUserId(user.getId()).stream().map(b -> BirthdayResponse.from(b, now))
+        return reminders.findByUserId(user.getId()).stream().map(b -> BirthdayResponse.from(b, now, couplesMode))
                 .sorted(Comparator.comparingLong(BirthdayResponse::daysUntil)
                         .thenComparing(BirthdayResponse::label, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(BirthdayResponse::id)).toList();
     }
     @Transactional
     public BirthdayResponse create(User user, BirthdayRequest request) {
+        if(couplesMode){ users.lockById(user.getId()).orElseThrow();if(reminders.countByUserId(user.getId())>=100)throw new IllegalStateException("You can keep up to 100 birthday reminders"); }
         return BirthdayResponse.from(reminders.save(new BirthdayReminder(
-                users.getReferenceById(user.getId()), request)), Instant.now());
+                users.getReferenceById(user.getId()), request)), Instant.now(), couplesMode);
     }
     @Transactional
     public BirthdayResponse update(User user, UUID id, BirthdayRequest request) {
         BirthdayReminder reminder = owned(user, id);
         reminder.update(request);
-        return BirthdayResponse.from(reminder, Instant.now());
+        return BirthdayResponse.from(reminder, Instant.now(), couplesMode);
     }
     @Transactional
     public void delete(User user, UUID id) {
@@ -42,7 +45,7 @@ public class BirthdayService {
     }
     private BirthdayReminder owned(User user, UUID id) {
         // The same lock also serializes edits/deletes with scheduler delivery.
-        return reminders.lockById(id).filter(b -> b.getUser().getId().equals(user.getId()))
+        return reminders.lockByIdAndUserId(id,user.getId())
                 .orElseThrow(() -> new NoSuchElementException("Birthday reminder not found"));
     }
 }

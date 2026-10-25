@@ -4,10 +4,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 
 /**
- * Handles login. There is deliberately no registration — the two users are
- * seeded directly in the database.
+ * Legacy username login. Public registration stays unavailable until the
+ * commercial identity and isolation milestones are complete.
  */
 @Service
 public class AuthService {
@@ -15,13 +17,15 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final boolean couplesMode;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService, Environment environment) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.couplesMode = environment.acceptsProfiles(Profiles.of("couples"));
     }
 
     @Transactional
@@ -34,7 +38,7 @@ public class AuthService {
         }
 
         // Both accounts can receive their own private birthday reminders.
-        if (request.fcmToken() != null && !request.fcmToken().isBlank()) {
+        if (!couplesMode && request.fcmToken() != null && !request.fcmToken().isBlank()) {
             assignPushToken(user, request.fcmToken());
         }
 

@@ -1,5 +1,7 @@
 package com.lifeorganizer.wishes;
 
+import org.springframework.context.annotation.Profile;
+
 import com.lifeorganizer.auth.User;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/wishes")
+@Profile("!couples")
 public class WishController {
     private final WishService wishes;
     private final WishPhotoService photos;

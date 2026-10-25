@@ -32,7 +32,8 @@ function BirthdayEditor({ entry, token, onSaved, onClose, onBusyChange }: {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
-  const timeZone = entry?.timeZone ?? MOROCCO_TIME_ZONE;
+  const { user } = useAuth();
+  const timeZone = entry?.timeZone ?? user?.timeZone ?? MOROCCO_TIME_ZONE;
   const daysInMonth = month ? new Date(2000, Number(month), 0).getDate() : 31;
 
   async function submit(event: FormEvent) {
@@ -83,7 +84,7 @@ function BirthdayEditor({ entry, token, onSaved, onClose, onBusyChange }: {
       </fieldset>
       <div className="birthday-reminder-note">
         <IonIcon icon={notificationsOutline} aria-hidden="true" />
-        <div><strong>3 days before · 1 day before</strong><p>Every year, around 7pm · {timeZone === MOROCCO_TIME_ZONE ? MOROCCO_TIME_LABEL : timeZone.replaceAll('_', ' ')}</p></div>
+        <div><strong>3 days before · 1 day before</strong><p>Every year, around 7pm · {timeZone === MOROCCO_TIME_ZONE && user?.role !== 'MEMBER' ? MOROCCO_TIME_LABEL : timeZone.replaceAll('_', ' ')}</p></div>
       </div>
       {month === '2' && day === '29' && <p className="birthday-muted">In years without February 29, we’ll use February 28.</p>}
       {error && <p className="birthday-error" role="alert">{error}</p>}

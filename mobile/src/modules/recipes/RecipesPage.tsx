@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { IonContent, IonIcon, IonModal, IonPage, IonRefresher, IonRefresherContent, IonToast } from '@ionic/react';
 import { addOutline, createOutline, heartOutline, peopleOutline, restaurantOutline, timeOutline, trashOutline } from 'ionicons/icons';
 import AppScreen from '../../shared/ui/AppScreen';
@@ -14,9 +14,10 @@ import '../../shared/notebooks/notebooks.css';
 import './recipes.css';
 
 export default function RecipesPage() {
-  const collection = useNotebookEntries(fetchRecipes);
   const [filter, setFilter] = useState<RecipeStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
+  const fetchEntries = useCallback((token: string, page = 0) => fetchRecipes(token, page, search), [search]);
+  const collection = useNotebookEntries(fetchEntries);
   const [editor, setEditor] = useState<{ entry: Recipe | null } | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -67,6 +68,7 @@ export default function RecipesPage() {
           </article>)}</div>
         </>}
         {entries?.length === 0 && !collection.error && <section className="notebook-empty"><span className="notebook-symbol"><IonIcon icon={restaurantOutline} aria-hidden="true" /></span><h2>La première page sent déjà bon.</h2><p>Ajoutez ce plat que vous aimez préparer ou la recette qu’on essaiera ensemble.</p></section>}
+        {collection.more && <AppButton variant="secondary" busy={collection.loading} onClick={() => { void collection.loadMore(); }}>Voir plus de recettes</AppButton>}
         <p className="notebook-footnote">Nos idées, nos astuces, nos petits classiques.</p>
       </div>
     </AppScreen>

@@ -23,11 +23,15 @@ import java.util.UUID;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private final org.springframework.beans.factory.ObjectProvider<com.lifeorganizer.identity.SessionStore> sessions;
+    private final boolean couplesMode;
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository, org.springframework.beans.factory.ObjectProvider<com.lifeorganizer.identity.SessionStore> sessions, org.springframework.core.env.Environment environment) {
         this.jwtService = jwtService;
+        this.sessions = sessions;
+        couplesMode = environment.acceptsProfiles(org.springframework.core.env.Profiles.of("couples"));
         this.userRepository = userRepository;
     }
 
@@ -48,10 +52,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (userOpt.isPresent() && jwtService.isValid(token, userOpt.get())
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userOpt.get();
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
-                var authToken = new UsernamePasswordAuthenticationToken(user, null, authorities);
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                boolean active = !couplesMode || (!user.isDeletionRequested() && jwtService.extractSessionId(token) != null
+                        && sessions.getObject().active(jwtService.extractSessionId(token), user.getId()));
+                if (active) {
+                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+                    var authToken = new UsernamePasswordAuthenticationToken(user, null, authorities);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         } catch (Exception ignored) {
             // Invalid token — leave the context unauthenticated.

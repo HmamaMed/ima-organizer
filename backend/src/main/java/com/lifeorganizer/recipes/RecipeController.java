@@ -1,5 +1,7 @@
 package com.lifeorganizer.recipes;
 
+import org.springframework.context.annotation.Profile;
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -7,6 +9,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/recipes")
+@Profile("!couples")
 public class RecipeController {
     private final RecipeService service;
     public RecipeController(RecipeService service) { this.service = service; }

@@ -10,7 +10,7 @@ export interface WatchItem {
   id: string; title: string; kind: WatchKind; status: WatchStatus; notes: string | null; createdAt: string; reviews: WatchReview[];
 }
 export type WatchInput = Pick<WatchItem, 'title' | 'kind' | 'status' | 'notes'>;
-export const fetchWatchlist = (token: string) => apiRequest<WatchItem[]>('/api/watchlist', { token });
+export const fetchWatchlist = (token: string, page = 0, filters?: { q: string; kind: WatchKind | 'ALL'; status: WatchStatus | 'ALL' }) => apiRequest<WatchItem[]>(`/api/watchlist?page=${page}&q=${encodeURIComponent(filters?.q ?? '')}${filters?.kind && filters.kind !== 'ALL' ? `&kind=${filters.kind}` : ''}${filters?.status && filters.status !== 'ALL' ? `&status=${filters.status}` : ''}`, { token });
 export const saveWatchItem = (token: string, body: WatchInput, id?: string) =>
   apiRequest<WatchItem>(id ? `/api/watchlist/${id}` : '/api/watchlist', { token, method: id ? 'PUT' : 'POST', body });
 export const changeWatchStatus = (token: string, id: string, status: WatchStatus) =>

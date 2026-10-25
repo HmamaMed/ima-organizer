@@ -5,7 +5,7 @@ import java.util.*;
 
 public interface WatchReviewRepository extends JpaRepository<WatchReview, UUID> {
     @EntityGraph(attributePaths = "user")
-    List<WatchReview> findByItemIdOrderByUpdatedAtAsc(UUID itemId);
-    Optional<WatchReview> findByItemIdAndUserId(UUID itemId, UUID userId);
-    void deleteByItemId(UUID itemId);
+    List<WatchReview> findByItemIdAndCoupleIdOrderByUpdatedAtAsc(UUID itemId, UUID coupleId);
+    Optional<WatchReview> findByItemIdAndUserIdAndCoupleId(UUID itemId, UUID userId, UUID coupleId);
+    void deleteByItemIdAndCoupleId(UUID itemId, UUID coupleId);
 }

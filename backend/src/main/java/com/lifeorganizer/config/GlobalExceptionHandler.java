@@ -20,6 +20,31 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleForbidden(org.springframework.security.access.AccessDeniedException e) {
+        return body(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataConflict(org.springframework.dao.DataIntegrityViolationException e) {
+        return body(HttpStatus.CONFLICT, "This change conflicts with the current state. Refresh and try again.");
+    }
+
+    @ExceptionHandler(java.time.DateTimeException.class)
+    public ResponseEntity<Map<String, Object>> handleTimeZone(java.time.DateTimeException e) {
+        return body(HttpStatus.BAD_REQUEST, "Choose a valid IANA time zone");
+    }
+
+    @ExceptionHandler(com.lifeorganizer.identity.AbuseLimiter.LimitExceeded.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimit(com.lifeorganizer.identity.AbuseLimiter.LimitExceeded e) {
+        return body(HttpStatus.TOO_MANY_REQUESTS, "Too many attempts. Try again later.");
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadable(org.springframework.http.converter.HttpMessageNotReadableException e) {
+        return body(HttpStatus.BAD_REQUEST, "Invalid request data");
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleBadInput(IllegalArgumentException e) {
         return body(HttpStatus.BAD_REQUEST, e.getMessage());

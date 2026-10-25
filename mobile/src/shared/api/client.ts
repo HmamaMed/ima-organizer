@@ -12,9 +12,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
  * device can't leave the UI looking authenticated when the backend has
  * already rejected it.
  */
-let onUnauthorized: (() => void) | null = null;
+let onScopeChange: (() => void) | null = null;
+export function setScopeChangeHandler(handler: (() => void) | null): void { onScopeChange = handler; }
+let recoverAuthentication: ((token: string) => Promise<string | null>) | null = null;
+let scopeProvider: (() => string | null) | null = null;
+export function setAuthenticationRecovery(handler: ((token: string) => Promise<string | null>) | null): void { recoverAuthentication = handler; }
+export function setCoupleScopeProvider(provider: (() => string | null) | null): void { scopeProvider = provider; }
 
-export function setUnauthorizedHandler(handler: (() => void) | null): void {
+let onUnauthorized: ((token?: string) => void) | null = null;
+
+export function setUnauthorizedHandler(handler: ((token?: string) => void) | null): void {
   onUnauthorized = handler;
 }
 
@@ -33,22 +40,27 @@ export class ApiError extends Error {
  */
 export async function apiRequest<T>(
   path: string,
-  options: { method?: string; body?: unknown; token?: string | null } = {},
+  options: { method?: string; body?: unknown; token?: string | null; headers?: Record<string, string> } = {},
 ): Promise<T> {
   const { method = 'GET', body, token } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...options.headers,
   };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const scope = scopeProvider?.();
+  if (token && scope) headers['X-Couple-Id'] = scope;
+  const request = { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined };
+  let response = await fetch(`${API_BASE_URL}${path}`, request);
+  // A 401 is rejected before application code runs. Only this known authentication failure may be replayed.
+  if (response.status === 401 && token && recoverAuthentication) {
+    const renewed = await recoverAuthentication(token);
+    if (renewed) { headers.Authorization = `Bearer ${renewed}`; response = await fetch(`${API_BASE_URL}${path}`, request); }
+  }
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
@@ -60,9 +72,9 @@ export async function apiRequest<T>(
     } catch {
       // ignore non-JSON error bodies
     }
-    if (response.status === 401) {
-      onUnauthorized?.();
-    }
+    if (response.status === 401) onUnauthorized?.(token ?? undefined);
+    if (response.status === 403 && /^\/api\/(notes|memories|watchlist|inbox|recipes|wishes)(\/|$)/.test(path)) onScopeChange?.();
+    if (response.status === 409 && message.startsWith('Your couple has changed.')) onScopeChange?.();
     throw new ApiError(response.status, message);
   }
 
@@ -74,13 +86,20 @@ export async function apiRequest<T>(
 export async function apiUpload<T>(path: string, blob: Blob, token: string): Promise<T> {
   const form = new FormData();
   form.append('file', blob, 'memory-media');
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form,
-  });
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  const scope = scopeProvider?.();
+  if (scope) headers['X-Couple-Id'] = scope;
+  const request = { method: 'POST', headers, body: form };
+  let response = await fetch(`${API_BASE_URL}${path}`, request);
+  if (response.status === 401 && recoverAuthentication) {
+    const renewed = await recoverAuthentication(token);
+    if (renewed) { headers.Authorization = `Bearer ${renewed}`; response = await fetch(`${API_BASE_URL}${path}`, request); }
+  }
   if (!response.ok) {
     let message = 'Could not upload this file. Please try again.';
     try { const data = await response.json(); if (data?.message) message = data.message; } catch { /* Keep the readable fallback. */ }
-    if (response.status === 401) onUnauthorized?.();
+    if (response.status === 401) onUnauthorized?.(token ?? undefined);
+    if (response.status === 403 || (response.status === 409 && message.startsWith('Your couple has changed.'))) onScopeChange?.();
     throw new ApiError(response.status, message);
   }
   return response.json() as Promise<T>;

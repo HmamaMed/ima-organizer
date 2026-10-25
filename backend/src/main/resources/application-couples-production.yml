@@ -1,0 +1,14 @@
+# Activate together: SPRING_PROFILES_ACTIVE=couples,couples-production.
+# Provision the two database roles and grants before startup.
+spring:
+  flyway:
+    url: ${COUPLES_DB_URL}
+    user: ${COUPLES_MIGRATION_USERNAME}
+    password: ${COUPLES_MIGRATION_PASSWORD}
+app:
+  privacy:
+    closed-retention-days: ${COUPLES_CLOSED_RETENTION_DAYS}
+  public-url: ${COUPLES_PUBLIC_URL}
+  support-email: ${COUPLES_SUPPORT_EMAIL}
+  identity:
+    mail-from: ${COUPLES_MAIL_FROM}

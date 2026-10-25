@@ -1,5 +1,7 @@
 package com.lifeorganizer.seed;
 
+import org.springframework.context.annotation.Profile;
+
 import com.lifeorganizer.auth.Role;
 import com.lifeorganizer.auth.User;
 import com.lifeorganizer.auth.UserRepository;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
  * defaults in application.yml for local dev).
  */
 @Component
+@Profile("!couples")
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);

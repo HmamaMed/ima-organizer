@@ -9,14 +9,14 @@
     "lint": "oxlint",
     "test:agios": "node --test scripts/agios-utils.test.mjs",
     "preview": "vite preview",
-    "assets": "node scripts/sync-brand-assets.mjs"
+    "assets": "node scripts/sync-brand-assets.mjs",
+    "audit:runtime": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
-    "@capacitor/android": "^8.5.0",
+    "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.1",
     "@capacitor/camera": "^8.2.2",
-    "@capacitor/cli": "^8.5.0",
-    "@capacitor/core": "^8.5.0",
+    "@capacitor/core": "^8.5.3",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/push-notifications": "^8.1.2",
@@ -29,7 +29,7 @@
     "react-router-dom": "^5.3.4"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -39,5 +39,10 @@
     "oxlint": "^1.75.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
+  },
+  "overrides": {
+    "get-blob-duration": {
+      "@babel/runtime": "^7.29.7"
+    }
   }
 }

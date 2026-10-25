@@ -33,7 +33,7 @@ public class R2Storage {
         if (!properties.configured()) throw new MediaStorageException("Media storage is not configured yet.");
         var credentials = StaticCredentialsProvider.create(AwsBasicCredentials.create(properties.accessKeyId(), properties.secretAccessKey()));
         var configuration = S3Configuration.builder().pathStyleAccessEnabled(true).chunkedEncodingEnabled(false).build();
-        client = S3Client.builder().endpointOverride(URI.create(properties.endpoint())).region(Region.of("auto"))
+        client = S3Client.builder().overrideConfiguration(c -> c.apiCallTimeout(Duration.ofMinutes(2)).apiCallAttemptTimeout(Duration.ofSeconds(30))).endpointOverride(URI.create(properties.endpoint())).region(Region.of("auto"))
                 .credentialsProvider(credentials).serviceConfiguration(configuration)
                 .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
                 .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED).build();

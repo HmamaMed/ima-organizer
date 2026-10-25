@@ -8,7 +8,7 @@ export interface Recipe {
   ingredients: RecipeIngredient[]; steps: string[]; tips: string | null; createdAt: string;
 }
 export type RecipeInput = Omit<Recipe, 'id' | 'createdAt'>;
-export const fetchRecipes = (token: string) => apiRequest<Recipe[]>('/api/recipes', { token });
+export const fetchRecipes = (token: string, page = 0, search = '') => apiRequest<Recipe[]>(`/api/recipes?page=${page}&q=${encodeURIComponent(search)}`, { token });
 export const saveRecipe = (token: string, body: RecipeInput, id?: string) =>
   apiRequest<Recipe>(id ? `/api/recipes/${id}` : '/api/recipes', { token, method: id ? 'PUT' : 'POST', body });
 export const changeRecipeStatus = (token: string, id: string, status: RecipeStatus) =>

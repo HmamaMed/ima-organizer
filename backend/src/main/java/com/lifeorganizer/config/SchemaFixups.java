@@ -1,5 +1,7 @@
 package com.lifeorganizer.config;
 
+import org.springframework.context.annotation.Profile;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 @Order(0)
+@Profile("!couples")
 public class SchemaFixups implements CommandLineRunner {
 
     @PersistenceContext

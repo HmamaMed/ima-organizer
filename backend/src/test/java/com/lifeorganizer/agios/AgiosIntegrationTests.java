@@ -140,7 +140,7 @@ class AgiosIntegrationTests {
     @Test
     @WithMockUser(roles = "RECIPIENT")
     void recipientCanRecordAndCorrectWithdrawalsForEitherPersonIncludingFractionalAmounts() throws Exception {
-        for (Role role : Role.values()) {
+        for (Role role : java.util.List.of(Role.OWNER, Role.RECIPIENT)) {
             UUID userId = account(role);
             mvc.perform(post("/api/agios").contentType("application/json")
                             .content(input(userId, "25.00", LocalDate.now().toString())))

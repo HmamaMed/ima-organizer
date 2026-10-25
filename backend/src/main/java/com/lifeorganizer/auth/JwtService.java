@@ -33,11 +33,14 @@ public class JwtService {
     }
 
 
-    public String generateToken(User user) {
+    public String generateToken(User user) { return generateToken(user, null); }
+
+    public String generateToken(User user, UUID sessionId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
         return Jwts.builder()
                 .subject(user.getId().toString())
+                .claim("sid", sessionId == null ? null : sessionId.toString())
                 .claim("role", user.getRole().name())
                 .claim("name", user.getName())
                 .issuedAt(now)
@@ -48,6 +51,11 @@ public class JwtService {
 
     public UUID extractUserId(String token) {
         return UUID.fromString(extractClaim(token, Claims::getSubject));
+    }
+
+    public UUID extractSessionId(String token) {
+        String value = extractClaim(token, claims -> claims.get("sid", String.class));
+        return value == null ? null : UUID.fromString(value);
     }
 
     public boolean isValid(String token, User user) {

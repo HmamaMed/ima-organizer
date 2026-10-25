@@ -1,0 +1,49 @@
+# Isolated staging foundation. Never point this profile at the personal database.
+spring:
+  datasource:
+    url: ${COUPLES_DB_URL}
+    username: ${COUPLES_DB_USERNAME}
+    password: ${COUPLES_DB_PASSWORD}
+  mail:
+    host: ${COUPLES_SMTP_HOST:localhost}
+    port: ${COUPLES_SMTP_PORT:1025}
+    username: ${COUPLES_SMTP_USERNAME:}
+    password: ${COUPLES_SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${COUPLES_SMTP_AUTH:false}
+      mail.smtp.ssl.enable: ${COUPLES_SMTP_SSL:false}
+      mail.smtp.starttls.enable: ${COUPLES_SMTP_STARTTLS:false}
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+  flyway:
+    enabled: true
+    locations: classpath:db/couples
+    baseline-on-migrate: false
+    clean-disabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+app:
+  privacy:
+    closed-retention-days: ${COUPLES_CLOSED_RETENTION_DAYS:30}
+  support-email: ${COUPLES_SUPPORT_EMAIL:}
+  public-url: ${COUPLES_PUBLIC_URL:http://localhost:5173}
+  identity:
+    registration-enabled: ${COUPLES_REGISTRATION_ENABLED:false}
+    token-secret: ${COUPLES_TOKEN_SECRET}
+    mail-from: ${COUPLES_MAIL_FROM:accounts@example.invalid}
+  couples-firebase-path: ${COUPLES_FIREBASE_SERVICE_ACCOUNT_PATH:}
+  media:
+    r2:
+      endpoint: ${COUPLES_R2_ENDPOINT:}
+      bucket: ${COUPLES_R2_BUCKET:}
+      access-key-id: ${COUPLES_R2_ACCESS_KEY_ID:}
+      secret-access-key: ${COUPLES_R2_SECRET_ACCESS_KEY:}
+    legacy-supabase:
+      url: ""
+      service-role-key: ""
+  jwt:
+    secret: ${COUPLES_JWT_SECRET}
+    expiration-ms: 900000

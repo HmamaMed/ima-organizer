@@ -1,0 +1,25 @@
+alter table recipes add column couple_id uuid not null references couples(id);
+alter table recipes add column creator_id uuid not null;
+alter table recipes add column client_request_id uuid not null;
+alter table recipes add constraint recipe_creator_scope foreign key(couple_id,creator_id) references couple_memberships(couple_id,user_id);
+alter table recipes add constraint recipe_scope_unique unique(id,couple_id);
+alter table recipes add constraint recipe_request_unique unique(couple_id,creator_id,client_request_id);
+create index recipes_couple_feed on recipes(couple_id,created_at desc,id desc);
+alter table recipe_ingredients add column couple_id uuid not null;
+alter table recipe_ingredients add constraint ingredient_recipe_scope foreign key(recipe_id,couple_id) references recipes(id,couple_id);
+alter table recipe_steps add column couple_id uuid not null;
+alter table recipe_steps add constraint step_recipe_scope foreign key(recipe_id,couple_id) references recipes(id,couple_id);
+
+alter table wishes add column couple_id uuid not null references couples(id);
+alter table wishes add column owner_id uuid not null;
+alter table wishes add column client_request_id uuid not null;
+alter table wishes add constraint wish_owner_scope foreign key(couple_id,owner_id) references couple_memberships(couple_id,user_id);
+alter table wishes add constraint wish_request_unique unique(couple_id,owner_id,client_request_id);
+create index wishes_couple_feed on wishes(couple_id,created_at desc,id desc);
+alter table wish_photos add column couple_id uuid not null;
+alter table wish_photos add column size bigint not null;
+alter table wish_photos add column created_at timestamptz not null default current_timestamp;
+alter table wish_photos add column upload_state varchar(20) not null default 'READY' check(upload_state in ('UPLOADING','READY','DELETING'));
+alter table wish_photos add constraint wish_photo_owner_scope foreign key(couple_id,uploader_id) references couple_memberships(couple_id,user_id);
+alter table wish_photos add constraint wish_photo_scope_unique unique(id,couple_id,uploader_id);
+alter table wishes add constraint wish_photo_scope foreign key(photo_id,couple_id,owner_id) references wish_photos(id,couple_id,uploader_id);
