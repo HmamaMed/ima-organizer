@@ -30,6 +30,12 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.CONFLICT, "This change conflicts with the current state. Refresh and try again.");
     }
 
+    @ExceptionHandler(org.springframework.dao.DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDatabaseFailure(org.springframework.dao.DataAccessException e) {
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class).error("Database request failed", e);
+        return body(HttpStatus.SERVICE_UNAVAILABLE, "Service temporarily unavailable. Please try again.");
+    }
+
     @ExceptionHandler(java.time.DateTimeException.class)
     public ResponseEntity<Map<String, Object>> handleTimeZone(java.time.DateTimeException e) {
         return body(HttpStatus.BAD_REQUEST, "Choose a valid IANA time zone");

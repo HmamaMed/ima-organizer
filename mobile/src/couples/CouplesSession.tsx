@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { apiRequest, setAuthenticationRecovery, setCoupleScopeProvider, setUnauthorizedHandler, setScopeChangeHandler } from '../shared/api/client';
+import { ApiError, apiRequest, setAuthenticationRecovery, setCoupleScopeProvider, setUnauthorizedHandler, setScopeChangeHandler } from '../shared/api/client';
 import { AuthSessionProvider } from '../shared/auth/AuthContext';
 
 import { Context, type Account, type AccessConfiguration, type Credentials, type Session, type Space } from './sessionContext';
@@ -60,7 +60,10 @@ export function CouplesSession({ children }: { children: ReactNode }) {
           if (generation.current !== version) return null;
           previousTokens.current.add(active.token);
           current.current = next; setCredentials(next); return next.token;
-        } catch { if (generation.current === version) clear(); return null; }
+        } catch (failure) {
+          if (generation.current === version && failure instanceof ApiError && failure.status === 401) clear();
+          throw failure;
+        }
         finally { renewing.current = null; }
       })();
       return renewing.current;

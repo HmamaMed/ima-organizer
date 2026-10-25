@@ -1,6 +1,11 @@
 # Activate together: SPRING_PROFILES_ACTIVE=couples,couples-production.
 # Keep the existing runtime and migration database credentials.
 spring:
+  datasource:
+    hikari:
+      # Hikari owns the pool; use a direct Neon URL so the selected schema persists.
+      maximum-pool-size: 5
+      minimum-idle: 1
   flyway:
     url: ${COUPLES_DB_URL:${DB_URL}}
     user: ${COUPLES_MIGRATION_USERNAME:${DB_USERNAME}}

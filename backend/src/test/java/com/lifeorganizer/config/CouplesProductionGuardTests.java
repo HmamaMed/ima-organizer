@@ -12,6 +12,8 @@ class CouplesProductionGuardTests {
     MockEnvironment environment() throws Exception {
         Path credentials=Files.writeString(directory.resolve("firebase.json"),"{}");
         var env=new MockEnvironment().withProperty("app.public-url","https://couples.example.test")
+            .withProperty("spring.datasource.url","jdbc:postgresql://ep-example.eu-central-1.aws.neon.tech/app?sslmode=require")
+            .withProperty("spring.flyway.url","jdbc:postgresql://ep-example.eu-central-1.aws.neon.tech/app?sslmode=require")
             .withProperty("spring.datasource.username","runtime").withProperty("spring.flyway.user","migrations")
             .withProperty("app.jwt.secret","production-test-jwt-secret-with-more-than-32-bytes")
             .withProperty("app.identity.token-secret","production-test-action-secret-with-more-than-32-bytes")
@@ -24,6 +26,14 @@ class CouplesProductionGuardTests {
     }
     R2Properties storage(){return new R2Properties("https://private-storage.example.test","couples","test-key","test-secret");}
     @Test void acceptsSeparatedProductionConfiguration() throws Exception { assertThatCode(()->new CouplesProductionGuard(environment(),storage()).validate()).doesNotThrowAnyException(); }
+    @Test void refusesNeonTransactionPoolerForRuntimeAndMigrations() throws Exception {
+        for (String key:java.util.List.of("spring.datasource.url","spring.flyway.url")) {
+            var env=environment();
+            env.setProperty(key,"jdbc:postgresql://ep-example-pooler.eu-central-1.aws.neon.tech/app?sslmode=require");
+            assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate())
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("direct Neon connection URL").hasMessageContaining(key);
+        }
+    }
     @Test void refusesHttpAndSharedDatabaseRoles() throws Exception {
         var env=environment();env.setProperty("app.public-url","http://localhost:5174");assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate()).isInstanceOf(IllegalStateException.class);
         env.setProperty("app.public-url","https://couples.example.test");env.setProperty("spring.datasource.username","migrations");assertThatThrownBy(()->new CouplesProductionGuard(env,storage()).validate()).isInstanceOf(IllegalStateException.class);

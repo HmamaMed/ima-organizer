@@ -26,6 +26,10 @@ COUPLES_PRIVATE_ACCOUNT_EMAILS=medhmama4@gmail.com,imane.abdenaimm2001@gmail.com
 
 Keep `COUPLES_DB_USERNAME`, `COUPLES_DB_PASSWORD` and `COUPLES_TOKEN_SECRET` at their existing values. The runtime database role uses `COUPLES_DB_USERNAME`/`COUPLES_DB_PASSWORD`; Flyway uses the existing schema-owner credentials in `DB_USERNAME`/`DB_PASSWORD`. Keep the current public URL, support address, retention and CORS settings. [Configuration reference](backend/.env.production.example).
 
+Use the **direct Neon connection URL** for `DB_URL`. In Neon → Connect, turn **Connection pooling off** and use the hostname without `-pooler`, retaining the same database, `jdbc:postgresql://` prefix and TLS parameters. The private `.render.env` now includes this direct `DB_URL`. If `COUPLES_DB_URL`, `SPRING_DATASOURCE_URL` or `SPRING_FLYWAY_URL` are set, remove stale overrides or give them the same direct URL. Keep `COUPLES_DB_SCHEMA=couples_app`.
+
+The app already pools its connections through Hikari (at most five runtime connections). Neon's transaction pooler can lose the selected schema between queries, causing intermittent missing-table errors such as `outbox_jobs`, even though those tables exist. [Neon documents the schema limitation and direct-connection solution](https://neon.com/docs/connect/connection-pooling#connection-pooling-in-transaction-mode). Changing the connection hostname does not copy or delete data.
+
 Remove all six obsolete import settings from Render:
 
 ```text

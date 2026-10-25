@@ -19,6 +19,8 @@ public class CouplesProductionGuard {
         if(!"https".equals(publicUrl.getScheme())||publicUrl.getHost()==null||List.of("localhost","127.0.0.1").contains(publicUrl.getHost()))throw new IllegalStateException("A public HTTPS origin is required");
         String runtime=required("spring.datasource.username"),migration=required("spring.flyway.user");
         if(runtime.equals(migration)||runtime.equals("postgres"))throw new IllegalStateException("Use separate migration and least-privilege runtime database roles");
+        requireDirectNeonConnection("spring.datasource.url");
+        requireDirectNeonConnection("spring.flyway.url");
         String jwt=required("app.jwt.secret"),actions=required("app.identity.token-secret");
         if(jwt.equals(actions)||jwt.length()<32||actions.length()<32||jwt.contains("dev-only")||actions.contains("dev-only"))throw new IllegalStateException("Provide distinct strong production signing secrets");
         if(!storage.configured()||!"https".equals(URI.create(storage.endpoint()).getScheme()))throw new IllegalStateException("Configure a dedicated private HTTPS media store");
@@ -36,5 +38,13 @@ public class CouplesProductionGuard {
         required("app.support-email");
         if(!Files.isReadable(Path.of(required("app.couples-firebase-path"))))throw new IllegalStateException("Configure a readable dedicated Firebase service account");
         if(!"validate".equals(env.getProperty("spring.jpa.hibernate.ddl-auto"))||!env.getProperty("spring.flyway.enabled",Boolean.class,false))throw new IllegalStateException("Production requires migrations and schema validation");
+    }
+
+    private void requireDirectNeonConnection(String key) {
+        String url=env.getProperty(key, "");
+        if (!url.startsWith("jdbc:postgresql://")) return;
+        String host=URI.create(url.substring("jdbc:".length())).getHost();
+        if (host!=null && host.endsWith(".neon.tech") && host.contains("-pooler."))
+            throw new IllegalStateException("Use the direct Neon connection URL for " + key + "; the pooled endpoint does not reliably preserve the app schema. Disable Connection pooling in Neon's Connect dialog and keep COUPLES_DB_SCHEMA unchanged.");
     }
 }
