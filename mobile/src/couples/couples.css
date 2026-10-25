@@ -19,9 +19,73 @@
 .couple-access .couple-error, .couple-access .couple-message { margin: 0; }
 .couple-privacy-link { display: flex; align-items: center; justify-content: center; min-height: 48px; margin-top: 20px; padding: 8px; color: var(--lo-muted); font-size: .875rem; line-height: 1.5; text-align: center; text-underline-offset: 4px; }
 .couple-privacy-link:hover { color: var(--lo-plum); }
-.couple-tab-bar { padding-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right)); }
-.couple-tab-bar ion-tab-button { max-width: 240px; }
-.couple-tab-bar ion-icon { font-size: 23px; }
+/* Keep the dock in Ionic's layout so it never covers the last item on a page. */
+.couple-tab-bar {
+  --background: var(--lo-surface);
+  --border: 0;
+  --color: var(--lo-muted);
+  --color-selected: var(--lo-plum);
+  position: relative;
+  isolation: isolate;
+  flex-shrink: 0;
+  width: min(400px, calc(100% - 48px));
+  height: max(56px, 3.5rem);
+  min-height: 56px;
+  margin: 8px auto calc(12px + var(--ion-safe-area-bottom, 0px));
+  padding: 7px;
+  gap: 8px;
+  border: 1px solid var(--lo-line);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgb(41 35 42 / 8%), 0 2px 6px rgb(41 35 42 / 3%);
+}
+
+/* Follow Ionic's selected tab; one pill moves instead of two blocks flashing. */
+.couple-tab-bar::before {
+  content: '';
+  position: absolute;
+  inset-block: 7px;
+  inset-inline-start: 7px;
+  width: calc((100% - 22px) / 2);
+  border-radius: 999px;
+  background: var(--lo-plum-soft);
+  box-shadow: inset 0 0 0 1px rgb(72 37 65 / 4%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--lo-motion-standard) cubic-bezier(.22, 1, .36, 1), opacity var(--lo-motion-fast) ease;
+}
+.couple-tab-bar:has(ion-tab-button.tab-selected)::before { opacity: 1; }
+.couple-tab-bar:has(ion-tab-button[tab='profile'].tab-selected)::before { transform: translateX(calc(100% + 8px)); }
+
+.couple-tab-bar ion-tab-button,
+.couple-tab-bar ion-tab-button.tab-selected {
+  --background: transparent;
+  --background-focused: transparent;
+  --ripple-color: var(--lo-plum);
+  --padding-top: 5px;
+  --padding-bottom: 5px;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  max-width: none;
+  min-height: 56px;
+  border-radius: 999px;
+  overflow: hidden;
+  font-weight: 600;
+  transition: color var(--lo-motion-fast) ease;
+}
+.couple-tab-bar ion-tab-button::part(native) {
+  border-radius: 999px;
+  transition: background-color var(--lo-motion-fast) ease, transform var(--lo-motion-fast) ease;
+}
+.couple-tab-bar ion-tab-button::part(native):active { transform: scale(.97); }
+.couple-tab-bar ion-tab-button.ion-focused::part(native),
+.couple-tab-bar ion-tab-button::part(native):focus-visible { outline: 2px solid var(--lo-focus); outline-offset: -3px; }
+.couple-tab-bar ion-icon { font-size: 23px; transition: transform var(--lo-motion-standard) cubic-bezier(.22, 1, .36, 1); }
+.couple-tab-bar ion-label { margin: 3px 0 0; font-size: .75rem; line-height: 1.25; }
+.couple-tab-bar .tab-selected ion-icon { transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) {
+  .couple-tab-bar ion-tab-button:not(.tab-selected):hover::part(native) { background-color: var(--lo-bg); }
+}
 .couple-privacy .lo-screen__intro { margin: 8px 0 28px; text-align: center; }
 .couple-privacy .lo-screen__title { max-width: 20ch; margin-inline: auto; text-wrap: balance; }
 .couple-privacy .lo-screen__subtitle { max-width: 38ch; margin-inline: auto; text-wrap: balance; }
