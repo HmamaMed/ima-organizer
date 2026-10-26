@@ -1,7 +1,7 @@
 import { t, useI18n } from "../i18n";
 import { IonHeader, IonIcon, IonToolbar } from '@ionic/react';
-import { useHistory } from 'react-router-dom';
 import { chevronBackOutline } from 'ionicons/icons';
+import useAppBack from '../navigation/useAppBack';
 
 export type Accent = 'rose' | 'gold' | 'plum' | 'muted';
 
@@ -23,12 +23,12 @@ export default function BrandHeader({
   title,
   accent,
   showBack,
-  backTo = '/home',
+  backTo,
   backLabel = t("Back"),
   onBack,
 }: BrandHeaderProps) {
   useI18n();
-  const history = useHistory();
+  const goBack = useAppBack(backTo);
 
   return (
     <IonHeader className="brand-header ion-no-border">
@@ -38,7 +38,7 @@ export default function BrandHeader({
             <button
               type="button"
               className="brand-header__back"
-              onClick={onBack ?? (() => history.push(backTo, { direction: 'back' }))}
+              onClick={onBack ?? goBack}
               aria-label={backLabel}
             >
               <IonIcon icon={chevronBackOutline} />

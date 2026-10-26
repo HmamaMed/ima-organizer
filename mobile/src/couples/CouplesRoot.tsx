@@ -2,7 +2,7 @@ import { t, useI18n, getLanguage } from "../shared/i18n";
 import { useState } from 'react';
 import { IonApp, IonIcon, IonLabel, IonPage, IonRefresher, IonRefresherContent, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { Link, Redirect, Route, useLocation } from 'react-router-dom';
+import { Link, Redirect, Route, useHistory, useLocation } from 'react-router-dom';
 import { chevronForwardOutline, filmOutline, homeOutline, imagesOutline, mailOutline, notificationsOutline, personOutline, restaurantOutline, giftOutline, calendarOutline } from 'ionicons/icons';
 import AppScreen from '../shared/ui/AppScreen';
 import BrandLogo from '../shared/ui/BrandLogo';
@@ -49,6 +49,7 @@ function Home() {
 }
 function Routes() {
   useI18n();
+  const history = useHistory();
   const { pathname } = useLocation();
   const { user, space, loading, error, refreshState } = useCouplesSession();
   const [link, setLink] = useState(() => {
@@ -61,7 +62,7 @@ function Routes() {
   });
   const accountReady = !!user && (user.emailVerified || user.emailVerificationRequired === false);
   if (pathname === '/privacy' && (!accountReady || !space || link.action)) return <CouplesPrivacyPage />;
-  if (!accountReady || link.action) return <CouplesAccessPage action={link.action} actionToken={link.actionToken} onActionDone={() => { setLink({ action: null, actionToken: '' }); window.history.replaceState(null, '', '/home'); }} />;
+  if (!accountReady || link.action) return <CouplesAccessPage action={link.action} actionToken={link.actionToken} onActionDone={() => { setLink({ action: null, actionToken: '' }); history.replace('/home'); }} />;
   if (!space) return <IonPage><AppScreen><FeedbackState kind={error ? 'failure' : 'loading'} heading={error || t("On retrouve votre espace…")} onRetry={error ? () => { void refreshState(); } : undefined} />{!loading && !error && <AppButton onClick={() => { void refreshState(); }}>{t("Retrouver mon espace")}</AppButton>}</AppScreen></IonPage>;
   return <IonTabs key={space.coupleId ?? 'unpaired'}>
     <IonRouterOutlet>

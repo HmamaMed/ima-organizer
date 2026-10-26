@@ -77,7 +77,7 @@ export default function NotificationsPage() {
           <span className="notification-symbol"><IonIcon icon={notificationsOutline} aria-hidden="true" /></span>
           <h2>{t("All quiet for now.")}</h2>
           <p>{t("Your birthday reminders will appear here 3 days before and 1 day before, around 7pm.")}</p>
-          <AppButton variant="secondary" onClick={() => history.push('/birthdays')}>{t("Your birthdays")}</AppButton>
+          <AppButton variant="secondary" onClick={() => history.push('/birthdays', { returnTo: '/notifications' })}>{t("Your birthdays")}</AppButton>
         </section>}
         {!!entries?.length && <>
           <div className="notification-heading"><h2>{t("Birthday reminders")}</h2><span>{entries.length} {" " + t("saved")}</span></div>
@@ -92,7 +92,7 @@ export default function NotificationsPage() {
                 onClick={() => { setSelected(entry); setDeleteError(null); }}><IonIcon icon={trashOutline} /></button>
             </li>)}
           </ul>
-          <p className="notification-footnote">{t("Reminders show when they arrived. Manage upcoming dates in") + " "}<button type="button" onClick={() => history.push('/birthdays')}>{t("your birthdays")}</button>.</p>
+          <p className="notification-footnote">{t("Reminders show when they arrived. Manage upcoming dates in") + " "}<button type="button" onClick={() => history.push('/birthdays', { returnTo: '/notifications' })}>{t("your birthdays")}</button>.</p>
         </>}
       </div>
     </AppScreen>

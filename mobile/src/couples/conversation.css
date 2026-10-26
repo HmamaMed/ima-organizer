@@ -38,8 +38,8 @@
 .conversation-editing button { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 8px; border: 0; border-radius: 50%; background: transparent; color: var(--lo-plum); font-size: 20px; }
 .conversation-error { max-width: 680px; margin: 0 auto 8px; color: var(--lo-danger); font-size: .8125rem; line-height: 1.5; }
 .conversation-new { position: absolute; bottom: 16px; left: 50%; display: flex; align-items: center; gap: 8px; min-height: 44px; max-width: calc(100% - 32px); padding: 10px 18px; transform: translateX(-50%); border: 1px solid var(--lo-line); border-radius: 999px; background: var(--lo-surface); color: var(--lo-plum); box-shadow: 0 4px 18px rgb(41 35 42 / 12%); font: inherit; font-size: .8125rem; font-weight: 600; }
-.conversation-schedule { --width: min(100% - 24px, 480px); --height: min(700px, 92%); --border-radius: 26px; }
-.conversation-schedule__body { display: grid; gap: 20px; padding: 20px var(--lo-gutter) max(24px, var(--ion-safe-area-bottom, 0px)); }
+.conversation-schedule { --width: min(100%, 480px); --height: min(700px, 92%); }
+.conversation-schedule__body { display: grid; gap: 20px; padding: 20px var(--lo-gutter) calc(24px + var(--ion-safe-area-bottom, 0px)); }
 .conversation-schedule__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .conversation-schedule__body h2 { margin: 0 0 8px; color: var(--lo-plum); font: 500 1.75rem/1.25 var(--font-display); }
 .conversation-schedule__body p { margin: 0; line-height: 1.6; }

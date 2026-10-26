@@ -26,8 +26,8 @@
 .wish-empty h2 { margin: 0; font: 500 1.5rem/1.4 var(--font-display); }
 .wish-empty p { margin: 0; color: var(--lo-muted); font-size: .875rem; line-height: 1.7; }
 .wish-footnote, .wish-editor__note { margin: 0; text-align: center; color: var(--lo-muted); font-size: .75rem; line-height: 1.8; }
-.wish-editor { --width: min(100%, 500px); --height: min(900px, 94%); --border-radius: var(--lo-radius-sheet); --background: var(--lo-bg); }
-.wish-editor__body { display: grid; gap: 24px; padding: 24px var(--lo-gutter) max(24px, var(--ion-safe-area-bottom, 0px)); }
+.wish-editor { --width: min(100%, 500px); --height: min(900px, 94%); --background: var(--lo-bg); }
+.wish-editor__body { display: grid; gap: 24px; padding: 24px var(--lo-gutter) calc(24px + var(--ion-safe-area-bottom, 0px)); }
 .wish-editor__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .wish-editor__top .lo-eyebrow { margin: 0; color: var(--lo-rose); }
 .wish-editor h2 { margin: 0; color: var(--lo-plum); font: 500 1.875rem/1.25 var(--font-display); }

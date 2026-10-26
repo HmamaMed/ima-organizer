@@ -34,8 +34,9 @@ ion-button::part(native) {
 }
 
 ion-modal {
-  --border-radius: 28px;
+  --border-radius: var(--lo-radius-sheet) var(--lo-radius-sheet) 0 0;
   --background: var(--lo-bg);
+  align-items: flex-end;
 }
 
 ion-segment-button {
@@ -307,11 +308,11 @@ ion-tab-button.tab-selected {
 .lo-confirm {
   --height: min(440px, 90%);
   --max-height: 90%;
-  --width: min(100% - 32px, 440px);
+  --width: min(100%, 440px);
 }
 
 .lo-confirm__body {
-  padding: 28px;
+  padding: 28px 28px calc(28px + var(--ion-safe-area-bottom, 0px));
   display: grid;
   gap: 12px;
 }
@@ -485,7 +486,7 @@ ion-tab-button.tab-selected {
 
 .help-modal {
   --height: 340px;
-  --width: min(100% - 32px, 400px);
+  --width: min(100%, 400px);
 }
 
 .help-modal__body {

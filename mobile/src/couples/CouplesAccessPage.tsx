@@ -1,5 +1,5 @@
 import { t, useI18n, getLanguage } from "../shared/i18n";
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { IonIcon, IonPage } from '@ionic/react';
 import { eyeOffOutline, eyeOutline, lockClosedOutline, mailOutline, personOutline } from 'ionicons/icons';
@@ -9,6 +9,7 @@ import BrandLogo from '../shared/ui/BrandLogo';
 import LanguageSwitcher from '../shared/i18n/LanguageSwitcher';
 import AppButton from '../shared/ui/AppButton';
 import { useCouplesSession } from './sessionContext';
+import type { HardwareBackEvent } from '../shared/navigation/useAppBack';
 
 type AccessMode = 'login' | 'register' | 'forgot';
 
@@ -90,6 +91,18 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
   }
 
   const verificationNeeded = !!user && !user.emailVerified && user.emailVerificationRequired !== false && !action;
+  useEffect(() => {
+    if (verificationNeeded || !action && mode === 'login') return;
+    const handleBack = (event: Event) => {
+      (event as HardwareBackEvent).detail.register(20, () => {
+        if (busy) return;
+        if (action) onActionDone();
+        else { setMode('login'); setPassword(''); setShowPassword(false); setError(''); setMessage(''); }
+      });
+    };
+    document.addEventListener('ionBackButton', handleBack);
+    return () => document.removeEventListener('ionBackButton', handleBack);
+  }, [action, mode, busy, verificationNeeded, onActionDone]);
   const formTitle = action === 'verify' ? t("Confirmer mon adresse")
     : action === 'reset' ? t("Nouveau mot de passe")
     : mode === 'register' ? t("Créer mon compte")

@@ -30,8 +30,8 @@
 .notebook-empty p, .notebook-footnote { margin: 0; color: var(--lo-muted); font-size: .8125rem; line-height: 1.8; }
 .notebook-footnote { text-align: center; }
 .notebook-tag { display: inline-block; justify-self: start; padding: 6px 11px; border-radius: 99px; background: var(--chapter-soft); color: var(--lo-plum); font-size: .6875rem; line-height: 1.5; font-weight: 600; }
-.notebook-editor { --width: min(100%, 540px); --height: min(900px, 94%); --border-radius: var(--lo-radius-sheet); --background: var(--lo-bg); }
-.notebook-editor__body { display: grid; gap: 24px; padding: 24px var(--lo-gutter) max(24px, var(--ion-safe-area-bottom, 0px)); }
+.notebook-editor { --width: min(100%, 540px); --height: min(900px, 94%); --background: var(--lo-bg); }
+.notebook-editor__body { display: grid; gap: 24px; padding: 24px var(--lo-gutter) calc(24px + var(--ion-safe-area-bottom, 0px)); }
 .notebook-editor__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .notebook-editor__top .lo-eyebrow { margin: 0; color: var(--chapter-accent); }
 .notebook-editor h2 { margin: 0; color: var(--lo-plum); font: 500 1.875rem/1.25 var(--font-display); overflow-wrap: anywhere; }
