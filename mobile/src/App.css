@@ -50,7 +50,7 @@ ion-toast {
   --border-radius: 12px;
 }
 
-.content-safe-top {
+.lo-screen.content-safe-top {
   --padding-top: calc(var(--ion-safe-area-top, 0px) + 16px);
 }
 
@@ -305,7 +305,7 @@ ion-tab-button.tab-selected {
 }
 
 .lo-confirm {
-  --height: 360px;
+  --height: min(440px, 90%);
   --max-height: 90%;
   --width: min(100% - 32px, 440px);
 }

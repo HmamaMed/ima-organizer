@@ -98,14 +98,14 @@ export default function WishesPage() {
       <div className="wishes">
         <div className="wish-owner-tabs" role="tablist" aria-label={t('Choisir un carnet d’envies')}>
           <button id="wishes-tab-mine" type="button" role="tab" aria-selected={owner === 'mine'} aria-controls="wishes-panel" tabIndex={owner === 'mine' ? 0 : -1} onKeyDown={changeTab} disabled={!!changing || deleting || saving} onClick={() => { if (!pending.current) setOwner('mine'); }}>{t('Mes envies')}</button>
-          <button id="wishes-tab-partner" type="button" role="tab" aria-selected={owner === 'partner'} aria-controls="wishes-panel" tabIndex={owner === 'partner' ? 0 : -1} onKeyDown={changeTab} disabled={!!changing || deleting || saving} onClick={() => { if (!pending.current) setOwner('partner'); }}>{partner?.name ? t('Les envies de {name}', { name: partner.name }) : t('Ses envies')}</button>
+          <button id="wishes-tab-partner" type="button" role="tab" aria-selected={owner === 'partner'} aria-controls="wishes-panel" tabIndex={owner === 'partner' ? 0 : -1} onKeyDown={changeTab} disabled={!!changing || deleting || saving} onClick={() => { if (!pending.current) setOwner('partner'); }}>{t('Ses envies')}</button>
         </div>
         <section id="wishes-panel" role="tabpanel" aria-labelledby={`wishes-tab-${owner}`} aria-busy={loading} className="wish-panel">
           {owner === 'mine' && <AppButton icon={addOutline} onClick={() => openEditor()}>{t('Ajouter une envie')}</AppButton>}
           {loading && !entries && <FeedbackState kind="loading" heading={t('On retrouve les petites envies…')} />}
           {error && <FeedbackState kind="failure" heading={error} onRetry={load} />}
           {!!entries?.length && <>
-            <div className="wish-list-heading"><h2>{owner === 'mine' ? t('Mon carnet d’envies') : t('Son carnet d’envies')}</h2><select className="wish-status-filter" aria-label={t('Afficher les envies')} value={status} onChange={event => setStatus(event.target.value as typeof status)}><option value="all">{t('Toutes les envies')}</option><option value="open">{t('À réaliser')}</option><option value="done">{t('Réalisées')}</option></select></div>
+            <div className="wish-list-heading"><h2>{owner === 'mine' ? t('Mon carnet d’envies') : partner?.name ? t('Les envies de {name}', { name: partner.name }) : t('Son carnet d’envies')}</h2><select className="wish-status-filter" aria-label={t('Afficher les envies')} value={status} onChange={event => setStatus(event.target.value as typeof status)}><option value="all">{t('Toutes les envies')}</option><option value="open">{t('À réaliser')}</option><option value="done">{t('Réalisées')}</option></select></div>
             <div className="wish-filters" role="group" aria-label={t('Filtrer les envies')}>{[{ value: 'ALL', label: 'Tout' }, ...WISH_CATEGORIES].map(item => <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value as WishCategory | 'ALL')}>{t(item.label)}</button>)}</div>
             {visible?.length === 0 && <FeedbackState kind="empty" heading={t('Aucune envie avec ces filtres.')} />}
             <div className="wish-grid">{visible?.map(entry => <article className={`wish-card ${entry.completedAt ? 'wish-card--done' : ''}`} key={entry.id}>
@@ -123,7 +123,7 @@ export default function WishesPage() {
         <p className="wish-footnote">{t('Un carnet à deux, pour les petites et les grandes attentions.')}</p>
       </div>
     </AppScreen>
-    <IonModal isOpen={editorOpen} className="wish-editor" canDismiss={!saving} aria-labelledby="wish-editor-title" onDidPresent={() => document.getElementById('wish-title')?.focus()} onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}><IonContent>{editor && token && <WishEditor entry={editor.entry} token={token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
+    <IonModal isOpen={editorOpen} className="wish-editor" canDismiss={!saving || !editorOpen} aria-labelledby="wish-editor-title" onDidPresent={() => document.getElementById('wish-title')?.focus()} onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}><IonContent>{editor && token && <WishEditor entry={editor.entry} token={token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
     <ConfirmSheet open={!!selected} title={t('Supprimer cette envie ?')} detail={deleteError ?? t('« {title} » et sa photo seront supprimés du carnet.', { title: selected?.title ?? '' })} confirmLabel={t('Supprimer l’envie')} cancelLabel={t('Annuler')} busy={deleting} onConfirm={() => { void remove(); }} onClose={() => { setSelected(null); setDeleteError(null); }} />
     <IonToast isOpen={!!toast} message={toast} duration={2400} onDidDismiss={() => setToast('')} />
   </IonPage>;

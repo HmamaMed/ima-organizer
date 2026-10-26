@@ -1,10 +1,7 @@
 .notebook--plum { --chapter-accent: var(--lo-plum); --chapter-soft: var(--lo-plum-soft); }
 .notebook--gold { --chapter-accent: var(--lo-gold); --chapter-soft: var(--lo-gold-soft); }
 .notebook { display: grid; gap: 22px; }
-.notebook-feature { display: flex; align-items: flex-start; gap: 16px; padding: 24px; border-radius: var(--lo-radius-feature); background: var(--chapter-soft); }
 .notebook-symbol { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; color: var(--chapter-accent); background: #ffffffb3; font-size: 25px; }
-.notebook-feature h2 { margin: 0 0 10px; color: var(--lo-plum); font: 500 1.35rem/1.4 var(--font-display); }
-.notebook-feature p { margin: 0; color: var(--lo-muted); font-size: .8125rem; line-height: 1.7; }
 .notebook-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .notebook-heading h2 { margin: 0; font-size: 1rem; }
 .notebook-heading > span { color: var(--lo-muted); font-size: .75rem; }
@@ -14,7 +11,7 @@
 .notebook-search-row { display: flex; flex-wrap: wrap; gap: 12px; }
 .notebook-search-row > label { flex: 2 1 180px; }
 .notebook-search-row > select { flex: 1 1 130px; width: auto; }
-.notebook-search-row input, .notebook-search-row select { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--lo-control-border); border-radius: 14px; background: var(--lo-surface); color: var(--lo-ink); font: 400 .875rem/1.5 var(--font-ui); box-sizing: border-box; min-width: 0; }
+.notebook-search-row input, .notebook-search-row select { width: 100%; min-height: 48px; padding: 12px; border: 1px solid var(--lo-control-border); border-radius: 14px; background: var(--lo-surface); color: var(--lo-ink); font: 400 1rem/1.5 var(--font-ui); box-sizing: border-box; min-width: 0; }
 .notebook-search-row > select { width: auto; }
 .notebook-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .notebook-card { display: grid; align-content: start; gap: 18px; padding: 22px; border: 1px solid var(--lo-line); border-radius: var(--lo-radius-card); background: var(--lo-surface); min-width: 0; overflow-wrap: anywhere; }
@@ -24,7 +21,7 @@
 .notebook-card__kind { margin: 0 0 6px; color: var(--chapter-accent); font-size: .6875rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .notebook-copy { margin: 0; white-space: pre-wrap; color: var(--lo-muted); font-size: .875rem; line-height: 1.75; overflow-wrap: anywhere; }
 .notebook-card__footer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-top: 1px solid var(--lo-line); padding-top: 14px; }
-.notebook-status { flex: 1 1 130px; min-width: 0; min-height: 48px; padding: 10px; border: 1px solid var(--lo-control-border); border-radius: 12px; background: var(--lo-bg); color: var(--lo-plum); font: 500 .8125rem/1.5 var(--font-ui); }
+.notebook-status { flex: 1 1 130px; min-width: 0; min-height: 48px; padding: 10px; border: 1px solid var(--lo-control-border); border-radius: 12px; background: var(--lo-bg); color: var(--lo-plum); font: 500 1rem/1.5 var(--font-ui); }
 .notebook-actions { display: flex; margin-left: auto; }
 .notebook-delete { color: var(--lo-danger); }
 .notebook-empty { display: grid; justify-items: center; gap: 18px; padding: 32px 20px; border: 1px dashed var(--lo-control-border); border-radius: var(--lo-radius-card); text-align: center; }

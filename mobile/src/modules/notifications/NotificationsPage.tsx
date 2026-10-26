@@ -67,7 +67,7 @@ export default function NotificationsPage() {
   }
 
   return <IonPage>
-    <BrandHeader icon={notificationsOutline} title="Notifications" accent="rose" showBack backTo="/profile" />
+    <BrandHeader icon={notificationsOutline} title="Notifications" accent="rose" showBack />
     <AppScreen eyebrow={t("Your little reminders")} title={t("A thoughtful heads-up.")} subtitle={t("Birthday reminders, kept here just for you.")}
       fixedContent={<IonRefresher slot="fixed" onIonRefresh={event => { void load().finally(() => event.detail.complete()); }}><IonRefresherContent /></IonRefresher>}>
       {loading && !entries && <FeedbackState kind="loading" heading={t("Finding your reminders…")} />}

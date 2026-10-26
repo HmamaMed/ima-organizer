@@ -1,12 +1,11 @@
 import { t, useI18n, getLanguage } from "../shared/i18n";
 import { useState } from 'react';
-import { IonApp, IonIcon, IonLabel, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/react';
+import { IonApp, IonIcon, IonLabel, IonPage, IonRefresher, IonRefresherContent, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { Link, Redirect, Route, useLocation } from 'react-router-dom';
-import { filmOutline, homeOutline, imagesOutline, mailOutline, notificationsOutline, personOutline, restaurantOutline, giftOutline, calendarOutline } from 'ionicons/icons';
+import { chevronForwardOutline, filmOutline, homeOutline, imagesOutline, mailOutline, notificationsOutline, personOutline, restaurantOutline, giftOutline, calendarOutline } from 'ionicons/icons';
 import AppScreen from '../shared/ui/AppScreen';
 import BrandLogo from '../shared/ui/BrandLogo';
-import LanguageSwitcher from '../shared/i18n/LanguageSwitcher';
 import AppButton from '../shared/ui/AppButton';
 import FeedbackState from '../shared/ui/FeedbackState';
 import WatchlistPage from '../modules/watchlist/WatchlistPage';
@@ -30,14 +29,22 @@ import './couples.css';
 
 function Home() {
   useI18n();
-  const { user, space, refreshState, loading, error } = useCouplesSession();
-  return <IonPage lang={getLanguage()}><AppScreen className="content-safe-top">
-    <div className="home-brand"><BrandLogo /><LanguageSwitcher /></div>
+  const { user, space, refreshState, error } = useCouplesSession();
+  const shared = [
+    { path: '/notes', title: t('Nos petits mots'), detail: t('Une pensée, une conversation.'), icon: mailOutline, accent: 'rose' },
+    { path: '/memories', title: t('Nos moments'), detail: t('Les instants qu’on partage.'), icon: imagesOutline, accent: 'gold' },
+    { path: '/watchlist', title: t('On regarde quoi ?'), detail: t('Notre prochaine soirée canapé.'), icon: filmOutline, accent: 'plum' },
+    { path: '/recipes', title: t('Nos recettes'), detail: t('À cuisiner et à savourer.'), icon: restaurantOutline, accent: 'gold' },
+    { path: '/wishes', title: t('Nos envies'), detail: t('Des idées pour se faire plaisir.'), icon: giftOutline, accent: 'rose' },
+    { path: '/inbox', title: t('Pour vous'), detail: t('Ses dernières attentions.'), icon: notificationsOutline, accent: 'plum' },
+  ];
+  return <IonPage lang={getLanguage()}><AppScreen className="content-safe-top couple-home" fixedContent={<IonRefresher slot="fixed" onIonRefresh={event => { void refreshState().finally(() => event.detail.complete()); }}><IonRefresherContent /></IonRefresher>}>
+    <div className="home-brand"><BrandLogo /></div>
     <header className="lo-screen__intro"><p className="lo-eyebrow">{space?.members.map(member => member.name).join(t(' et '))}</p><h1 className="lo-screen__title">{t("Bonjour") + " "}{user?.name ?? ''}.</h1><p className="lo-screen__subtitle">{t("Un espace privé pour vos petits mots, vos moments et vos projets.")}</p></header>
     <CouplePairing />
-    {space?.coupleId && <div className="couple-grid">{[{ path: '/notes', title: t("Nos petits mots"), icon: mailOutline }, { path: '/memories', title: t("Nos moments"), icon: imagesOutline }, { path: '/watchlist', title: t("On regarde quoi ?"), icon: filmOutline }, { path: '/recipes', title: t("Nos recettes"), icon: restaurantOutline }, { path: '/wishes', title: t("Nos envies"), icon: giftOutline }, { path: '/inbox', title: t("Pour vous"), icon: notificationsOutline }].map(item => <Link className="couple-link" to={item.path} key={item.path}><IonIcon icon={item.icon} aria-hidden="true" />{item.title}</Link>)}</div>}
-    <div className="couple-grid"><Link className="couple-link" to="/birthdays"><IonIcon icon={calendarOutline} aria-hidden="true" />{t("Mes rappels d’anniversaire")}</Link><Link className="couple-link" to="/notifications"><IonIcon icon={notificationsOutline} aria-hidden="true" />{t("Mes rappels personnels")}</Link></div>
-    {error && <p className="couple-error" role="alert">{error}</p>}<AppButton variant="quiet" busy={loading} onClick={() => { void refreshState(); }}>{t("Actualiser notre espace")}</AppButton>
+    {error && <FeedbackState kind="failure" heading={t(error)} onRetry={() => { void refreshState(); }} />}
+    {space?.coupleId && <section aria-labelledby="home-shared"><h2 className="home-section-title" id="home-shared">{t('À partager')}</h2><div className="home-cards">{shared.map(item => <Link className={`home-card home-card--${item.accent}`} to={item.path} key={item.path}><span className="home-card__icon"><IonIcon icon={item.icon} aria-hidden="true" /></span><span><strong>{item.title}</strong><span className="home-card__detail">{item.detail}</span></span><IonIcon className="home-card__arrow" icon={chevronForwardOutline} aria-hidden="true" /></Link>)}</div></section>}
+    <section className="home-personal" aria-labelledby="home-personal"><h2 className="home-section-title" id="home-personal">{t('Pour moi')}</h2><div className="home-personal__links"><Link to="/birthdays"><IonIcon icon={calendarOutline} aria-hidden="true" /><span>{t('Mes rappels d’anniversaire')}</span><IonIcon icon={chevronForwardOutline} aria-hidden="true" /></Link><Link to="/notifications"><IonIcon icon={notificationsOutline} aria-hidden="true" /><span>{t('Mes rappels personnels')}</span><IonIcon icon={chevronForwardOutline} aria-hidden="true" /></Link></div></section>
   </AppScreen></IonPage>;
 }
 function Routes() {

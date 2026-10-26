@@ -52,13 +52,12 @@ export default function WatchlistPage() {
     <AppScreen eyebrow={t("Notre sélection")} title={t("Une soirée. Deux regards.")} subtitle={t("Les films et les séries qu’on se promet de découvrir ensemble.")}
       fixedContent={<IonRefresher slot="fixed" onIonRefresh={event => { void collection.load().finally(() => event.detail.complete()); }}><IonRefresherContent /></IonRefresher>}>
       <div className="notebook watchlist" aria-busy={collection.loading}>
-        <section className="notebook-feature"><span className="notebook-symbol"><IonIcon icon={filmOutline} aria-hidden="true" /></span><div><h2>{t("Le plaisir de choisir à deux.")}</h2><p>{t("À voir, en cours ou déjà vu. Et, après le générique, chacun son avis.")}</p></div></section>
         <AppButton icon={addOutline} onClick={() => openEditor()}>{t("Ajouter un film ou une série")}</AppButton>
         {collection.loading && !entries && <FeedbackState kind="loading" heading={t("On retrouve notre sélection…")} />}
         {collection.error && <FeedbackState kind="failure" heading={t("Impossible de charger la sélection.")} onRetry={collection.load} retryLabel="Réessayer" />}
         {mutationError && <p className="notebook-error" role="alert">{mutationError}</p>}
         {!!entries?.length && <>
-          <div className="notebook-heading"><h2>{t("Notre liste")}</h2><span>{entries.length} {entries.length === 1 ? 'titre' : 'titres'}</span></div>
+          <div className="notebook-heading"><h2>{t("Notre liste")}</h2><span>{entries.length} {entries.length === 1 ? t('titre') : t('titres')}</span></div>
           <div className="notebook-filters" role="group" aria-label={t("Filtrer par statut")}>{[{ value: 'ALL', label: t("Tout") }, ...WATCH_STATUSES].map(item => <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value as WatchStatus | 'ALL')}>{t(item.label)}</button>)}</div>
           <div className="notebook-search-row"><label><span className="notebook-sr-only">{t("Rechercher un titre")}</span><input type="search" aria-label={t("Rechercher un titre")} placeholder={t("Un titre en tête ?")} value={search} onChange={event => setSearch(event.target.value)} /></label>
             <select aria-label={t("Filtrer par format")} value={kind} onChange={event => setKind(event.target.value as WatchKind | 'ALL')}><option value="ALL">{t("Tous les formats")}</option><option value="FILM">{t("Films")}</option><option value="SERIES">{t("Séries")}</option></select></div>
@@ -82,8 +81,8 @@ export default function WatchlistPage() {
         <p className="notebook-footnote">{t("Une liste partagée. Des avis qui vous ressemblent.")}</p>
       </div>
     </AppScreen>
-    <IonModal isOpen={editorOpen} className="notebook-editor notebook--plum" canDismiss={!saving} aria-labelledby="watch-editor-title" onDidPresent={() => document.getElementById('watch-title')?.focus()} onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}><IonContent>{editor && collection.token && <WatchEditor entry={editor.entry} token={collection.token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
-    <IonModal isOpen={reviewOpen} className="notebook-editor notebook--plum" canDismiss={!saving} aria-labelledby="watch-review-title" onDidPresent={() => document.getElementById('watch-review-comment')?.focus()} onDidDismiss={() => { setReviewOpen(false); setReview(null); }}><IonContent>{review && collection.token && user && <WatchReviewEditor entry={review} userId={user.userId} token={collection.token} onSaved={saved} onClose={() => setReviewOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
+    <IonModal isOpen={editorOpen} className="notebook-editor notebook--plum" canDismiss={!saving || !editorOpen} aria-labelledby="watch-editor-title" onDidPresent={() => document.getElementById('watch-title')?.focus()} onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}><IonContent>{editor && collection.token && <WatchEditor entry={editor.entry} token={collection.token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
+    <IonModal isOpen={reviewOpen} className="notebook-editor notebook--plum" canDismiss={!saving || !reviewOpen} aria-labelledby="watch-review-title" onDidPresent={() => document.getElementById('watch-review-comment')?.focus()} onDidDismiss={() => { setReviewOpen(false); setReview(null); }}><IonContent>{review && collection.token && user && <WatchReviewEditor entry={review} userId={user.userId} token={collection.token} onSaved={saved} onClose={() => setReviewOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
     <NotebookDeleteSheet entry={toDelete} resource="/api/watchlist" title={t("Retirer ce titre ?")} detail={t("le titre et vos deux avis seront retirés de la sélection.")} onDeleted={id => { collection.removed(id); setToast(t("Titre retiré.")); }} onClose={() => setToDelete(null)} />
     <IonToast isOpen={!!toast} message={toast} duration={2400} onDidDismiss={() => setToast('')} />
   </IonPage>;

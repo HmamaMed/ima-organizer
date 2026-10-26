@@ -1,9 +1,8 @@
-.language-switcher { display: flex; flex: none; gap: 2px; padding: 3px; border: 1px solid var(--lo-line); border-radius: 18px; background: var(--lo-bg); }
-.language-switcher button { display: grid; place-items: center; width: 42px; min-height: 42px; padding: 4px; border: 0; border-radius: 14px; background: transparent; font-size: 24px; line-height: 1; transition: background-color var(--lo-motion-fast) ease, box-shadow var(--lo-motion-fast) ease; }
-.language-switcher button[aria-pressed='true'] { background: var(--lo-surface); box-shadow: 0 1px 6px rgb(41 35 42 / 10%), inset 0 0 0 1px var(--lo-plum-soft); }
-.brand-header__identity { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 680px; margin: auto; padding: 6px var(--lo-gutter) 8px; }
-.brand-header__identity .brand-logo { width: 156px; max-width: calc(100% - 110px); }
-.home-brand { justify-content: space-between; gap: 16px; }
-.home-brand .brand-logo { min-width: 0; max-width: calc(100% - 110px); }
-.couple-access .login-brand { justify-content: space-between; align-items: flex-start; gap: 16px; }
-.couple-access .login-brand .brand-logo { width: 150px; max-width: calc(100% - 110px); }
+.language-switcher { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 5px; border: 1px solid var(--lo-line); border-radius: 18px; background: var(--lo-bg); }
+.language-switcher button { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; min-height: 48px; padding: 10px; border: 0; border-radius: 13px; background: transparent; color: var(--lo-muted); font-size: .9375rem; font-weight: 500; transition: background-color var(--lo-motion-fast), color var(--lo-motion-fast), box-shadow var(--lo-motion-fast); }
+.language-switcher button > span { font-size: 20px; }
+.language-switcher button[aria-pressed='true'] { background: var(--lo-surface); color: var(--lo-plum); box-shadow: 0 1px 6px rgb(41 35 42 / 8%), inset 0 0 0 1px var(--lo-line); }
+.language-select { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--lo-muted); }
+.language-select select { width: auto; min-height: 44px; padding: 8px 28px 8px 28px; border: 0; border-radius: 12px; appearance: none; background: transparent; color: inherit; font: inherit; font-size: 1rem; cursor: pointer; }
+.language-select > ion-icon { position: absolute; left: 4px; font-size: 18px; pointer-events: none; }
+.language-select > ion-icon:last-child { left: auto; right: 6px; font-size: 14px; }

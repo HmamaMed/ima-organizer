@@ -103,7 +103,7 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
     <IonPage lang={getLanguage()}>
       <AppScreen className="couple-access-screen content-safe-top">
         <div className="couple-access login-screen">
-          <div className="login-brand"><BrandLogo variant="stacked" /><LanguageSwitcher /></div>
+          <div className="login-brand"><BrandLogo variant="stacked" /></div>
           <header className="couple-access__intro">
             <h1 className="login-title">{t("Votre espace à deux.")}</h1>
             <p className="login-subtitle">{t("Des mots, des moments et des projets à partager.")}<br />{t("Entrez, et faites comme chez vous.")}</p>
@@ -175,7 +175,10 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
             </form>
           )}
           {(verificationNeeded || action && !access.emailEnabled) && <>{error && <p className="couple-error" role="alert">{error}</p>}{message && <p className="couple-message" role="status">{message}</p>}</>}
-          <Link className="couple-privacy-link" to={{ pathname: '/privacy', state: { privacyReturnTo: window.location.pathname === '/delete-account' ? '/delete-account' : '/' } }}>{t("Votre espace et vos données")}</Link>
+          <footer className="couple-access__footer">
+            <LanguageSwitcher compact />
+            <Link className="couple-privacy-link" to={{ pathname: '/privacy', state: { privacyReturnTo: window.location.pathname === '/delete-account' ? '/delete-account' : '/' } }}>{t("Votre espace et vos données")}</Link>
+          </footer>
         </div>
       </AppScreen>
     </IonPage>

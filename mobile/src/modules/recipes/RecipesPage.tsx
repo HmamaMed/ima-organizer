@@ -49,13 +49,12 @@ export default function RecipesPage() {
     <AppScreen eyebrow={t("Notre carnet de cuisine")} title={t("Ça se partage, ça se savoure.")} subtitle={t("Les plats qu’on aime, ceux qu’on veut essayer, et nos petits secrets en cuisine.")}
       fixedContent={<IonRefresher slot="fixed" onIonRefresh={event => { void collection.load().finally(() => event.detail.complete()); }}><IonRefresherContent /></IonRefresher>}>
       <div className="notebook recipes" aria-busy={collection.loading}>
-        <section className="notebook-feature"><span className="notebook-symbol"><IonIcon icon={restaurantOutline} aria-hidden="true" /></span><div><h2>{t("Les bonnes choses se gardent.")}</h2><p>{t("Une recette à tester, un plat devenu un classique. Tout notre carnet, à deux.")}</p></div></section>
         <AppButton icon={addOutline} onClick={() => openEditor()}>{t("Ajouter une recette")}</AppButton>
         {collection.loading && !entries && <FeedbackState kind="loading" heading={t("On ouvre le carnet…")} />}
         {collection.error && <FeedbackState kind="failure" heading={t("Impossible de charger les recettes.")} onRetry={collection.load} retryLabel="Réessayer" />}
         {mutationError && <p className="notebook-error" role="alert">{mutationError}</p>}
         {!!entries?.length && <>
-          <div className="notebook-heading"><h2>{t("Dans notre carnet")}</h2><span>{entries.length} {entries.length === 1 ? 'recette' : 'recettes'}</span></div>
+          <div className="notebook-heading"><h2>{t("Dans notre carnet")}</h2><span>{entries.length} {entries.length === 1 ? t('recette') : t('recettes')}</span></div>
           <div className="notebook-filters" role="group" aria-label={t("Filtrer les recettes")}>{[{ value: 'ALL', label: t("Tout") }, ...RECIPE_STATUSES].map(item => <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value as RecipeStatus | 'ALL')}>{t(item.label)}</button>)}</div>
           <div className="notebook-search-row"><label><span className="notebook-sr-only">{t("Rechercher une recette ou un ingrédient")}</span><input type="search" aria-label={t("Rechercher une recette ou un ingrédient")} placeholder={t("Un plat, un ingrédient…")} value={search} onChange={event => setSearch(event.target.value)} /></label></div>
           {visible?.length === 0 && <FeedbackState kind="empty" heading={t("Aucune recette ici pour le moment.")} detail={t("Essayez un autre filtre ou un autre ingrédient.")} />}
@@ -74,7 +73,7 @@ export default function RecipesPage() {
         <p className="notebook-footnote">{t("Nos idées, nos astuces, nos petits classiques.")}</p>
       </div>
     </AppScreen>
-    <IonModal isOpen={editorOpen} className="notebook-editor notebook--gold" canDismiss={!saving} aria-labelledby="recipe-editor-title" onDidPresent={() => document.getElementById('recipe-title')?.focus()} onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}><IonContent>{editor && collection.token && <RecipeEditor entry={editor.entry} token={collection.token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
+    <IonModal isOpen={editorOpen} className="notebook-editor notebook--gold" canDismiss={!saving || !editorOpen} aria-labelledby="recipe-editor-title" onDidPresent={() => document.getElementById('recipe-title')?.focus()} onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}><IonContent>{editor && collection.token && <RecipeEditor entry={editor.entry} token={collection.token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent></IonModal>
     <IonModal isOpen={detailOpen} className="notebook-editor notebook--gold" aria-labelledby="recipe-detail-title" onDidDismiss={() => { setDetailOpen(false); setDetail(null); }}><IonContent>{detail && <RecipeDetail recipe={detail} onClose={() => setDetailOpen(false)} />}</IonContent></IonModal>
     <NotebookDeleteSheet entry={toDelete} resource="/api/recipes" title={t("Supprimer cette recette ?")} detail={t("les ingrédients, les étapes et les astuces seront retirés du carnet partagé.")} onDeleted={id => { collection.removed(id); setToast(t("Recette supprimée.")); }} onClose={() => setToDelete(null)} />
     <IonToast isOpen={!!toast} message={toast} duration={2400} onDidDismiss={() => setToast('')} />

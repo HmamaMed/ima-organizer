@@ -173,7 +173,7 @@ export default function BirthdaysPage() {
           <p className="birthday-private"><IonIcon icon={lockClosedOutline} aria-hidden="true" /> {" " + t("Your dates, just for you. Your partner has their own list.")}</p>
         </div>
       </AppScreen>
-      <IonModal isOpen={editorOpen} className="birthday-editor" canDismiss={!saving} aria-labelledby="birthday-editor-title"
+      <IonModal isOpen={editorOpen} className="birthday-editor" canDismiss={!saving || !editorOpen} aria-labelledby="birthday-editor-title"
         onDidPresent={() => document.getElementById('birthday-label')?.focus()}
         onDidDismiss={() => { setEditorOpen(false); setEditor(null); }}>
         <IonContent>{editor && token && <BirthdayEditor entry={editor.entry} token={token} onSaved={saved} onClose={() => setEditorOpen(false)} onBusyChange={setSaving} />}</IonContent>

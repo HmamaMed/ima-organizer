@@ -102,6 +102,8 @@ textarea {
   font: inherit;
 }
 
+select { font: inherit; }
+
 button {
   cursor: pointer;
 }
@@ -117,7 +119,7 @@ textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
-:where(button, a, input, textarea):focus-visible {
+:where(button, a, input, textarea, select, summary):focus-visible {
   outline: 3px solid var(--lo-focus);
   outline-offset: 3px;
 }
