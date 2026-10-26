@@ -1,3 +1,4 @@
+import { t, useI18n, getLanguage, hasLanguagePreference, setLanguage } from "../shared/i18n";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiError, apiRequest, setAuthenticationRecovery, setCoupleScopeProvider, setUnauthorizedHandler, setScopeChangeHandler } from '../shared/api/client';
 import { AuthSessionProvider } from '../shared/auth/AuthContext';
@@ -5,6 +6,7 @@ import { AuthSessionProvider } from '../shared/auth/AuthContext';
 import { Context, type Account, type AccessConfiguration, type Credentials, type Session, type Space } from './sessionContext';
 /** Credentials stay in memory. Restarting the app requires login until a Keystore-backed integration is shipped. */
 export function CouplesSession({ children }: { children: ReactNode }) {
+  const { language } = useI18n();
   const [credentials, setCredentials] = useState<Credentials | null>(null);
   const current = useRef<Credentials | null>(null);
   const [space, setSpace] = useState<Space | null>(null);
@@ -22,6 +24,7 @@ export function CouplesSession({ children }: { children: ReactNode }) {
   }, []);
   const login = useCallback(async (email: string, password: string) => {
     const response = await apiRequest<Credentials>('/api/identity/login', { method: 'POST', body: { email, password, deviceName: 'Life Organizer' } });
+    if (!hasLanguagePreference() && (response.user.locale === 'fr' || response.user.locale === 'en')) setLanguage(response.user.locale);
     generation.current++; previousTokens.current.clear(); scope.current = null; setSpace(null);
     current.current = response; setCredentials(response);
   }, []);
@@ -41,7 +44,7 @@ export function CouplesSession({ children }: { children: ReactNode }) {
       if (generation.current !== version || !current.current) return;
       current.current = { ...current.current, user }; setCredentials(current.current);
       scope.current = nextSpace.coupleId; setSpace(nextSpace);
-    } catch { if (generation.current === version) setError('Impossible de retrouver votre espace. Réessayez.'); }
+    } catch { if (generation.current === version) setError(t("Impossible de retrouver votre espace. Réessayez.")); }
     finally { if (generation.current === version) setLoading(false); }
   }, []);
   useEffect(() => {
@@ -71,6 +74,23 @@ export function CouplesSession({ children }: { children: ReactNode }) {
     return () => { setAuthenticationRecovery(null); setCoupleScopeProvider(null); setUnauthorizedHandler(null); setScopeChangeHandler(null); };
   }, [clear, refreshState]);
   const userId = credentials?.user.userId;
+  const syncingLanguage = useRef(false);
+  useEffect(() => {
+    if (syncingLanguage.current || !current.current || current.current.user.locale === language) return;
+    syncingLanguage.current = true;
+    const version = generation.current;
+    void (async () => {
+      try {
+        // Serialize rapid flag changes, updating only the language and preserving account settings.
+        while (current.current && generation.current === version && current.current.user.locale !== getLanguage()) {
+          const account = await apiRequest<Account>('/api/identity/language', { token: current.current.token, method: 'PATCH', body: { locale: getLanguage() } });
+          if (!current.current || generation.current !== version) return;
+          current.current = { ...current.current, user: account }; setCredentials(current.current);
+        }
+      } catch { /* The local language remains available offline; the next account refresh retries. */ }
+      finally { syncingLanguage.current = false; }
+    })();
+  }, [language, credentials]);
   useEffect(() => { if (userId) void refreshState(); }, [userId, refreshState]);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === 'visible') void refreshState(); };

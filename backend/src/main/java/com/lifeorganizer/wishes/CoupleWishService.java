@@ -18,10 +18,24 @@ import java.util.*;
 public class CoupleWishService {
     private final JdbcTemplate jdbc;private final CoupleAccess access;private final R2Storage storage;private final CoupleMediaValidator validator;private final JobStore jobs;private final TransactionTemplate tx;private final long userQuota,coupleQuota;
     public CoupleWishService(JdbcTemplate jdbc,CoupleAccess access,R2Storage storage,CoupleMediaValidator validator,JobStore jobs,PlatformTransactionManager manager,@org.springframework.beans.factory.annotation.Value("${app.media.user-quota-bytes:104857600}")long userQuota,@org.springframework.beans.factory.annotation.Value("${app.media.couple-quota-bytes:209715200}")long coupleQuota){this.jdbc=jdbc;this.access=access;this.storage=storage;this.validator=validator;this.jobs=jobs;tx=new TransactionTemplate(manager);this.userQuota=userQuota;this.coupleQuota=coupleQuota;}
-    public record Wish(UUID id,String title,WishCategory category,String details,String link,UUID photoId,String photoUrl,Instant createdAt,UUID ownerId,String ownerName){}
-    private RowMapper<Wish> mapper(){return(r,n)->{String key=r.getString("object_key");return new Wish(r.getObject("id",UUID.class),r.getString("title"),WishCategory.valueOf(r.getString("category")),r.getString("details"),r.getString("link"),r.getObject("photo_id",UUID.class),key==null?null:storage.readUrl(key,null,Instant.now()),r.getTimestamp("created_at").toInstant(),r.getObject("owner_id",UUID.class),r.getString("owner_name"));};}
+    public record Wish(UUID id,String title,WishCategory category,String details,String link,UUID photoId,String photoUrl,Instant createdAt,UUID ownerId,String ownerName,Instant completedAt){}
+    private RowMapper<Wish> mapper(){return(r,n)->{String key=r.getString("object_key");return new Wish(r.getObject("id",UUID.class),r.getString("title"),WishCategory.valueOf(r.getString("category")),r.getString("details"),r.getString("link"),r.getObject("photo_id",UUID.class),key==null?null:storage.readUrl(key,null,Instant.now()),r.getTimestamp("created_at").toInstant(),r.getObject("owner_id",UUID.class),r.getString("owner_name"),r.getTimestamp("completed_at")==null?null:r.getTimestamp("completed_at").toInstant());};}
     private static final String SELECT="select w.*,u.name owner_name,p.object_key from wishes w join users u on u.id=w.owner_id left join wish_photos p on p.id=w.photo_id ";
-    @Transactional(readOnly=true) public List<Wish> list(User user,int page,int size){UUID scope=access.requireScope(user);return jdbc.query(SELECT+"where w.couple_id=? order by w.created_at desc,w.id desc limit ? offset ?",mapper(),scope,Math.clamp(size,1,100),Math.max(0,page)*(long)Math.clamp(size,1,100));}
+    @Transactional(readOnly=true) public List<Wish> list(User user,int page,int size){return list(user,page,size,"all");}
+    @Transactional(readOnly=true) public List<Wish> list(User user,int page,int size,String owner){
+        UUID scope=access.requireScope(user);
+        String filter=switch(owner){case "all"->"";case "mine"->" and w.owner_id=?";case "partner"->" and w.owner_id<>?";default->throw new IllegalArgumentException("Choose mine, partner or all");};
+        var parameters=new ArrayList<Object>();parameters.add(scope);
+        if(!owner.equals("all"))parameters.add(user.getId());
+        parameters.add(Math.clamp(size,1,100));parameters.add(Math.max(0,page)*(long)Math.clamp(size,1,100));
+        return jdbc.query(SELECT+"where w.couple_id=?"+filter+" order by w.created_at desc,w.id desc limit ? offset ?",mapper(),parameters.toArray());
+    }
+    public record Completion(@jakarta.validation.constraints.NotNull Boolean completed){}
+    @Transactional public Wish complete(User user,UUID id,boolean completed){
+        UUID scope=access.requireScopeForWrite(user);
+        if(jdbc.update("update wishes set completed_at=case when ? then coalesce(completed_at,current_timestamp) else null end where id=? and couple_id=?",completed,id,scope)==0)throw new NoSuchElementException("Wish not found");
+        return get(user,id);
+    }
     @Transactional(readOnly=true) public Wish get(User user,UUID id){UUID scope=access.requireScope(user);return jdbc.query(SELECT+"where w.id=? and w.couple_id=?",mapper(),id,scope).stream().findFirst().orElseThrow(()->new NoSuchElementException("Wish not found"));}
     private UUID owned(User user,UUID id){UUID scope=access.requireScopeForWrite(user);if(jdbc.queryForList("select id from wishes where id=? and couple_id=? and owner_id=? for update",UUID.class,id,scope,user.getId()).isEmpty())throw new NoSuchElementException("Your wish was not found");return scope;}
     private void photo(User user,UUID scope,UUID photo,UUID excluded){if(photo==null)return;boolean valid=Boolean.TRUE.equals(jdbc.queryForObject("select exists(select 1 from wish_photos p where p.id=? and p.couple_id=? and p.uploader_id=? and p.ready and p.upload_state='READY' and p.delete_after is null and not exists(select 1 from wishes w where w.photo_id=p.id and (?::uuid is null or w.id<>?)))",Boolean.class,photo,scope,user.getId(),excluded,excluded));if(!valid)throw new NoSuchElementException("Unused wish photo not found");}

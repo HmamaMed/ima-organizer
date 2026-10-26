@@ -1,3 +1,4 @@
+import { t, useI18n, getLanguage } from "../shared/i18n";
 import { useState } from 'react';
 import { IonApp, IonIcon, IonLabel, IonPage, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
@@ -5,6 +6,7 @@ import { Link, Redirect, Route, useLocation } from 'react-router-dom';
 import { filmOutline, homeOutline, imagesOutline, mailOutline, notificationsOutline, personOutline, restaurantOutline, giftOutline, calendarOutline } from 'ionicons/icons';
 import AppScreen from '../shared/ui/AppScreen';
 import BrandLogo from '../shared/ui/BrandLogo';
+import LanguageSwitcher from '../shared/i18n/LanguageSwitcher';
 import AppButton from '../shared/ui/AppButton';
 import FeedbackState from '../shared/ui/FeedbackState';
 import WatchlistPage from '../modules/watchlist/WatchlistPage';
@@ -27,17 +29,19 @@ import CoupleInboxPage from './CoupleInboxPage';
 import './couples.css';
 
 function Home() {
+  useI18n();
   const { user, space, refreshState, loading, error } = useCouplesSession();
-  return <IonPage lang="fr"><AppScreen className="content-safe-top">
-    <div className="home-brand"><BrandLogo /></div>
-    <header className="lo-screen__intro"><p className="lo-eyebrow">{space?.members.map(member => member.name).join(' et ')}</p><h1 className="lo-screen__title">Bonjour {user?.name ?? ''}.</h1><p className="lo-screen__subtitle">Un espace privé pour vos petits mots, vos moments et vos projets.</p></header>
+  return <IonPage lang={getLanguage()}><AppScreen className="content-safe-top">
+    <div className="home-brand"><BrandLogo /><LanguageSwitcher /></div>
+    <header className="lo-screen__intro"><p className="lo-eyebrow">{space?.members.map(member => member.name).join(t(' et '))}</p><h1 className="lo-screen__title">{t("Bonjour") + " "}{user?.name ?? ''}.</h1><p className="lo-screen__subtitle">{t("Un espace privé pour vos petits mots, vos moments et vos projets.")}</p></header>
     <CouplePairing />
-    {space?.coupleId && <div className="couple-grid">{[{ path: '/notes', title: 'Nos petits mots', icon: mailOutline }, { path: '/memories', title: 'Nos moments', icon: imagesOutline }, { path: '/watchlist', title: 'On regarde quoi ?', icon: filmOutline }, { path: '/recipes', title: 'Nos recettes', icon: restaurantOutline }, { path: '/wishes', title: 'Nos envies', icon: giftOutline }, { path: '/inbox', title: 'Pour vous', icon: notificationsOutline }].map(item => <Link className="couple-link" to={item.path} key={item.path}><IonIcon icon={item.icon} aria-hidden="true" />{item.title}</Link>)}</div>}
-    <div className="couple-grid"><Link className="couple-link" to="/birthdays"><IonIcon icon={calendarOutline} aria-hidden="true" />Mes rappels d’anniversaire</Link><Link className="couple-link" to="/notifications"><IonIcon icon={notificationsOutline} aria-hidden="true" />Mes rappels personnels</Link></div>
-    {error && <p className="couple-error" role="alert">{error}</p>}<AppButton variant="quiet" busy={loading} onClick={() => { void refreshState(); }}>Actualiser notre espace</AppButton>
+    {space?.coupleId && <div className="couple-grid">{[{ path: '/notes', title: t("Nos petits mots"), icon: mailOutline }, { path: '/memories', title: t("Nos moments"), icon: imagesOutline }, { path: '/watchlist', title: t("On regarde quoi ?"), icon: filmOutline }, { path: '/recipes', title: t("Nos recettes"), icon: restaurantOutline }, { path: '/wishes', title: t("Nos envies"), icon: giftOutline }, { path: '/inbox', title: t("Pour vous"), icon: notificationsOutline }].map(item => <Link className="couple-link" to={item.path} key={item.path}><IonIcon icon={item.icon} aria-hidden="true" />{item.title}</Link>)}</div>}
+    <div className="couple-grid"><Link className="couple-link" to="/birthdays"><IonIcon icon={calendarOutline} aria-hidden="true" />{t("Mes rappels d’anniversaire")}</Link><Link className="couple-link" to="/notifications"><IonIcon icon={notificationsOutline} aria-hidden="true" />{t("Mes rappels personnels")}</Link></div>
+    {error && <p className="couple-error" role="alert">{error}</p>}<AppButton variant="quiet" busy={loading} onClick={() => { void refreshState(); }}>{t("Actualiser notre espace")}</AppButton>
   </AppScreen></IonPage>;
 }
 function Routes() {
+  useI18n();
   const { pathname } = useLocation();
   const { user, space, loading, error, refreshState } = useCouplesSession();
   const [link, setLink] = useState(() => {
@@ -51,7 +55,7 @@ function Routes() {
   const accountReady = !!user && (user.emailVerified || user.emailVerificationRequired === false);
   if (pathname === '/privacy' && (!accountReady || !space || link.action)) return <CouplesPrivacyPage />;
   if (!accountReady || link.action) return <CouplesAccessPage action={link.action} actionToken={link.actionToken} onActionDone={() => { setLink({ action: null, actionToken: '' }); window.history.replaceState(null, '', '/home'); }} />;
-  if (!space) return <IonPage><AppScreen><FeedbackState kind={error ? 'failure' : 'loading'} heading={error || 'On retrouve votre espace…'} onRetry={error ? () => { void refreshState(); } : undefined} />{!loading && !error && <AppButton onClick={() => { void refreshState(); }}>Retrouver mon espace</AppButton>}</AppScreen></IonPage>;
+  if (!space) return <IonPage><AppScreen><FeedbackState kind={error ? 'failure' : 'loading'} heading={error || t("On retrouve votre espace…")} onRetry={error ? () => { void refreshState(); } : undefined} />{!loading && !error && <AppButton onClick={() => { void refreshState(); }}>{t("Retrouver mon espace")}</AppButton>}</AppScreen></IonPage>;
   return <IonTabs key={space.coupleId ?? 'unpaired'}>
     <IonRouterOutlet>
     <Route exact path="/home"><Home /></Route>
@@ -68,12 +72,13 @@ function Routes() {
     <Route exact path="/inbox">{space.coupleId ? <CoupleInboxPage /> : <Redirect to="/home" />}</Route>
     <Route><Redirect to="/home" /></Route>
     </IonRouterOutlet>
-    <IonTabBar slot="bottom" className="couple-tab-bar" aria-label="Navigation principale">
-      <IonTabButton tab="home" href="/home"><IonIcon icon={homeOutline} aria-hidden="true" /><IonLabel>Home</IonLabel></IonTabButton>
-      <IonTabButton tab="profile" href="/profile"><IonIcon icon={personOutline} aria-hidden="true" /><IonLabel>Profile</IonLabel></IonTabButton>
+    <IonTabBar slot="bottom" className="couple-tab-bar" aria-label={t("Navigation principale")}>
+      <IonTabButton tab="home" href="/home"><IonIcon icon={homeOutline} aria-hidden="true" /><IonLabel>{t("Home")}</IonLabel></IonTabButton>
+      <IonTabButton tab="profile" href="/profile"><IonIcon icon={personOutline} aria-hidden="true" /><IonLabel>{t("Profile")}</IonLabel></IonTabButton>
     </IonTabBar>
   </IonTabs>;
 }
 export default function CouplesRoot() {
+  useI18n();
   return <IonApp><IonReactRouter><CouplesSession><BackButtonHandler /><CouplesPushRegistration /><Routes /></CouplesSession></IonReactRouter></IonApp>;
 }

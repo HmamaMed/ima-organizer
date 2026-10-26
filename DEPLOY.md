@@ -72,3 +72,14 @@ For an Android update, run `npm run build`, then `npx cap sync android`, and reb
 ## Email at official launch
 
 When ready, configure your chosen SMTP provider and verified sender on Render, set `COUPLES_EMAIL_ENABLED=true`, and validate verification and password recovery. Existing accounts will then require real email verification. Enable public registration separately when ready.
+
+## Conversation, wishes and languages
+
+Deploy the backend and frontend together using the normal root Docker image. Flyway automatically applies `V9__conversation_and_wish_completion.sql`; no manual SQL or additional Render variables are needed.
+
+- Sent notes are available for seven days from their actual sending time. This also applies to existing sent notes: older messages disappear from the active app and are physically deleted in batches of 500 by the normal background scheduler (every 15 minutes). Their partner notifications and delivery/push jobs are removed too. Drafts and future scheduled notes are preserved. Independently retained database snapshots/backups are unchanged.
+- Conversation reads use a stable `(sent_at,id)` cursor, return the latest 10 messages initially, and load earlier messages on request. While open and visible, the conversation checks for new messages every five seconds. It updates near the bottom or offers a new-messages button while reading earlier messages, preserving the reading position.
+- Wishes keep their existing IDs, photos and ownership. `completed_at` starts empty. Each person has a separate list; both current partners may mark wishes fulfilled or undo that action, while editing/deletion remain restricted to the wish owner.
+- French/English selection is stored on the device and synced to the signed-in account for future system notifications. Changing language preserves screen/form state. User-written messages, names and notebook content keep their original text.
+
+At the owner's request, tests and builds were not run locally for these changes. Regression cases are included for cursors, retention, ownership and completion; they still need execution in CI or another suitable environment.

@@ -39,7 +39,7 @@ public class PartnerNotifications {
         return jdbc.query("""
             select p.*,u.name from partner_notifications p join users u on u.id=p.author_id
             where p.recipient_id = ? and p.couple_id = ? and not p.dismissed and (
-                (p.kind = 'NOTE' and exists(select 1 from notes n where n.id=p.resource_id and n.couple_id=p.couple_id and n.status='SENT')) or
+                (p.kind = 'NOTE' and exists(select 1 from notes n where n.id=p.resource_id and n.couple_id=p.couple_id and n.status='SENT' and n.sent_at > current_timestamp - interval '7 days')) or
                 (p.kind = 'MEMORY' and exists(select 1 from memories m join memory_groups g on g.id=m.group_id where m.id=p.resource_id and m.couple_id=p.couple_id and m.deleted_at is null and g.deleted_at is null and g.expires_at > current_timestamp)))
             order by p.created_at desc,p.id desc limit ? offset ?
             """,(r,n)->new Notification(r.getObject("id",UUID.class),r.getString("kind"),r.getObject("resource_id",UUID.class),r.getString("name"),r.getTimestamp("created_at").toInstant()),user.getId(),scope,Math.clamp(size,1,100),Math.max(page,0)*(long)Math.clamp(size,1,100));

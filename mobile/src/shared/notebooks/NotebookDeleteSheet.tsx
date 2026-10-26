@@ -1,3 +1,4 @@
+import { t, useI18n } from "../i18n";
 import { useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError, apiRequest } from '../api/client';
@@ -7,6 +8,7 @@ export default function NotebookDeleteSheet({ entry, resource, title, detail, on
   entry: { id: string; title: string } | null; resource: '/api/watchlist' | '/api/recipes'; title: string; detail: string;
   onDeleted: (id: string) => void; onClose: () => void;
 }) {
+  useI18n();
   const { token } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -21,6 +23,6 @@ export default function NotebookDeleteSheet({ entry, resource, title, detail, on
     } catch { setError(true); }
     finally { pending.current = false; setBusy(false); }
   }
-  return <ConfirmSheet open={!!entry} title={title} detail={error ? 'La suppression a échoué. Réessayez.' : `« ${entry?.title ?? ''} » : ${detail}`}
-    confirmLabel="Supprimer" cancelLabel="Annuler" busy={busy} onConfirm={() => { void remove(); }} onClose={() => { setError(false); onClose(); }} />;
+  return <ConfirmSheet open={!!entry} title={title} detail={error ? t("La suppression a échoué. Réessayez.") : t("« {v0} » : {v1}", { v0: entry?.title ?? '', v1: detail })}
+    confirmLabel={t("Supprimer")} cancelLabel={t("Annuler")} busy={busy} onConfirm={() => { void remove(); }} onClose={() => { setError(false); onClose(); }} />;
 }

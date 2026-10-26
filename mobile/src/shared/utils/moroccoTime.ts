@@ -8,8 +8,8 @@ const GMT_START = Date.parse('2026-09-20T01:00:00Z');
 export function moroccoTimeZone(date = new Date()): string {
   return date.getTime() >= GMT_START ? 'UTC' : MOROCCO_TIME_ZONE;
 }
-export function moroccoFormat(date: Date, options: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(undefined, { ...options, timeZone: moroccoTimeZone(date) }).format(date);
+export function moroccoFormat(date: Date, options: Intl.DateTimeFormatOptions, locale?: string): string {
+  return new Intl.DateTimeFormat(locale, { ...options, timeZone: moroccoTimeZone(date) }).format(date);
 }
 export function moroccoDateKey(date = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-CA', {

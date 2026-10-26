@@ -39,6 +39,7 @@ public class IdentityController {
     @GetMapping("/config") public IdentityService.Configuration configuration() { return identity.configuration(); }
     @GetMapping("/me") public IdentityService.Account me(@AuthenticationPrincipal User user) { return identity.account(user); }
     @PutMapping("/me") public IdentityService.Account settings(@AuthenticationPrincipal User user, @Valid @RequestBody IdentityService.Settings body) { return identity.settings(user,body); }
+    @PatchMapping("/language") public IdentityService.Account language(@AuthenticationPrincipal User user,@Valid @RequestBody IdentityService.Language body) { return identity.language(user,body); }
     public UUID session(HttpServletRequest request) { return jwt.extractSessionId(request.getHeader("Authorization").substring(7)); }
     @PostMapping("/reauthenticate") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reauthenticate(@AuthenticationPrincipal User user, @Valid @RequestBody IdentityService.PasswordInput body, HttpServletRequest request) { limit(request,"reauth",user.getId().toString(),10); identity.reauthenticate(user,session(request),body.password()); }

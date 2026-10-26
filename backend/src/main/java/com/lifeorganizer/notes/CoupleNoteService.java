@@ -26,14 +26,31 @@ public class CoupleNoteService {
     public record NoteView(UUID id,String content,String status,UUID senderId,String senderName,UUID recipientId,String recipientName,Instant scheduledFor,Instant sentAt,Instant createdAt) {}
     private final RowMapper<NoteView> mapper=(r,n)->new NoteView(r.getObject("id",UUID.class),r.getString("content"),r.getString("status"),r.getObject("sender_id",UUID.class),r.getString("sender_name"),r.getObject("recipient_id",UUID.class),r.getString("recipient_name"),r.getTimestamp("scheduled_for")==null?null:r.getTimestamp("scheduled_for").toInstant(),r.getTimestamp("sent_at")==null?null:r.getTimestamp("sent_at").toInstant(),r.getTimestamp("created_at").toInstant());
     private static final String SELECT="select n.*, s.name sender_name, r.name recipient_name from notes n join users s on s.id=n.sender_id left join users r on r.id=n.recipient_id ";
+    private static final String VISIBLE="(n.status <> 'SENT' or n.sent_at > current_timestamp - interval '7 days')";
+    public record Conversation(List<NoteView> messages,boolean hasMore,Instant nextBefore,UUID nextBeforeId) {}
+    public Conversation conversation(User user,Instant before,UUID beforeId,int size) {
+        UUID scope=access.requireScope(user);
+        if ((before==null)!=(beforeId==null)) throw new IllegalArgumentException("Provide both conversation cursor values");
+        int limit=Math.clamp(size,1,50);
+        var parameters=new ArrayList<Object>(List.of(scope,user.getId(),user.getId()));
+        String cursor="";
+        if(before!=null) { cursor=" and (n.sent_at,n.id) < (?,?)"; parameters.add(Timestamp.from(before));parameters.add(beforeId); }
+        parameters.add(limit+1);
+        var batch=new ArrayList<>(jdbc.query(SELECT+"where n.couple_id=? and n.status='SENT' and "+VISIBLE+" and (n.sender_id=? or n.recipient_id=?)"+cursor+" order by n.sent_at desc,n.id desc limit ?",mapper,parameters.toArray()));
+        boolean more=batch.size()>limit;
+        if(more)batch.removeLast();
+        NoteView oldest=batch.isEmpty()?null:batch.getLast();
+        Collections.reverse(batch);
+        return new Conversation(batch,more,oldest==null?null:oldest.sentAt(),oldest==null?null:oldest.id());
+    }
     public List<NoteView> list(User user,String view,int page,int size) {
         UUID scope=access.requireScope(user);
         String filter=switch(view) { case "received"->"n.recipient_id = ? and n.status = 'SENT'"; case "sent"->"n.sender_id = ? and n.status = 'SENT'"; case "drafts"->"n.sender_id = ? and n.status in ('DRAFT','SCHEDULED')"; default->throw new IllegalArgumentException("Choose received, sent or drafts"); };
-        return jdbc.query(SELECT+"where n.couple_id = ? and "+filter+" order by n.created_at desc,n.id desc limit ? offset ?",mapper,scope,user.getId(),Math.clamp(size,1,100),Math.max(0,page)*(long)Math.clamp(size,1,100));
+        return jdbc.query(SELECT+"where n.couple_id = ? and "+VISIBLE+" and "+filter+" order by n.created_at desc,n.id desc limit ? offset ?",mapper,scope,user.getId(),Math.clamp(size,1,100),Math.max(0,page)*(long)Math.clamp(size,1,100));
     }
     public NoteView get(User user,UUID id) {
         UUID scope=access.requireScope(user);
-        return jdbc.query(SELECT+"where n.id = ? and n.couple_id = ? and (n.sender_id = ? or (n.recipient_id = ? and n.status = 'SENT'))",mapper,id,scope,user.getId(),user.getId()).stream().findFirst().orElseThrow(()->new NoSuchElementException("Note not found"));
+        return jdbc.query(SELECT+"where n.id = ? and n.couple_id = ? and "+VISIBLE+" and (n.sender_id = ? or (n.recipient_id = ? and n.status = 'SENT'))",mapper,id,scope,user.getId(),user.getId()).stream().findFirst().orElseThrow(()->new NoSuchElementException("Note not found"));
     }
     private UUID recipient(UUID scope,User user) {
         var recipients=jdbc.queryForList("select m.user_id from couple_memberships m join couples c on c.id=m.couple_id where m.couple_id = ? and m.user_id <> ? and m.left_at is null and c.status = 'ACTIVE'",UUID.class,scope,user.getId());

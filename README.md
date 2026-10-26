@@ -4,6 +4,8 @@ The updated app uses the normal commands: `cd mobile && npm run dev` for develop
 
 Keep `VITE_API_URL` pointed at the backend you are validating. [Deploy to Render](DEPLOY.md) using the existing database and private account settings; SMTP is deferred until official launch. [Local setup and implementation](backend/COUPLES_FOUNDATION.md) describes the development stack. Changes follow the usual edit, validate, then push workflow. Android updates also require rebuilding/installing the APK.
 
+The active app supports French and English through the flag selector beside the logo. Notes use a conversation view with the latest 10 messages, cursor-based loading of older messages and seven-day retention from delivery; private drafts and scheduled notes remain until sent. Wishes have separate personal/partner lists and a reversible fulfilled state.
+
 See the [architecture and launch roadmap](COUPLES_PRODUCT_ROADMAP.md) for the public release plan.
 
 ## Original personal app reference

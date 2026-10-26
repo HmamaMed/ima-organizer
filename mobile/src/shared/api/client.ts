@@ -1,3 +1,4 @@
+import { t, getLanguage } from "../i18n";
 /**
  * Thin API client for the Spring Boot backend.
  *
@@ -29,7 +30,7 @@ export class ApiError extends Error {
   status: number;
 
   constructor(status: number, message: string) {
-    super(message);
+    super(t(message));
     this.status = status;
   }
 }
@@ -46,6 +47,7 @@ export async function apiRequest<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept-Language': getLanguage(),
     ...options.headers,
   };
   if (token) {
@@ -63,7 +65,7 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
+    let message = t("Request failed with status {v0}", { v0: response.status });
     try {
       const data = await response.json();
       if (data?.message) {
@@ -86,7 +88,7 @@ export async function apiRequest<T>(
 export async function apiUpload<T>(path: string, blob: Blob, token: string): Promise<T> {
   const form = new FormData();
   form.append('file', blob, 'memory-media');
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}`, 'Accept-Language': getLanguage() };
   const scope = scopeProvider?.();
   if (scope) headers['X-Couple-Id'] = scope;
   const request = { method: 'POST', headers, body: form };
@@ -96,7 +98,7 @@ export async function apiUpload<T>(path: string, blob: Blob, token: string): Pro
     if (renewed) { headers.Authorization = `Bearer ${renewed}`; response = await fetch(`${API_BASE_URL}${path}`, request); }
   }
   if (!response.ok) {
-    let message = 'Could not upload this file. Please try again.';
+    let message = t("Could not upload this file. Please try again.");
     try { const data = await response.json(); if (data?.message) message = data.message; } catch { /* Keep the readable fallback. */ }
     if (response.status === 401) onUnauthorized?.(token ?? undefined);
     if (response.status === 403 || (response.status === 409 && message.startsWith('Your couple has changed.'))) onScopeChange?.();

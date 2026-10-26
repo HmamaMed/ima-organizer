@@ -102,7 +102,7 @@ class CouplesPostgresIntegrationTests {
 
     @Test void freshMigrationsValidateAndLegacyBackgroundWritersAreAbsent() {
         flyway.validate();
-        assertThat(flyway.info().applied()).hasSize(8);
+        assertThat(flyway.info().applied()).hasSize(9);
         assertThat(flyway.migrate().migrationsExecuted).isZero();
         for (String bean : List.of("dataSeeder", "gymPlanSeeder", "schemaFixups", "noteScheduler", "memoryCleanupScheduler", "wishPhotoCleanup", "birthdayScheduler", "firebaseConfig")) {
             assertThat(context.containsBean(bean)).as(bean).isFalse();
@@ -258,7 +258,7 @@ class CouplesPostgresIntegrationTests {
             assertThatThrownBy(latest::migrate).isInstanceOf(org.flywaydb.core.api.FlywayException.class);
             // Ownership must be explicitly classified before strict constraints can be installed.
             jdbc.update("update " + schema + ".watch_items set couple_id = ?, created_by_id = ? where id = ?", couple, member, item);
-            assertThat(latest.migrate().migrationsExecuted).isEqualTo(7);
+            assertThat(latest.migrate().migrationsExecuted).isEqualTo(8);
             latest.validate();
             assertThat(jdbc.queryForObject("select title from " + schema + ".watch_items where id = ?", String.class, item)).isEqualTo("Preserved title");
             assertThat(jdbc.queryForObject("select couple_id from " + schema + ".watch_items where id = ?", UUID.class, item)).isEqualTo(couple);
@@ -618,4 +618,66 @@ class CouplesPostgresIntegrationTests {
         }
         assertThat(jdbc.queryForObject("select count(*) from couple_memberships where couple_id = ? and left_at is null", Integer.class, waiting.getId())).isEqualTo(2);
     }
+    @Test void conversationUsesStableTenMessageCursorsAndNeverIncludesPrivateOrOtherCoupleNotes() {
+        var sent=new ArrayList<UUID>();
+        for(int i=0;i<25;i++) {
+            var message=notes.create(i%2==0?a:b,new com.lifeorganizer.notes.CoupleNoteService.Input("Message "+i,com.lifeorganizer.notes.CoupleNoteService.Mode.SEND,null),UUID.randomUUID());
+            sent.add(message.id());
+            jdbc.update("update notes set sent_at=? where id=?",java.sql.Timestamp.from(Instant.now().minusSeconds(100-i)),message.id());
+        }
+        notes.create(b,new com.lifeorganizer.notes.CoupleNoteService.Input("Private draft",com.lifeorganizer.notes.CoupleNoteService.Mode.DRAFT,null),UUID.randomUUID());
+        notes.create(c,new com.lifeorganizer.notes.CoupleNoteService.Input("Other couple",com.lifeorganizer.notes.CoupleNoteService.Mode.SEND,null),UUID.randomUUID());
+        var latest=notes.conversation(a,null,null,10);
+        assertThat(latest.messages()).hasSize(10);
+        assertThat(latest.messages().stream().map(com.lifeorganizer.notes.CoupleNoteService.NoteView::id)).containsExactlyElementsOf(sent.subList(15,25));
+        // A new arrival between reads must not shift the older-message cursor.
+        notes.create(b,new com.lifeorganizer.notes.CoupleNoteService.Input("New arrival",com.lifeorganizer.notes.CoupleNoteService.Mode.SEND,null),UUID.randomUUID());
+        var older=notes.conversation(a,latest.nextBefore(),latest.nextBeforeId(),10);
+        assertThat(older.messages().stream().map(com.lifeorganizer.notes.CoupleNoteService.NoteView::id)).containsExactlyElementsOf(sent.subList(5,15));
+        var oldest=notes.conversation(a,older.nextBefore(),older.nextBeforeId(),10);
+        assertThat(oldest.messages()).hasSize(5);assertThat(oldest.hasMore()).isFalse();
+        assertThat(oldest.messages().stream().map(com.lifeorganizer.notes.CoupleNoteService.NoteView::id)).containsExactlyElementsOf(sent.subList(0,5));
+        assertThatThrownBy(()->notes.conversation(a,Instant.now(),null,10)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void expiredMessagesAreHiddenAndPhysicallyRemovedButPrivateAndScheduledNotesRemain() {
+        var expired=notes.create(a,new com.lifeorganizer.notes.CoupleNoteService.Input("Expired",com.lifeorganizer.notes.CoupleNoteService.Mode.SEND,null),UUID.randomUUID());
+        var recent=notes.create(b,new com.lifeorganizer.notes.CoupleNoteService.Input("Recent",com.lifeorganizer.notes.CoupleNoteService.Mode.SEND,null),UUID.randomUUID());
+        var draft=notes.create(a,new com.lifeorganizer.notes.CoupleNoteService.Input("Keep draft",com.lifeorganizer.notes.CoupleNoteService.Mode.DRAFT,null),UUID.randomUUID());
+        var scheduled=notes.create(a,new com.lifeorganizer.notes.CoupleNoteService.Input("Keep scheduled",com.lifeorganizer.notes.CoupleNoteService.Mode.SCHEDULE,Instant.now().plusSeconds(86400)),UUID.randomUUID());
+        jdbc.update("update notes set sent_at=current_timestamp-interval '8 days' where id=?",expired.id());
+        jdbc.update("update notes set created_at=current_timestamp-interval '30 days' where id in (?,?)",draft.id(),scheduled.id());
+        assertThat(notes.conversation(a,null,null,10).messages()).extracting(com.lifeorganizer.notes.CoupleNoteService.NoteView::id).containsExactly(recent.id());
+        assertThatThrownBy(()->notes.get(a,expired.id())).isInstanceOf(NoSuchElementException.class);
+        assertThat(notes.list(a,"sent",0,50)).isEmpty();
+        assertThat(notifications.inbox(b,0,50)).isEmpty();
+        new com.lifeorganizer.notes.NoteRetentionCleanup(jdbc).clean();
+        assertThat(jdbc.queryForObject("select count(*) from notes where id=?",Integer.class,expired.id())).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from partner_notifications where kind='NOTE' and resource_id=?",Integer.class,expired.id())).isZero();
+        assertThat(notes.get(a,draft.id()).status()).isEqualTo("DRAFT");
+        assertThat(notes.get(a,scheduled.id()).status()).isEqualTo("SCHEDULED");
+    }
+
+    @Test void wishesHaveSeparateOwnerListsAndIdempotentCompletionWithinTheCurrentCoupleOnly() {
+        var body=new com.lifeorganizer.wishes.WishRequest("A wish",com.lifeorganizer.wishes.WishCategory.BOOK,null,null,null);
+        var mine=wishes.create(a,body,UUID.randomUUID());var partner=wishes.create(b,body,UUID.randomUUID());
+        wishes.create(c,body,UUID.randomUUID());
+        assertThat(wishes.list(a,0,50,"mine")).extracting(com.lifeorganizer.wishes.CoupleWishService.Wish::id).containsExactly(mine.id());
+        assertThat(wishes.list(a,0,50,"partner")).extracting(com.lifeorganizer.wishes.CoupleWishService.Wish::id).containsExactly(partner.id());
+        var completed=wishes.complete(a,partner.id(),true);assertThat(completed.completedAt()).isNotNull();
+        assertThat(wishes.complete(b,partner.id(),true).completedAt()).isEqualTo(completed.completedAt());
+        assertThatThrownBy(()->wishes.complete(c,partner.id(),false)).isInstanceOf(NoSuchElementException.class);
+        assertThat(wishes.get(a,partner.id()).completedAt()).isEqualTo(completed.completedAt());
+        assertThat(wishes.complete(a,partner.id(),false).completedAt()).isNull();
+        assertThatThrownBy(()->wishes.update(a,partner.id(),body)).isInstanceOf(NoSuchElementException.class);
+    }
+
+    @Test void changingLanguagePreservesOtherAccountSettingsAndRejectsUnsupportedLanguages() {
+        String name=a.getName(),zone=a.getTimeZone();
+        identity.language(a,new com.lifeorganizer.identity.IdentityService.Language("en"));
+        var stored=users.findById(a.getId()).orElseThrow();
+        assertThat(stored.getLocale()).isEqualTo("en");assertThat(stored.getName()).isEqualTo(name);assertThat(stored.getTimeZone()).isEqualTo(zone);
+        assertThatThrownBy(()->identity.language(a,new com.lifeorganizer.identity.IdentityService.Language("de"))).isInstanceOf(IllegalArgumentException.class);
+    }
+
 }

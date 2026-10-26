@@ -1,0 +1,9 @@
+.language-switcher { display: flex; flex: none; gap: 2px; padding: 3px; border: 1px solid var(--lo-line); border-radius: 18px; background: var(--lo-bg); }
+.language-switcher button { display: grid; place-items: center; width: 42px; min-height: 42px; padding: 4px; border: 0; border-radius: 14px; background: transparent; font-size: 24px; line-height: 1; transition: background-color var(--lo-motion-fast) ease, box-shadow var(--lo-motion-fast) ease; }
+.language-switcher button[aria-pressed='true'] { background: var(--lo-surface); box-shadow: 0 1px 6px rgb(41 35 42 / 10%), inset 0 0 0 1px var(--lo-plum-soft); }
+.brand-header__identity { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 680px; margin: auto; padding: 6px var(--lo-gutter) 8px; }
+.brand-header__identity .brand-logo { width: 156px; max-width: calc(100% - 110px); }
+.home-brand { justify-content: space-between; gap: 16px; }
+.home-brand .brand-logo { min-width: 0; max-width: calc(100% - 110px); }
+.couple-access .login-brand { justify-content: space-between; align-items: flex-start; gap: 16px; }
+.couple-access .login-brand .brand-logo { width: 150px; max-width: calc(100% - 110px); }

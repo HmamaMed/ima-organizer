@@ -1,6 +1,9 @@
+import { t, useI18n } from "../i18n";
 import { IonHeader, IonIcon, IonToolbar } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import { chevronBackOutline } from 'ionicons/icons';
+import BrandLogo from './BrandLogo';
+import LanguageSwitcher from '../i18n/LanguageSwitcher';
 
 export type Accent = 'rose' | 'gold' | 'plum' | 'muted';
 
@@ -23,14 +26,16 @@ export default function BrandHeader({
   accent,
   showBack,
   backTo = '/home',
-  backLabel = 'Back',
+  backLabel = t("Back"),
   onBack,
 }: BrandHeaderProps) {
+  useI18n();
   const history = useHistory();
 
   return (
     <IonHeader className="brand-header ion-no-border">
       <IonToolbar>
+        <div className="brand-header__identity"><BrandLogo /><LanguageSwitcher /></div>
         <div className={`brand-header__inner brand-header__inner--${accent}`}>
           {showBack && (
             <button

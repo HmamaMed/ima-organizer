@@ -43,6 +43,7 @@ public class IdentityService {
     public record Reset(@NotBlank @Size(max=512) String token, @NotBlank @Size(min=12,max=72) String password) {}
     public record PasswordInput(@NotBlank @Size(max=72) String password) {}
     public record Settings(@NotBlank @Size(max=100) String name, @NotBlank @Size(max=20) String locale, @NotBlank @Size(max=100) String timeZone) {}
+    public record Language(@NotBlank @Pattern(regexp="fr|en") String locale) {}
     public record Account(UUID userId, String name, String email, boolean emailVerified, String locale, String timeZone, boolean emailVerificationRequired) {
         public static Account from(User user, boolean verificationRequired) { return new Account(user.getId(), user.getName(), user.getEmail(), user.isEmailVerified(), user.getLocale(), user.getTimeZone(), verificationRequired); }
     }
@@ -137,6 +138,12 @@ public class IdentityService {
     public Account settings(User caller, Settings request) {
         User user = users.lockById(caller.getId()).orElseThrow();
         user.updateSettings(request.name(), request.locale(), request.timeZone()); return account(user);
+    }
+    @Transactional
+    public Account language(User caller, Language request) {
+        if (!Set.of("fr","en").contains(request.locale())) throw new IllegalArgumentException("Choose French or English");
+        User user=users.lockById(caller.getId()).orElseThrow();
+        user.changeLanguage(request.locale());return account(user);
     }
     @Transactional
     public void reauthenticate(User caller, UUID session, String password) {

@@ -61,6 +61,9 @@ For the backend, set `SPRING_PROFILES_ACTIVE=couples,couples-production` in the 
 
 ## Working features
 
+The current UI supports French/English with persistent flag selection. Notes now open as a two-way conversation (10 latest messages and stable older-message cursors); sent messages expire after seven days, including from reads, exports and notifications, with batched physical cleanup. Drafts and future scheduled notes are retained. Wishes have owner-filtered lists and an idempotent, reversible completion action available to both current partners. See [deployment details](../DEPLOY.md#conversation-wishes-and-languages).
+
+
 | Area | Implemented behavior |
 | --- | --- |
 | Accounts | Normalized unique email, registration gate, verification, password recovery, account name/locale/IANA timezone settings and BCrypt hashing |

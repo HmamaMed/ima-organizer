@@ -1,3 +1,4 @@
+import { t, useI18n } from "../i18n";
 import { IonContent, IonModal } from '@ionic/react';
 import AppButton from './AppButton';
 
@@ -6,7 +7,7 @@ export default function ConfirmSheet({
   title,
   detail,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel = t("Cancel"),
   busy,
   destructive = true,
   onConfirm,
@@ -22,6 +23,7 @@ export default function ConfirmSheet({
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  useI18n();
   return (
     <IonModal
       className="lo-confirm"
@@ -32,8 +34,8 @@ export default function ConfirmSheet({
     >
       <IonContent>
         <div className="lo-confirm__body">
-          <h2 id="confirm-title">{title}</h2>
-          <p>{detail}</p>
+          <h2 id="confirm-title">{t(title)}</h2>
+          <p>{t(detail)}</p>
           <AppButton variant={destructive ? 'danger' : 'primary'} onClick={onConfirm} busy={busy}>
             {confirmLabel}
           </AppButton>

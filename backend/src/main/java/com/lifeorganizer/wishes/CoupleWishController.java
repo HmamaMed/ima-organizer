@@ -14,10 +14,11 @@ import java.util.*;
 @RestController @Profile("couples") @RequestMapping("/api/wishes")
 public class CoupleWishController {
     private final CoupleWishService wishes;public CoupleWishController(CoupleWishService wishes){this.wishes=wishes;}
-    @GetMapping public List<CoupleWishService.Wish> list(@AuthenticationPrincipal User user,@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue="50")int size){return wishes.list(user,page,size);}
+    @GetMapping public List<CoupleWishService.Wish> list(@AuthenticationPrincipal User user,@RequestParam(defaultValue="0")int page,@RequestParam(defaultValue="50")int size,@RequestParam(defaultValue="all")String owner){return wishes.list(user,page,size,owner);}
     @GetMapping("/{id}") public CoupleWishService.Wish get(@AuthenticationPrincipal User user,@PathVariable UUID id){return wishes.get(user,id);}
     @PostMapping @ResponseStatus(HttpStatus.CREATED) public CoupleWishService.Wish create(@AuthenticationPrincipal User user,@Valid @RequestBody WishRequest body,@RequestHeader(value="Idempotency-Key",required=false)UUID key){return wishes.create(user,body,key==null?UUID.randomUUID():key);}
     @PutMapping("/{id}") public CoupleWishService.Wish update(@AuthenticationPrincipal User user,@PathVariable UUID id,@Valid @RequestBody WishRequest body){return wishes.update(user,id,body);}
+    @PatchMapping("/{id}/completion") public CoupleWishService.Wish complete(@AuthenticationPrincipal User user,@PathVariable UUID id,@Valid @RequestBody CoupleWishService.Completion body){return wishes.complete(user,id,body.completed());}
     @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT) public void delete(@AuthenticationPrincipal User user,@PathVariable UUID id){wishes.delete(user,id);}
     @PostMapping(value="/photos",consumes="multipart/form-data") @ResponseStatus(HttpStatus.CREATED) public CoupleWishService.Upload upload(@AuthenticationPrincipal User user,@RequestPart MultipartFile file){return wishes.upload(user,file);}
     @Component @Profile("couples") public static class Cleanup implements DurableJobHandler {

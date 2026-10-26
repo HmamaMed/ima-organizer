@@ -1,3 +1,4 @@
+import { t, useI18n } from "../i18n";
 import { IonIcon, IonSpinner } from '@ionic/react';
 import { alertCircleOutline, heartOutline } from 'ionicons/icons';
 import AppButton from './AppButton';
@@ -11,7 +12,7 @@ export default function FeedbackState({
   heading,
   detail,
   onRetry,
-  retryLabel = 'Try again',
+  retryLabel = t("Try again"),
   illustration,
 }: {
   kind: 'loading' | 'empty' | 'failure' | 'success';
@@ -21,6 +22,7 @@ export default function FeedbackState({
   retryLabel?: string;
   illustration?: keyof typeof illustrations;
 }) {
+  useI18n();
   return (
     <div className={`lo-feedback lo-feedback--${kind}`} role="status" aria-live="polite">
       {kind === 'empty' && illustration ? (
@@ -31,8 +33,8 @@ export default function FeedbackState({
         <IonIcon icon={kind === 'failure' ? alertCircleOutline : heartOutline} aria-hidden="true" />
       )}
       <div>
-        <p className="lo-feedback__heading">{heading}</p>
-        {detail && <p>{detail}</p>}
+        <p className="lo-feedback__heading">{t(heading)}</p>
+        {detail && <p>{t(detail)}</p>}
       </div>
       {onRetry && (
         <AppButton variant="secondary" onClick={onRetry}>

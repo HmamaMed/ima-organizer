@@ -1,3 +1,4 @@
+import { t, useI18n } from "../i18n";
 import { useEffect, useRef, useState } from 'react';
 import { App } from '@capacitor/app';
 import { IonToast } from '@ionic/react';
@@ -17,6 +18,7 @@ const ROOT_PATHS = new Set(['/home']);
  *   press within the window actually exits the app.
  */
 export default function BackButtonHandler() {
+  useI18n();
   const history = useHistory();
   const location = useLocation();
   const pathnameRef = useRef(location.pathname);
@@ -65,7 +67,7 @@ export default function BackButtonHandler() {
   return (
     <IonToast
       isOpen={showExitToast}
-      message="Press back again to exit"
+      message={t("Press back again to exit")}
       duration={EXIT_PRESS_WINDOW_MS}
       position="bottom"
       onDidDismiss={() => setShowExitToast(false)}

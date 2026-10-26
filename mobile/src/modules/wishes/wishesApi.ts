@@ -17,9 +17,12 @@ export interface Wish {
   photoId: string | null;
   photoUrl: string | null;
   createdAt: string;
+  completedAt?: string | null;
 }
 export type WishInput = Pick<Wish, 'title' | 'category' | 'details' | 'link' | 'photoId'>;
-export const fetchWishes = (token: string, page = 0) => apiRequest<Wish[]>(`/api/wishes?page=${page}`, { token });
+export type WishOwner = 'mine' | 'partner' | 'all';
+export const fetchWishes = (token: string, page = 0, owner: WishOwner = 'all') => apiRequest<Wish[]>(`/api/wishes?page=${page}&owner=${owner}`, { token });
+export const completeWish = (token: string, id: string, completed: boolean) => apiRequest<Wish>(`/api/wishes/${id}/completion`, { token, method: 'PATCH', body: { completed } });
 export const saveWish = (token: string, body: WishInput, id?: string) =>
   apiRequest<Wish>(id ? `/api/wishes/${id}` : '/api/wishes', { token, method: id ? 'PUT' : 'POST', body });
 export const uploadWishPhoto = (token: string, file: File) => apiUpload<{ id: string }>('/api/wishes/photos', file, token);

@@ -50,6 +50,7 @@ public class User {
     public void verifyEmail() { emailVerified = true; }
     public void requestDeletion() { deletionRequested = true; fcmToken = null; }
     public void changePassword(String hash) { passwordHash = hash; }
+    public void changeLanguage(String locale) { this.locale = locale; }
     public void updateSettings(String displayName, String locale, String zone) {
         java.time.ZoneId.of(zone);
         name = displayName.trim(); this.locale = locale; timeZone = zone;

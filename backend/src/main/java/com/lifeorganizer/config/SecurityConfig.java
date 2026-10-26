@@ -68,7 +68,7 @@ public class SecurityConfig {
                         auth.requestMatchers(HttpMethod.POST, "/api/identity/register", "/api/identity/login", "/api/identity/refresh",
                                 "/api/identity/verification-email", "/api/identity/password-email", "/api/identity/verify", "/api/identity/reset-password").permitAll();
                         // Deny unfinished modules, uploads and unknown routes even for authenticated members.
-                        auth.requestMatchers("/api/identity/me", "/api/identity/reauthenticate", "/api/identity/logout", "/api/identity/logout-all",
+                        auth.requestMatchers("/api/identity/me", "/api/identity/language", "/api/identity/reauthenticate", "/api/identity/logout", "/api/identity/logout-all",
                                 "/api/birthdays", "/api/birthdays/**", "/api/notifications", "/api/notifications/**", "/api/recipes", "/api/recipes/**", "/api/wishes", "/api/wishes/**", "/api/privacy/**", "/api/identity/devices", "/api/couples", "/api/couples/**", "/api/watchlist", "/api/watchlist/**",
                                 "/api/notes", "/api/notes/**", "/api/memories", "/api/memories/groups", "/api/memories/groups/*",
                                 "/api/memories/groups/*/media", "/api/memories/*", "/api/inbox", "/api/inbox/**").authenticated()
@@ -95,7 +95,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "X-Couple-Id"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept-Language", "Idempotency-Key", "X-Couple-Id"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
