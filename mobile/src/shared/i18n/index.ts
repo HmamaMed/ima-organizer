@@ -22,7 +22,7 @@ export function setLanguage(next: Language) {
   try { localStorage.setItem(STORAGE_KEY, next); } catch { /* Language still works when browser storage is unavailable. */ }
   if (next === language) return;
   language = next;
-  if (typeof document !== 'undefined') document.documentElement.lang = next;
+  syncDocumentLanguage();
   listeners.forEach(listener => listener());
 }
 /** Source phrases are translation keys; only explicitly marked interface copy is translated. */
@@ -34,4 +34,13 @@ export function useI18n() {
   const language = useSyncExternalStore(subscribe, getLanguage, () => 'fr' as const);
   return { language, t, setLanguage };
 }
-if (typeof document !== 'undefined') document.documentElement.lang = language;
+function syncDocumentLanguage() {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = language;
+  document.title = 'Entre Nous';
+  const description = t('Nos mots, nos moments, notre quotidien.');
+  for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) {
+    document.querySelector(selector)?.setAttribute('content', description);
+  }
+}
+syncDocumentLanguage();

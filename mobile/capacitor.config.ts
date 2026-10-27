@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.lifeorganizer.app',
-  appName: 'Life Organizer',
+  appName: 'Entre Nous',
   webDir: 'dist',
   plugins: {
     PushNotifications: {

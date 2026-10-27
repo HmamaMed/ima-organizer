@@ -23,7 +23,7 @@ export function CouplesSession({ children }: { children: ReactNode }) {
     setCredentials(null); setSpace(null); setError(''); setLoading(false);
   }, []);
   const login = useCallback(async (email: string, password: string) => {
-    const response = await apiRequest<Credentials>('/api/identity/login', { method: 'POST', body: { email, password, deviceName: 'Life Organizer' } });
+    const response = await apiRequest<Credentials>('/api/identity/login', { method: 'POST', body: { email, password, deviceName: 'Entre Nous' } });
     if (!hasLanguagePreference() && (response.user.locale === 'fr' || response.user.locale === 'en')) setLanguage(response.user.locale);
     generation.current++; previousTokens.current.clear(); scope.current = null; setSpace(null);
     current.current = response; setCredentials(response);

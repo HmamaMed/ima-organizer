@@ -119,7 +119,7 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
           <div className="login-brand"><BrandLogo variant="stacked" /></div>
           <header className="couple-access__intro">
             <h1 className="login-title">{t("Votre espace à deux.")}</h1>
-            <p className="login-subtitle">{t("Des mots, des moments et des projets à partager.")}<br />{t("Entrez, et faites comme chez vous.")}</p>
+            <p className="login-subtitle">{t('Nos mots, nos moments, notre quotidien.')}</p>
           </header>
           {window.location.pathname === '/delete-account' && <p>{t("Pour supprimer votre compte sans l’application, connectez-vous ici puis confirmez la suppression dans « Mes données ».")}</p>}
           {action && !access.emailEnabled ? (

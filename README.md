@@ -1,10 +1,12 @@
-# Life Organizer
+# Entre Nous
+
+*Nos mots, nos moments, notre quotidien.*
 
 The updated app uses the normal commands: `cd mobile && npm run dev` for development and `npm run build` for deployment or Android packaging. Accounts, pairing, two-way notes/memories, shared notebooks and privacy flows are part of this app; there is no separate frontend mode.
 
 Keep `VITE_API_URL` pointed at the backend you are validating. [Deploy to Render](DEPLOY.md) using the existing database and private account settings; SMTP is deferred until official launch. [Local setup and implementation](backend/COUPLES_FOUNDATION.md) describes the development stack. Changes follow the usual edit, validate, then push workflow. Android updates also require rebuilding/installing the APK.
 
-The active app supports French and English through the flag selector beside the logo. Notes use a conversation view with the latest 10 messages, cursor-based loading of older messages and seven-day retention from delivery; private drafts and scheduled notes remain until sent. Wishes have separate personal/partner lists and a reversible fulfilled state.
+The active app supports French and English through the language setting in Profile and the compact selector below the login form. The English signature is “Our words, our moments, our everyday life.” Notes use a conversation view with the latest 10 messages, cursor-based loading of older messages and seven-day retention from delivery; private drafts and scheduled notes remain until sent. Wishes have separate personal/partner lists and a reversible fulfilled state.
 
 See the [architecture and launch roadmap](COUPLES_PRODUCT_ROADMAP.md) for the public release plan.
 
@@ -33,7 +35,7 @@ sit alongside shared everyday notebooks, with more chapters added over time.
 
 ## Mes envies 🎁
 
-A shared gift-idea notebook: she adds, edits and removes objects, books and experiences; you can browse her list. Each wish has a title and category, with an optional photo, HTTP/HTTPS link and short details. The French interface includes category filters, photo previews and deletion confirmation, using the existing Life Organizer design.
+A shared gift-idea notebook: she adds, edits and removes objects, books and experiences; you can browse her list. Each wish has a title and category, with an optional photo, HTTP/HTTPS link and short details. The French interface includes category filters, photo previews and deletion confirmation, using the Entre Nous design.
 
 Wishes stay until she removes them. Photos use the same private Cloudflare R2 bucket under `wishes/`, separately from the 72-hour memory categories. Replaced/deleted photos are removed by a retryable backend worker; unused uploads are cleaned after 24 hours. No new credentials are needed beyond the existing R2 configuration. Both updated backend and mobile builds must be deployed.
 

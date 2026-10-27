@@ -11,5 +11,5 @@ export default function BrandLogo({
   variant?: keyof typeof logos;
   className?: string;
 }) {
-  return <img src={logos[variant]} alt="Life Organizer" className={`brand-logo ${className}`} />;
+  return <img src={logos[variant]} alt="Entre Nous" className={`brand-logo ${className}`} />;
 }

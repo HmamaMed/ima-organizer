@@ -1,5 +1,6 @@
 /** Interface copy only; user-authored content is never translated. */
 export const en: Record<string, string> = {
+  "Nos mots, nos moments, notre quotidien.": "Our words, our moments, our everyday life.",
   "Nouveaux messages": "New messages",
   "25 Mo par fichier, 16 mégapixels par photo. Ce moment expirera avec son groupe, 72 heures après la création du groupe.": "25 MB per file, 16 megapixels per photo. This moment expires with its collection, 72 hours after the collection was created.",
   "? Chacun pourra partager ses notes et ses moments.": "? You will both be able to share notes and moments.",
@@ -589,6 +590,7 @@ export const en: Record<string, string> = {
 };
 
 export const fr: Record<string, string> = {
+  "Our words, our moments, our everyday life.": "Nos mots, nos moments, notre quotidien.",
   "25 MB per file, 16 megapixels per photo. This moment expires with its collection, 72 hours after the collection was created.": "25 Mo par fichier, 16 mégapixels par photo. Ce moment expirera avec son groupe, 72 heures après la création du groupe.",
   "? You will both be able to share notes and moments.": "? Chacun pourra partager ses notes et ses moments.",
   "Refresh": "Actualiser",

@@ -40,7 +40,7 @@ function Home() {
   ];
   return <IonPage lang={getLanguage()}><AppScreen className="content-safe-top couple-home" fixedContent={<IonRefresher slot="fixed" onIonRefresh={event => { void refreshState().finally(() => event.detail.complete()); }}><IonRefresherContent /></IonRefresher>}>
     <div className="home-brand"><BrandLogo /></div>
-    <header className="lo-screen__intro"><p className="lo-eyebrow">{space?.members.map(member => member.name).join(t(' et '))}</p><h1 className="lo-screen__title">{t("Bonjour") + " "}{user?.name ?? ''}.</h1><p className="lo-screen__subtitle">{t("Un espace privé pour vos petits mots, vos moments et vos projets.")}</p></header>
+    <header className="lo-screen__intro"><p className="lo-eyebrow">{space?.members.map(member => member.name).join(t(' et '))}</p><h1 className="lo-screen__title">{t("Bonjour") + " "}{user?.name ?? ''}.</h1><p className="lo-screen__subtitle">{t('Nos mots, nos moments, notre quotidien.')}</p></header>
     <CouplePairing />
     {error && <FeedbackState kind="failure" heading={t(error)} onRetry={() => { void refreshState(); }} />}
     {space?.coupleId && <section aria-labelledby="home-shared"><h2 className="home-section-title" id="home-shared">{t('À partager')}</h2><div className="home-cards">{shared.map(item => <Link className={`home-card home-card--${item.accent}`} to={item.path} key={item.path}><span className="home-card__icon"><IonIcon icon={item.icon} aria-hidden="true" /></span><span><strong>{item.title}</strong><span className="home-card__detail">{item.detail}</span></span><IonIcon className="home-card__arrow" icon={chevronForwardOutline} aria-hidden="true" /></Link>)}</div></section>}

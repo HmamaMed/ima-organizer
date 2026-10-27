@@ -18,4 +18,7 @@
   font-size: 13px;
   color: #E8B9C4;
   margin: 0;
+  max-width: 30ch;
+  text-align: center;
+  line-height: 1.6;
 }

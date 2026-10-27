@@ -34,7 +34,7 @@ public class PushController {
 
         boolean sent = pushService.sendToUser(
                 recipient,
-                "Life Organizer",
+                "Entre Nous",
                 "This is a test push — the pipeline works! 💌");
 
         return ResponseEntity.ok(Map.of(

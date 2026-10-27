@@ -106,7 +106,7 @@ export default function CoupleAccountPage() {
           if (password) await apiRequest('/api/identity/reauthenticate', { token, method: 'POST', body: { password } });
           const data = await apiRequest('/api/privacy/export', { token });
           const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-          const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'life-organizer-export.json'; anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+          const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'entre-nous-export.json'; anchor.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
           setMessage(t('Export préparé. Gardez ce fichier dans un endroit privé.'));
         }); }}>{t('Exporter mes contributions')}</AppButton>
         {!deletion && <button className="account-text-button account-text-button--danger" type="button" disabled={busy} onClick={() => setDeletion(true)}>{t('Supprimer mon compte')}</button>}

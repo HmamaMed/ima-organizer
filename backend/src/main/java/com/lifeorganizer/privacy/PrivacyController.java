@@ -23,7 +23,7 @@ public class PrivacyController {
     @PostMapping("/deletion") @ResponseStatus(HttpStatus.ACCEPTED) public Map<String,UUID> delete(@AuthenticationPrincipal User user,HttpServletRequest request) { recent(user,request);return Map.of("requestId",privacy.requestDeletion(user)); }
     @GetMapping("/export") public ResponseEntity<Map<String,Object>> export(@AuthenticationPrincipal User user,HttpServletRequest request) {
         recent(user,request);limits.check("export:"+user.getId(),3,3600);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=life-organizer-export.json").cacheControl(CacheControl.noStore()).body(privacy.export(user));
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=entre-nous-export.json").cacheControl(CacheControl.noStore()).body(privacy.export(user));
     }
     @PostMapping("/reports") @ResponseStatus(HttpStatus.ACCEPTED) public void report(@AuthenticationPrincipal User user,@Valid @RequestBody PrivacyService.Report body,HttpServletRequest request) {
         limits.check("report:"+user.getId(),5,3600);if(body.kind()==PrivacyService.Report.Kind.UNWANTED_PARTNER)recent(user,request);privacy.report(user,body);

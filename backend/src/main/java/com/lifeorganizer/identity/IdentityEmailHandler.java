@@ -31,10 +31,11 @@ public class IdentityEmailHandler implements DurableJobHandler {
         if (actions.isEmpty()) return;
         var action=actions.getFirst(); boolean reset=action.kind().equals("RESET"),english="en".equals(action.locale());
         var message=new SimpleMailMessage(); message.setFrom(from); message.setTo(action.email());
-        message.setSubject(english ? (reset ? "Reset your password" : "Confirm your email address") : (reset ? "Réinitialisez votre mot de passe" : "Confirmez votre adresse e-mail"));
+        message.setSubject("Entre Nous — " + (english ? (reset ? "Reset your password" : "Confirm your email address") : (reset ? "Réinitialisez votre mot de passe" : "Confirmez votre adresse e-mail")));
         String introduction=english ? (reset ? "To choose a new password:\n" : "To confirm your email address:\n") : (reset ? "Pour choisir un nouveau mot de passe :\n" : "Pour confirmer votre adresse e-mail :\n");
         String footer=english ? "\n\nIf you did not request this message, ignore it." : "\n\nSi vous n'avez pas demandé ce message, ignorez-le.";
-        message.setText(introduction + publicUrl + (reset ? "/reset" : "/verify") + "#token=" + tokens.action(job.resourceId()) + footer);
+        String signature=english ? "Our words, our moments, our everyday life." : "Nos mots, nos moments, notre quotidien.";
+        message.setText(introduction + publicUrl + (reset ? "/reset" : "/verify") + "#token=" + tokens.action(job.resourceId()) + footer + "\n\nEntre Nous\n" + signature);
         mail.send(message);
     }
 }

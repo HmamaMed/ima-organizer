@@ -1,6 +1,8 @@
-# Deploy Life Organizer
+# Deploy Entre Nous
 
 The one-time database import is complete. Normal updates follow **edit → validate → push → deploy**. The existing Neon database and account passwords stay in use; the app reads and writes the `couples_app` schema.
+
+The product name is **Entre Nous**, with the signature **“Nos mots, nos moments, notre quotidien.”** The existing Render service URL, database settings and Android application ID (`com.lifeorganizer.app`) stay the same. This branding change requires no new environment variables or database migration. Deploy the normal web/backend update; the Android name and logos appear after the next APK update.
 
 ## Render configuration
 
