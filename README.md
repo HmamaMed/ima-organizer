@@ -2,119 +2,141 @@
 
 *Nos mots, nos moments, notre quotidien.*
 
-The updated app uses the normal commands: `cd mobile && npm run dev` for development and `npm run build` for deployment or Android packaging. Accounts, pairing, two-way notes/memories, shared notebooks and privacy flows are part of this app; there is no separate frontend mode.
+*Our words, our moments, our everyday life.*
 
-Keep `VITE_API_URL` pointed at the backend you are validating. [Deploy to Render](DEPLOY.md) using the existing database and private account settings; SMTP is deferred until official launch. [Local setup and implementation](backend/COUPLES_FOUNDATION.md) describes the development stack. Changes follow the usual edit, validate, then push workflow. Android updates also require rebuilding/installing the APK.
+Entre Nous is a private, mobile-first space for two partners to share everyday life. It combines conversations, temporary photo/audio moments and shared notebooks with personal birthday reminders. The same React app runs in a browser and inside an Android app through Capacitor. French and English are supported.
 
-The active app supports French and English through the language setting in Profile and the compact selector below the login form. The English signature is “Our words, our moments, our everyday life.” Notes use a conversation view with the latest 10 messages, cursor-based loading of older messages and seven-day retention from delivery; private drafts and scheduled notes remain until sent. Wishes have separate personal/partner lists and a reversible fulfilled state.
+## What the app contains
 
-See the [architecture and launch roadmap](COUPLES_PRODUCT_ROADMAP.md) for the public release plan.
+| Area | What it does |
+| --- | --- |
+| Accounts and pairing | Sign in, manage your account and invite a partner into a shared space. Registration, email verification and password recovery depend on server configuration. |
+| Notes | A two-way conversation with drafts, scheduled messages and loading older messages. Delivered messages expire after seven days; drafts and future scheduled notes remain until sent. |
+| Moments | Share photos, captions and optional uploaded audio in groups. Each group and its media expire 72 hours after the group is created. |
+| Wishes | Separate personal and partner wish lists, categories, photos, links and a reversible fulfilled state. Each author controls editing and deletion. |
+| Watchlist | Shared films and series, viewing status, search and filters, with separate ratings and reviews for each partner. |
+| Recipes | Shared recipes with servings, duration, ordered ingredients and steps, tips and favorites. |
+| Birthdays | Personal birthday reminders and a personal notification inbox, independent of the shared space. |
+| Partner inbox | Partner activity notifications, notification preferences and Android push delivery through Firebase. |
+| Account and privacy | Name, language and timezone settings, sessions/devices, data export, disconnect, reporting and account deletion. |
 
-## Original personal app reference
+Shared data is scoped to the current couple. Unsent notes remain private to their author. Wish photos persist independently of temporary moments. Sessions are kept in memory: reloading or restarting the app requires signing in again.
 
-The sections below describe the original app. The current account system and deployment requirements are documented in the setup guide linked above.
+The current interface starts at `mobile/src/App.tsx` and uses `mobile/src/couples/CouplesRoot.tsx`. It replaces an earlier personal birthday-gift app; the retired gym, interest tracker, countdown and original personal screens are no longer part of the frontend. Backend compatibility endpoints remain alongside the current APIs.
 
-A private, modular mobile app built as a birthday gift. Not a generic utility app —
-every module is written for one specific person. The initial three modules now
-sit alongside shared everyday notebooks, with more chapters added over time.
+## Design
 
-## Tech Stack
+The visual style is warm, calm and personal, with an off-white background, white cards, rounded corners and generous spacing. Plum, rose and gold identify shared actions and different chapters.
 
-| Layer | Choice | Why |
-|---|---|---|
-| Mobile shell | React + Vite + TypeScript | Your current daily framework |
-| UI components | Ionic React (`@ionic/react`) | Native-feeling components (tabs, cards, lists) without hand-building UI/UX |
-| Native wrapper | Capacitor | Packages the web app into an installable Android APK, sideloadable — no Play Store review needed |
-| Backend | Spring Boot (Java) | Your daily backend tool, zero new learning |
-| Database | PostgreSQL (via JPA/Hibernate) | Same territory as your Cosy work |
-| Push notifications | Firebase Cloud Messaging + `@capacitor/push-notifications` | Native-level delivery on Android, free tier |
-| Media storage | Private Cloudflare R2 | Authenticated backend uploads, temporary signed reads, 72-hour memory categories and automatic file deletion |
-| Auth | Spring Security + JWT, 2 seeded users | Only two users ever (OWNER = you, RECIPIENT = her) — no need for open registration |
+| Element | Choice |
+| --- | --- |
+| Background / text | `#f8f6f3` / `#29232a` |
+| Plum / rose / gold | `#482541` / `#aa4566` / `#89642c` |
+| Typography | Locally hosted Inter for interface text; Fraunces for display headings |
+| Layout | Mobile-first cards and forms; Home and Profile bottom navigation |
+| Interaction | Confirmation sheets, loading/empty/error states, visible focus and reduced-motion support |
 
-> Current storage setup and existing-memory erasure: [Cloudflare R2 setup](backend/R2-SETUP.md).
+Shared styles live in `mobile/src/index.css`, `mobile/src/theme/variables.css`, `mobile/src/App.css` and the couples/module stylesheets. Reusable controls live in `mobile/src/shared/ui/`; canonical logos live in `mobile/src/assets/brand/`. Font and wordmark licenses are retained with the assets.
 
-## Mes envies 🎁
+## Technologies
 
-A shared gift-idea notebook: she adds, edits and removes objects, books and experiences; you can browse her list. Each wish has a title and category, with an optional photo, HTTP/HTTPS link and short details. The French interface includes category filters, photo previews and deletion confirmation, using the Entre Nous design.
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 19, TypeScript 6, Vite 8 |
+| UI and routing | Ionic React 8, React Router 5, Ionicons |
+| Android | Capacitor 8, native app lifecycle, keyboard and push-notification plugins |
+| Backend | Java 21, Spring Boot 4.1, Spring Web MVC, Spring Security, Bean Validation |
+| Authentication | BCrypt passwords, JWT access tokens and rotating refresh sessions |
+| Database | PostgreSQL, Spring Data JPA/Hibernate, Flyway migrations |
+| Media | Private Cloudflare R2 through the AWS S3 SDK; signed reads; FFmpeg/ffprobe for audio validation |
+| Notifications / email | Firebase Cloud Messaging, Spring Mail and durable database-backed background jobs |
+| Development and checks | npm, Oxlint, Node test runner, Maven Wrapper, JUnit, H2 and PostgreSQL/Testcontainers |
+| Deployment | Docker, Render; GitHub Actions for backend tests, frontend build, lint and runtime dependency audit |
 
-Wishes stay until she removes them. Photos use the same private Cloudflare R2 bucket under `wishes/`, separately from the 72-hour memory categories. Replaced/deleted photos are removed by a retryable backend worker; unused uploads are cleaned after 24 hours. No new credentials are needed beyond the existing R2 configuration. Both updated backend and mobile builds must be deployed.
+## Repository
 
-[Module/API details](mobile/src/modules/wishes/README.md) · [Screenshots and verification](design-validation/wishes/README.md)
-
-## On regarde quoi ? 🎬
-
-A shared film and series selection that both accounts can manage. Titles move between **À voir**, **En cours** and **Vu**, with optional notes, search and format/status filters. Once a title is marked Vu, each person can leave their own 1–5 star rating and comment, edit it or remove it. One person's review never replaces the other's. Removing a title removes its reviews after confirmation.
-
-## Nos recettes 🍝
-
-A shared recipe notebook that both accounts can manage, with **À essayer** and **Nos favoris**. Each recipe stores servings, optional duration, ordered ingredients with separate quantities, ordered preparation steps and personal tips. A reading sheet keeps the ingredients and steps easy to follow; search includes ingredient names. These structured ingredients can support a future shopping-list feature.
-
-Both modules use the current database and authentication, with no extra API key or storage setup. Deploy the updated backend and mobile build together. [Cinema API](mobile/src/modules/watchlist/README.md) · [Recipe API](mobile/src/modules/recipes/README.md) · [Verification and screenshots](design-validation/shared-notebooks/README.md)
-
-## Modules — v1 (birthday launch)
-
-1. **Notes** — you write a note (now or scheduled for later) from your dashboard; she
-   gets a push notification and can scroll back through every note ever sent, in a feed.
-2. **Memory Timeline** — a scrollable feed of photo entries. Each entry: a photo,
-   an optional short caption, an optional short audio clip (your voice). Designed to be
-   scrolled slowly, ~5 minutes, like a walk through memories.
-3. **Gym Coach** — a simple structured home-workout plan you curate (which days train
-   which muscle groups, which exercises, how many sets/reps, short instructions). She
-   opens it, sees today's workout, checks it off when done.
-
-## Coming Soon (post-launch, not in v1)
-
-- Shopping list module
-- Whatever comes after that — the module-picker UI is built to support adding entries
-  without touching existing modules
-
-## Timeline (8 weeks)
-
-| Weeks | Focus | Ships |
-|---|---|---|
-| 1 | Backend foundation: auth, DB schema for all 3 modules, Firebase/FCM wired end-to-end with one test push | Nothing user-facing yet, but the highest-risk piece (push delivery) is proven early |
-| 2 | Notes module, full: dashboard send/schedule, her feed, push on send | **Notes module fully working** — first real win |
-| 3-4 | Memory Timeline: photo + audio upload, feed UI, playback | **Memory Timeline working** |
-| 5-6 | Gym Coach: your workout content entered, plan display, check-off UI | **Gym Coach working** |
-| 7 | Integration pass: "coming soon" placeholder for future modules, real-device testing across all 3, battery-optimization prompt for reliable push | Full app, polish pass |
-| 8 | Buffer only — no new features. Testing, signing the release APK, prepping the reveal | Final APK ready |
-
-**If week 6 arrives and Gym Coach isn't done:** simplify it, don't cut it — a static
-weekly plan with a checklist is still a real module. It's the easiest of the three to
-descope without it feeling unfinished, because it doesn't depend on push notifications
-or media upload working correctly.
-
-## Folder Structure
-
-```
-life-organizer/
-├── README.md
-├── ARCHITECTURE.md
-├── SETUP.md
-├── AGENT_PROMPT.md
-├── mobile/                        # React + Vite + Ionic + Capacitor
-│   ├── src/
-│   │   ├── modules/
-│   │   │   ├── notes/
-│   │   │   ├── memories/
-│   │   │   └── gym/
-│   │   ├── shared/                # shared components, API client, auth context
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   ├── android/                   # generated by `npx cap add android`
-│   ├── capacitor.config.ts
-│   └── package.json
-└── backend/                       # Spring Boot
-    ├── src/main/java/com/lifeorganizer/
-    │   ├── auth/
-    │   ├── notes/
-    │   ├── memories/
-    │   ├── gym/
-    │   └── LifeOrganizerApplication.java
-    ├── src/main/resources/application.yml
-    └── pom.xml
+```text
+mobile/
+  src/couples/           Accounts, pairing, home, conversation, moments and privacy
+  src/modules/           Birthdays, notifications, recipes, watchlist and wishes
+  src/shared/            API client, session bridge, UI, navigation and translations
+  src/assets/            Brand and empty-state illustrations
+  public/                Fonts and browser icons
+  android/               Native Android project and resources
+  scripts/               Brand synchronization and timezone tests
+backend/
+  src/main/              Spring application, configuration and SQL migrations
+  src/test/              Backend unit and integration tests
+  scripts/couples-smoke.py  Isolated local API/media/lifecycle smoke test
+scripts/couples-dev.sh   Local stack helper
+compose.couples.yml      Local PostgreSQL, Mailpit and S3-compatible storage
+Dockerfile              Combined frontend/backend production image
 ```
 
-See `ARCHITECTURE.md` for data models and API design, `SETUP.md` for exact commands
-to scaffold the project, and `AGENT_PROMPT.md` for a ready-to-paste brief for your
-agent IDE.
+## Local development
+
+Use Node.js 24, npm and Docker. Java 21 plus FFmpeg/ffprobe are needed when running the backend directly; the backend container includes these tools.
+
+From the repository root:
+
+```sh
+./scripts/couples-dev.sh
+```
+
+The helper creates an ignored `.couples-dev.env` containing local credentials and starts isolated development services. It uses local Java when available; `./scripts/couples-dev.sh container` explicitly selects the container backend. Keep that environment file while retaining the local database/storage volumes.
+
+In a second terminal:
+
+```sh
+cd mobile
+npm ci
+# Set VITE_API_URL=http://localhost:8082 in mobile/.env.local.
+npm run dev
+```
+
+Open `http://localhost:5173`. Local email is captured at `http://localhost:8025`; the API runs at `http://localhost:8082`. Create two test accounts, verify them through the captured emails, then create and accept a partner invitation. Separate browser profiles allow testing both partners.
+
+```sh
+./scripts/couples-dev.sh status
+./scripts/couples-dev.sh stop
+```
+
+Stopping retains local volumes. Avoid a local API override when building for a phone: `localhost` on a phone refers to the phone. `VITE_API_URL` is embedded at build time; restart Vite after changing it.
+
+## Checks and Android builds
+
+```sh
+cd mobile
+npm test
+npm run lint
+npm run build
+npm run audit:runtime
+```
+
+```sh
+cd backend
+./mvnw test
+```
+
+PostgreSQL integration tests require Docker/Testcontainers. With the isolated local stack running, execute `python3 backend/scripts/couples-smoke.py` from the root to exercise accounts, pairing, notes, media, notebooks and deletion with synthetic accounts.
+
+For Android, run `npm run build` and `npx cap sync android` in `mobile`, then build/sign/install through the existing Android project. Native builds require the Android SDK and local Firebase client configuration. A backend deployment does not update an installed APK. Run `npm run assets` to synchronize the checked-in SVG logo exports.
+
+## Deployment and configuration
+
+The root Docker image builds the frontend and serves it with the backend. Render uses the repository root, `./Dockerfile` and `/api/privacy/policy` as the health check. The image includes FFmpeg.
+
+Use `backend/.env.production.example` as the configuration reference. Keep credentials in private environment settings or secret files. Configure:
+
+- `SPRING_PROFILES_ACTIVE=couples,couples-production` and `COUPLES_DB_SCHEMA=couples_app` for the existing deployment.
+- PostgreSQL connection settings and separate migration/runtime roles. For Neon, use a direct hostname without `-pooler`; Hikari manages runtime pooling and the app depends on consistent schema selection.
+- Distinct JWT/action-token secrets, the public HTTPS URL, support address, retention settings and explicit browser/native CORS origins.
+- Private R2 storage and the server-side Firebase service account.
+- For private access, `COUPLES_EMAIL_ENABLED=false`, `COUPLES_REGISTRATION_ENABLED=false` and an explicit `COUPLES_PRIVATE_ACCOUNT_EMAILS` list. SMTP, verification emails and email-based recovery are disabled in this mode.
+- For public launch, configure SMTP and its sender, enable email, validate verification/recovery, then enable registration separately.
+
+Keep existing deployment secrets and schema settings. The one-time personal-data import is complete; do not rerun import SQL or reintroduce import environment variables. Retain all versioned Flyway migrations: startup validates and applies them. The legacy `public` schema remains separate from current data in `couples_app`.
+
+The hosted Docker build uses same-origin API calls. Android/separate frontend builds need the hosted backend URL in `VITE_API_URL`; public/native links can use `VITE_APP_LINK_ORIGIN`. Do not put server credentials in `VITE_*` variables.
+
+Validate changes before deploying. After startup, check `/api/privacy/policy`, `/api/identity/config` and the changed feature with approved accounts. Persistent Android sign-in, final App Links/signing, real-device push checks, monitoring, backup/restore drills and public-release validation remain release work. Billing is not implemented.

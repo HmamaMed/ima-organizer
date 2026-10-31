@@ -7,12 +7,7 @@ import { t, getLanguage } from "../i18n";
  */
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
 
-/**
- * Called whenever any request comes back 401 (no/invalid/expired token).
- * AuthContext registers its own `logout` here so a stale token stored on the
- * device can't leave the UI looking authenticated when the backend has
- * already rejected it.
- */
+// Session callbacks handle expired credentials and relationship changes.
 let onScopeChange: (() => void) | null = null;
 export function setScopeChangeHandler(handler: (() => void) | null): void { onScopeChange = handler; }
 let recoverAuthentication: ((token: string) => Promise<string | null>) | null = null;

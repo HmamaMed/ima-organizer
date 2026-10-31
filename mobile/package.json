@@ -7,22 +7,19 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test:agios": "node --test scripts/agios-utils.test.mjs",
     "preview": "vite preview",
     "assets": "node scripts/sync-brand-assets.mjs",
-    "audit:runtime": "npm audit --omit=dev --audit-level=high"
+    "audit:runtime": "npm audit --omit=dev --audit-level=high",
+    "test": "node --test scripts/morocco-time.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.1",
-    "@capacitor/camera": "^8.2.2",
     "@capacitor/core": "^8.5.3",
-    "@capacitor/haptics": "^8.0.2",
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/push-notifications": "^8.1.2",
     "@ionic/react": "^8.8.16",
     "@ionic/react-router": "^8.8.16",
-    "capacitor-voice-recorder": "^7.0.6",
     "ionicons": "^8.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -39,10 +36,5 @@
     "oxlint": "^1.75.0",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
-  },
-  "overrides": {
-    "get-blob-duration": {
-      "@babel/runtime": "^7.29.7"
-    }
   }
 }
