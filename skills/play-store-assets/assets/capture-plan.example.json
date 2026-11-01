@@ -1,0 +1,16 @@
+{
+  "baseUrl": "http://localhost:5173",
+  "locale": "en-US",
+  "timezoneId": "UTC",
+  "viewport": {"width": 360, "height": 640},
+  "deviceScaleFactor": 3,
+  "record": false,
+  "setup": [
+    {"action": "goto", "path": "/"},
+    {"action": "waitFor", "selector": "main"}
+  ],
+  "scenes": [
+    {"name": "01-home", "steps": [], "ready": "main"},
+    {"name": "02-detail", "steps": [{"action": "click", "selector": "[data-testid=example-detail-link]"}], "ready": "[data-testid=example-detail]"}
+  ]
+}

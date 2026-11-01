@@ -1,0 +1,4 @@
+interface:
+  display_name: "Play Store Assets"
+  short_description: "Create store assets and narrated app promo videos"
+  default_prompt: "Use $play-store-assets to prepare a local Google Play asset pack from this app using synthetic data, real screenshots, listing graphics and a narrated promotional video with a hook, animated captions, real UI and music."

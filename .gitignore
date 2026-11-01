@@ -15,3 +15,8 @@ google-services.json
 # Private Render credentials, including any old upgrade copies
 .render*.env
 .render*.sql
+
+# Generated store media and isolated asset tooling
+artifacts/
+.venv/
+__pycache__/

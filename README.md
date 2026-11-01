@@ -1,10 +1,10 @@
-# Entre Nous
+# Between Us
 
 *Nos mots, nos moments, notre quotidien.*
 
 *Our words, our moments, our everyday life.*
 
-Entre Nous is a private, mobile-first space for two partners to share everyday life. It combines conversations, temporary photo/audio moments and shared notebooks with personal birthday reminders. The same React app runs in a browser and inside an Android app through Capacitor. French and English are supported.
+Between Us is a private, mobile-first space for two partners to share everyday life. It combines conversations, temporary photo/audio moments and shared notebooks with personal birthday reminders. The same React app runs in a browser and inside an Android app through Capacitor. French and English are supported.
 
 ## What the app contains
 
@@ -120,7 +120,7 @@ cd backend
 
 PostgreSQL integration tests require Docker/Testcontainers. With the isolated local stack running, execute `python3 backend/scripts/couples-smoke.py` from the root to exercise accounts, pairing, notes, media, notebooks and deletion with synthetic accounts.
 
-For Android, run `npm run build` and `npx cap sync android` in `mobile`, then build/sign/install through the existing Android project. Native builds require the Android SDK and local Firebase client configuration. A backend deployment does not update an installed APK. Run `npm run assets` to synchronize the checked-in SVG logo exports.
+For Android, run `npm run build` and `npx cap sync android` in `mobile`, then build/sign/install through the existing Android project. The Android application ID and Java namespace are `com.betweenus.app`. This is a new installation identity relative to the former package; use a matching Firebase Android registration and download its `google-services.json` into `mobile/android/app/`. Do not hand-edit an old Firebase client config to pretend it is registered for the new package. Native builds require the Android SDK and local Firebase client configuration. A backend deployment does not update an installed APK. Run `npm run assets` to synchronize the checked-in SVG logo exports.
 
 ## Deployment and configuration
 
@@ -140,3 +140,7 @@ Keep existing deployment secrets and schema settings. The one-time personal-data
 The hosted Docker build uses same-origin API calls. Android/separate frontend builds need the hosted backend URL in `VITE_API_URL`; public/native links can use `VITE_APP_LINK_ORIGIN`. Do not put server credentials in `VITE_*` variables.
 
 Validate changes before deploying. After startup, check `/api/privacy/policy`, `/api/identity/config` and the changed feature with approved accounts. Persistent Android sign-in, final App Links/signing, real-device push checks, monitoring, backup/restore drills and public-release validation remain release work. Billing is not implemented.
+
+## Play Store assets
+
+The project-local [Play Store asset skill](skills/play-store-assets/SKILL.md) prepares real screenshots, listing graphics and optional preview videos using synthetic data. Ask an AI to read that file, or invoke `$play-store-assets` if its agent discovers project-local skills. Helpers support Playwright capture, phone image validation and narrated motion promos with a spoken hook, animated layers, music and captions. A screenshot montage is available only as a rough-cut option. Generated packs go in ignored `artifacts/play-store/`; uploading to YouTube or Play Console is a separate action.

@@ -1,4 +1,4 @@
-package com.lifeorganizer.app;
+package com.betweenus.app;
 
 import com.getcapacitor.BridgeActivity;
 import android.os.Bundle;

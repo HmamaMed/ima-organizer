@@ -37,7 +37,7 @@ export function useI18n() {
 function syncDocumentLanguage() {
   if (typeof document === 'undefined') return;
   document.documentElement.lang = language;
-  document.title = 'Entre Nous';
+  document.title = 'Between Us';
   const description = t('Nos mots, nos moments, notre quotidien.');
   for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) {
     document.querySelector(selector)?.setAttribute('content', description);
