@@ -27,7 +27,7 @@ export function useAuth(): AuthContextValue {
   return context;
 }
 
-/** Supply the current memory-only session to shared notebook components. */
+/** Supply the current access session to shared notebook components. */
 export function AuthSessionProvider({ value, children }: { value: AuthContextValue; children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -133,7 +133,7 @@ export default function CoupleAccountPage() {
         </form>
       </AccountSection>
       <AccountSection title={t('Mes connexions')} description={t('Gérer mes appareils connectés')} icon={logOutOutline}>
-        <p className="couple-meta">{t('Les identifiants restent en mémoire. Après fermeture complète de l’application, reconnectez-vous pour retrouver votre espace.')}</p>
+        <p className="couple-meta">{t('Vous restez connecté sur cet appareil jusqu’à l’expiration de votre session. Déconnectez-vous si vous partagez cet appareil.')}</p>
         <AppButton variant="secondary" disabled={busy} busy={working === 'logout'} onClick={() => { void perform('logout', logout); }}>{t('Me déconnecter')}</AppButton>
         <AppButton variant="quiet" disabled={busy} busy={working === 'logout-all'} onClick={() => { void perform('logout-all', async () => { await apiRequest('/api/identity/logout-all', { token, method: 'POST' }); await logout(); }); }}>{t('Déconnecter tous mes appareils')}</AppButton>
       </AccountSection>

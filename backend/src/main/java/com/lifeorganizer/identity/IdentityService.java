@@ -62,7 +62,7 @@ public class IdentityService {
         passwordLength(request.password());
         String email = normalize(request.email());
         Optional<User> existing = users.findByEmail(email);
-        if (existing.isPresent()) return;
+        if (existing.isPresent()) throw new IllegalStateException("An account already exists with this email. Sign in or reset your password.");
         User user = users.saveAndFlush(new User(email, request.name(), passwords.encode(request.password()), request.locale(), request.timeZone()));
         challenge(user, "VERIFY");
     }
@@ -95,6 +95,15 @@ public class IdentityService {
         jdbc.update("insert into refresh_token_history (token_hash, session_id) values (?, ?)", hash, id);
         jdbc.update("update refresh_sessions set token_hash = ? where id = ?", SecretTokens.hash(next), id);
         return new Credentials(jwt.generateToken(user, id), next, account(user));
+    }
+    @Transactional
+    public void endSession(String raw) {
+        if (raw == null || raw.isBlank()) return;
+        UUID id;
+        try { id = UUID.fromString(raw.split("\\.", 2)[0]); }
+        catch (RuntimeException invalid) { return; }
+        sessions.lock(id).filter(session -> session.hash().equals(SecretTokens.hash(raw)))
+                .ifPresent(session -> sessions.revoke(id, session.userId()));
     }
     @Transactional
     public void emailAction(String email, String kind) {

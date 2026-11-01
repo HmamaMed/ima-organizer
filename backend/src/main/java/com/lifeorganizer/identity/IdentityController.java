@@ -2,6 +2,7 @@ package com.lifeorganizer.identity;
 
 import com.lifeorganizer.auth.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,8 @@ public class IdentityController {
     private final SessionStore sessions;
     private final AbuseLimiter limits;
     private final JwtService jwt;
-    public IdentityController(IdentityService identity, SessionStore sessions, AbuseLimiter limits, JwtService jwt) { this.identity=identity; this.sessions=sessions; this.limits=limits; this.jwt=jwt; }
+    private final BrowserSessions browsers;
+    public IdentityController(IdentityService identity, SessionStore sessions, AbuseLimiter limits, JwtService jwt, BrowserSessions browsers) { this.identity=identity; this.sessions=sessions; this.limits=limits; this.jwt=jwt; this.browsers=browsers; }
     private void limit(HttpServletRequest request, String action, String email, int perEmail) {
         limits.check(action + ":ip:" + request.getRemoteAddr(), 50, 900);
         limits.check(action + ":email:" + IdentityService.normalize(email), perEmail, 900);
@@ -25,9 +27,29 @@ public class IdentityController {
     @PostMapping("/register") @ResponseStatus(HttpStatus.ACCEPTED)
     public void register(@Valid @RequestBody IdentityService.Register body, HttpServletRequest request) { limit(request,"register",body.email(),5); identity.register(body); }
     @PostMapping("/login")
-    public IdentityService.Credentials login(@Valid @RequestBody IdentityService.Login body, HttpServletRequest request) { limit(request,"login",body.email(),10); return identity.login(body); }
+    public IdentityService.Credentials login(@Valid @RequestBody IdentityService.Login body, HttpServletRequest request, HttpServletResponse response) {
+        browsers.validate(request); limit(request,"login",body.email(),10);
+        return browsers.deliver(identity.login(body), request, response);
+    }
     @PostMapping("/refresh")
-    public IdentityService.Credentials refresh(@Valid @RequestBody IdentityService.TokenInput body, HttpServletRequest request) { limits.check("refresh:"+request.getRemoteAddr(),100,900); return identity.refresh(body.token()); }
+    public IdentityService.Credentials refresh(@Valid @RequestBody(required=false) IdentityService.TokenInput body, HttpServletRequest request, HttpServletResponse response) {
+        browsers.validate(request); limits.check("refresh:"+request.getRemoteAddr(),100,900);
+        String token = browsers.requested(request) ? browsers.token(request) : body == null ? null : body.token();
+        try {
+            if (token == null || token.isBlank()) throw new InvalidCredentialsException("Session expired");
+            return browsers.deliver(identity.refresh(token), request, response);
+        } catch (InvalidCredentialsException expired) {
+            if (browsers.requested(request)) browsers.clear(response);
+            throw expired;
+        }
+    }
+    @PostMapping("/end-session") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void endSession(@Valid @RequestBody(required=false) IdentityService.TokenInput body, HttpServletRequest request, HttpServletResponse response) {
+        browsers.validate(request); limits.check("end-session:"+request.getRemoteAddr(),100,900);
+        String token = browsers.requested(request) ? browsers.token(request) : body == null ? null : body.token();
+        identity.endSession(token);
+        if (browsers.requested(request)) browsers.clear(response);
+    }
     @PostMapping("/verification-email") @ResponseStatus(HttpStatus.ACCEPTED)
     public void resend(@Valid @RequestBody IdentityService.EmailInput body, HttpServletRequest request) { limit(request,"email",body.email(),3); identity.emailAction(body.email(),"VERIFY"); }
     @PostMapping("/password-email") @ResponseStatus(HttpStatus.ACCEPTED)

@@ -36,7 +36,7 @@ export class ApiError extends Error {
  */
 export async function apiRequest<T>(
   path: string,
-  options: { method?: string; body?: unknown; token?: string | null; headers?: Record<string, string> } = {},
+  options: { method?: string; body?: unknown; token?: string | null; headers?: Record<string, string>; credentials?: RequestCredentials; signal?: AbortSignal } = {},
 ): Promise<T> {
   const { method = 'GET', body, token } = options;
 
@@ -51,7 +51,7 @@ export async function apiRequest<T>(
 
   const scope = scopeProvider?.();
   if (token && scope) headers['X-Couple-Id'] = scope;
-  const request = { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined };
+  const request = { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined, credentials: options.credentials ?? 'omit', signal: options.signal };
   let response = await fetch(`${API_BASE_URL}${path}`, request);
   // A 401 is rejected before application code runs. Only this known authentication failure may be replayed.
   if (response.status === 401 && token && recoverAuthentication) {

@@ -65,7 +65,7 @@ public class SecurityConfig {
                                 "/index.html", "/assets/**", "/fonts/**", "/favicon.ico", "/favicon.svg", "/favicon-*.png", "/icon.svg").permitAll();
                         auth.requestMatchers(HttpMethod.HEAD, "/", "/index.html", "/assets/**").permitAll();
                         auth.requestMatchers(HttpMethod.GET, "/api/privacy/policy").permitAll();
-                        auth.requestMatchers(HttpMethod.POST, "/api/identity/register", "/api/identity/login", "/api/identity/refresh",
+                        auth.requestMatchers(HttpMethod.POST, "/api/identity/register", "/api/identity/login", "/api/identity/refresh", "/api/identity/end-session",
                                 "/api/identity/verification-email", "/api/identity/password-email", "/api/identity/verify", "/api/identity/reset-password").permitAll();
                         // Deny unfinished modules, uploads and unknown routes even for authenticated members.
                         auth.requestMatchers("/api/identity/me", "/api/identity/language", "/api/identity/reauthenticate", "/api/identity/logout", "/api/identity/logout-all",
@@ -95,7 +95,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept-Language", "Idempotency-Key", "X-Couple-Id"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept-Language", "Idempotency-Key", "X-Couple-Id", "X-Session-Transport"));
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

@@ -73,6 +73,7 @@ class CouplesPostgresIntegrationTests {
 
     @BeforeEach void fixtures() {
         org.mockito.Mockito.reset(storage,mail);
+        org.mockito.Mockito.when(mail.createMimeMessage()).thenAnswer(call -> new jakarta.mail.internet.MimeMessage(jakarta.mail.Session.getInstance(new java.util.Properties())));
         org.mockito.Mockito.when(storage.readUrl(org.mockito.ArgumentMatchers.anyString(),org.mockito.ArgumentMatchers.any(Instant.class),org.mockito.ArgumentMatchers.any(Instant.class)))
                 .thenAnswer(call -> "https://private.test/" + call.getArgument(0));
         jdbc.execute("truncate table deletion_requests, deletion_markers, support_reports, outbox_jobs, abuse_limits, watch_reviews, watch_items, couple_memberships, couples, users cascade");
@@ -316,12 +317,74 @@ class CouplesPostgresIntegrationTests {
         UUID action=jdbc.queryForObject("select id from identity_actions where user_id=?",UUID.class,user.getId());
         assertThat(jdbc.queryForObject("select token_hash from identity_actions where id=?",String.class,action)).isEqualTo(com.lifeorganizer.identity.SecretTokens.hash(tokens.action(action)));
         runner.runBatch();
-        var message=org.mockito.ArgumentCaptor.forClass(org.springframework.mail.SimpleMailMessage.class);
+        var message=org.mockito.ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);
         org.mockito.Mockito.verify(mail).send(message.capture());
-        assertThat(message.getValue().getText()).contains("/verify#token="+tokens.action(action));
+        message.getValue().saveChanges();
+        assertThat(emailBody(message.getValue(),"text/plain")).contains("/verify#token="+tokens.action(action));
+        assertThat(emailBody(message.getValue(),"text/html")).contains("/verify#token="+tokens.action(action),"Confirmer mon adresse","cid:between-us-mark");
+        assertThat(message.getValue().getSubject()).isEqualTo("Between Us — Confirmez votre adresse e-mail");
+        assertThat(message.getValue().getHeader("Content-Language",null)).isEqualTo("fr");
+        assertThat(emailBody(message.getValue(),"image/png")).isEqualTo("INLINE_IMAGE");
         mvc.perform(post("/api/identity/verify").contentType("application/json").content("{\"token\":\""+tokens.action(action)+"\"}")).andExpect(status().isNoContent());
         mvc.perform(post("/api/identity/verify").contentType("application/json").content("{\"token\":\""+tokens.action(action)+"\"}")).andExpect(status().isBadRequest());
         assertThat(users.findById(user.getId()).orElseThrow().isEmailVerified()).isTrue();
+    }
+
+    String emailBody(jakarta.mail.Part part,String contentType) throws Exception {
+        if (part.isMimeType(contentType)) return contentType.equals("image/png") ? "INLINE_IMAGE" : (String) part.getContent();
+        if (part.isMimeType("multipart/*")) {
+            var content=(jakarta.mail.Multipart) part.getContent();
+            for (int index=0;index<content.getCount();index++) {
+                String body=emailBody(content.getBodyPart(index),contentType);
+                if (body!=null) return body;
+            }
+        }
+        return null;
+    }
+
+    @Test void passwordResetSendsEnglishHtmlAndPlainTextWithAnInlineBrandMark() throws Exception {
+        User user=verifiedAccount("english-email@example.test");
+        identity.language(user,new com.lifeorganizer.identity.IdentityService.Language("en"));
+        identity.emailAction(user.getEmail(),"RESET");
+        UUID action=jdbc.queryForObject("select id from identity_actions where user_id=? and kind='RESET'",UUID.class,user.getId());
+        runner.runBatch();
+        var sent=org.mockito.ArgumentCaptor.forClass(jakarta.mail.internet.MimeMessage.class);
+        org.mockito.Mockito.verify(mail).send(sent.capture());
+        sent.getValue().saveChanges();
+        assertThat(sent.getValue().getSubject()).isEqualTo("Between Us — Reset your password");
+        assertThat(sent.getValue().getHeader("Content-Language",null)).isEqualTo("en");
+        assertThat(emailBody(sent.getValue(),"text/plain")).contains("/reset#token="+tokens.action(action),"Your password will stay the same.");
+        assertThat(emailBody(sent.getValue(),"text/html")).contains("/reset#token="+tokens.action(action),"Choose a new password","cid:between-us-mark");
+        assertThat(emailBody(sent.getValue(),"image/png")).isEqualTo("INLINE_IMAGE");
+    }
+
+    @Test void duplicateRegistrationReturnsAConflictWithoutChangingTheAccountOrQueuingAnotherEmail() throws Exception {
+        for (boolean verified : List.of(false, true)) {
+            String email = verified ? "existing-verified@example.test" : "existing-unverified@example.test";
+            identity.register(new com.lifeorganizer.identity.IdentityService.Register(email,"Original name","correct-horse-password","fr","UTC"));
+            User original = users.findByEmail(email).orElseThrow();
+            UUID action = jdbc.queryForObject("select id from identity_actions where user_id=?",UUID.class,original.getId());
+            if (verified) identity.verify(tokens.action(action));
+            int queued = jdbc.queryForObject("select count(*) from outbox_jobs where kind='IDENTITY_EMAIL'",Integer.class);
+            String hash = original.getPasswordHash();
+
+            mvc.perform(post("/api/identity/register").contentType("application/json").content("""
+                {"email":"%s","name":"Replacement name","password":"a-different-password","locale":"en","timeZone":"Europe/Paris"}
+                """.formatted(email.toUpperCase(Locale.ROOT))))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").value("An account already exists with this email. Sign in or reset your password."));
+
+            User unchanged = users.findByEmail(email).orElseThrow();
+            assertThat(unchanged.getId()).isEqualTo(original.getId());
+            assertThat(unchanged.getName()).isEqualTo("Original name");
+            assertThat(unchanged.getPasswordHash()).isEqualTo(hash);
+            assertThat(unchanged.getLocale()).isEqualTo("fr");
+            assertThat(unchanged.getTimeZone()).isEqualTo("UTC");
+            assertThat(unchanged.isEmailVerified()).isEqualTo(verified);
+            assertThat(jdbc.queryForObject("select count(*) from outbox_jobs where kind='IDENTITY_EMAIL'",Integer.class)).isEqualTo(queued);
+            assertThat(jdbc.queryForList("select id from identity_actions where user_id=?",UUID.class,original.getId())).containsExactly(action);
+            assertThat(signIn(unchanged).token()).isNotBlank();
+        }
     }
 
     @Test void refreshRotationDetectsReplayAndRevokesTheEntireSession() throws Exception {
@@ -333,6 +396,43 @@ class CouplesPostgresIntegrationTests {
         assertThatThrownBy(()->identity.refresh(credentials.refreshToken())).isInstanceOf(InvalidCredentialsException.class);
         mvc.perform(get("/api/identity/me").header("Authorization","Bearer "+renewed.token())).andExpect(status().isUnauthorized());
         assertThatThrownBy(()->identity.refresh(renewed.refreshToken())).isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test void browserSessionRestoresThroughCookieAndLogoutRevokesItWithoutAnAccessToken() throws Exception {
+        User user=verifiedAccount("browser-session@example.test");
+        var login=mvc.perform(post("/api/identity/login").header("X-Session-Transport","cookie")
+                .header("Origin","http://localhost:5173").contentType("application/json")
+                .content("{\"email\":\"browser-session@example.test\",\"password\":\"correct-horse-password\",\"deviceName\":\"browser\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        var cookie=login.getCookie("between-us-session");assertThat(cookie).isNotNull();
+        assertThat(cookie.isHttpOnly()).isTrue();
+        assertThat(login.getContentAsString()).doesNotContain(cookie.getValue());
+        var refreshed=mvc.perform(post("/api/identity/refresh").header("X-Session-Transport","cookie")
+                .header("Origin","http://localhost:5173").contentType("application/json").cookie(cookie))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        var rotated=refreshed.getCookie("between-us-session");assertThat(rotated).isNotNull();
+        assertThat(rotated.getValue()).isNotEqualTo(cookie.getValue());
+        assertThat(refreshed.getContentAsString()).doesNotContain(rotated.getValue());
+        assertThat(jdbc.queryForObject("select token_hash from refresh_sessions where user_id=?",String.class,user.getId()))
+                .isEqualTo(com.lifeorganizer.identity.SecretTokens.hash(rotated.getValue()));
+        mvc.perform(post("/api/identity/end-session").header("X-Session-Transport","cookie")
+                .header("Origin","http://localhost:5173").contentType("application/json").cookie(rotated))
+                .andExpect(status().isNoContent());
+        assertThatThrownBy(()->identity.refresh(rotated.getValue())).isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test void nativeSessionLogoutRejectsForgedTokensAndRevokesTheMatchingSessionAndDevice() throws Exception {
+        User user=verifiedAccount("native-session@example.test");var credentials=signIn(user);
+        UUID session=jwt.extractSessionId(credentials.token());
+        jdbc.update("insert into device_registrations(id,user_id,session_id,fcm_token,platform) values (?,?,?,'session-test-device','ANDROID')",UUID.randomUUID(),user.getId(),session);
+        mvc.perform(post("/api/identity/end-session").contentType("application/json")
+                .content("{\"token\":\""+session+".forged\"}")).andExpect(status().isNoContent());
+        mvc.perform(get("/api/identity/me").header("Authorization","Bearer "+credentials.token())).andExpect(status().isOk());
+        mvc.perform(post("/api/identity/end-session").contentType("application/json")
+                .content("{\"token\":\""+credentials.refreshToken()+"\"}")).andExpect(status().isNoContent());
+        mvc.perform(get("/api/identity/me").header("Authorization","Bearer "+credentials.token())).andExpect(status().isUnauthorized());
+        assertThat(jdbc.queryForObject("select count(*) from device_registrations where user_id=? and revoked_at is null",Integer.class,user.getId())).isZero();
+        assertThatThrownBy(()->identity.refresh(credentials.refreshToken())).isInstanceOf(InvalidCredentialsException.class);
     }
 
     @Test void passwordResetRevokesSessionsAndDevicesAndResetTokensCannotBeReplayed() throws Exception {

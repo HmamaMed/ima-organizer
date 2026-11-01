@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "assets": "node scripts/sync-brand-assets.mjs",
     "audit:runtime": "npm audit --omit=dev --audit-level=high",
-    "test": "node --test scripts/morocco-time.test.mjs"
+    "test": "node --test scripts/*.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

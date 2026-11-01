@@ -20,7 +20,7 @@ Between Us is a private, mobile-first space for two partners to share everyday l
 | Partner inbox | Partner activity notifications, notification preferences and Android push delivery through Firebase. |
 | Account and privacy | Name, language and timezone settings, sessions/devices, data export, disconnect, reporting and account deletion. |
 
-Shared data is scoped to the current couple. Unsent notes remain private to their author. Wish photos persist independently of temporary moments. Sessions are kept in memory: reloading or restarting the app requires signing in again.
+Shared data is scoped to the current couple. Unsent notes remain private to their author. Wish photos persist independently of temporary moments. Sign-in survives app restarts within the server's 30-day session lifetime: Android saves only the rotating refresh token using Android Keystore encryption in a file excluded from backup; browsers use an HttpOnly session cookie. Passwords and access tokens are never saved to persistent app storage. Logout, device/session revocation, password reset and account deletion invalidate the session.
 
 The current interface starts at `mobile/src/App.tsx` and uses `mobile/src/couples/CouplesRoot.tsx`. It replaces an earlier personal birthday-gift app; the retired gym, interest tracker, countdown and original personal screens are no longer part of the frontend. Backend compatibility endpoints remain alongside the current APIs.
 
@@ -139,7 +139,45 @@ Keep existing deployment secrets and schema settings. The one-time personal-data
 
 The hosted Docker build uses same-origin API calls. Android/separate frontend builds need the hosted backend URL in `VITE_API_URL`; public/native links can use `VITE_APP_LINK_ORIGIN`. Do not put server credentials in `VITE_*` variables.
 
-Validate changes before deploying. After startup, check `/api/privacy/policy`, `/api/identity/config` and the changed feature with approved accounts. Persistent Android sign-in, final App Links/signing, real-device push checks, monitoring, backup/restore drills and public-release validation remain release work. Billing is not implemented.
+Validate changes before deploying. After startup, check `/api/privacy/policy`, `/api/identity/config` and the changed feature with approved accounts. Final App Links/signing, real-device push and session checks, monitoring, backup/restore drills and public-release validation remain release work. Billing is not implemented.
+
+### SMTP setup and public registration
+
+The existing Spring Mail integration sends verification and password-reset messages through durable database jobs. Emails use a shared Between Us HTML design with personalized French/English copy, the embedded heart mark, an action button, the real link expiry in UTC, a fallback URL and a plain-text alternative. The sender stays controlled by `COUPLES_MAIL_FROM`. No email SDK is required. [Resend SMTP](https://resend.com/docs/send-with-smtp) is one supported option:
+
+1. Create your provider account, add a domain you own and publish the provider's DNS verification records (SPF/DKIM). Wait for verification. Create a sending API key scoped to the domain when supported. Use an address on that verified domain for the sender, and an address you actually monitor for support.
+2. In Render's backend service **Environment**, add the following values, replacing every placeholder. Do not add these credentials to the Android app, `VITE_*` variables or Git. Render's form takes the sender value without shell quotes.
+
+   ```dotenv
+   COUPLES_SMTP_HOST=smtp.resend.com
+   COUPLES_SMTP_PORT=2587
+   COUPLES_SMTP_USERNAME=resend
+   COUPLES_SMTP_PASSWORD=YOUR_RESEND_API_KEY
+   COUPLES_SMTP_AUTH=true
+   COUPLES_SMTP_STARTTLS=true
+   COUPLES_SMTP_SSL=false
+   COUPLES_MAIL_FROM=Between Us <accounts@YOUR_VERIFIED_DOMAIN>
+   COUPLES_SUPPORT_EMAIL=YOUR_MONITORED_SUPPORT_ADDRESS
+   COUPLES_PUBLIC_URL=https://YOUR_PUBLIC_APP_HOST
+   COUPLES_EMAIL_ENABLED=true
+   COUPLES_REGISTRATION_ENABLED=false
+   ```
+
+   [Render Free blocks outbound ports 25, 465 and 587](https://render.com/docs/free#other-limitations). Resend documents 2587 as an alternative STARTTLS port; verify delivery from your deployment. Paid Render services can use 587 with these same STARTTLS settings. A free service also sleeps when idle, delaying background email jobs; use an appropriate always-on service for launch.
+3. Redeploy with registration still disabled. Enabling email restores verification requirements for existing private accounts too. For an existing account, request a verification email from the sign-in verification screen; confirm delivery, correct branding and a working `/verify#token=...` link. Test password recovery and its `/reset#token=...` link. Check provider delivery events and job failures without logging message bodies or secret tokens. The public URL must serve the real frontend, including those routes, rather than an API-only endpoint.
+4. After both flows work, set `COUPLES_REGISTRATION_ENABLED=true` and redeploy. Confirm `/api/identity/config` reports email and registration enabled; create a synthetic account, verify it, sign in, reset its password and pair it with a second test account. Resetting a password must revoke existing sessions. Verify expired/used links are rejected. Keep registration disabled if any step fails.
+
+For another SMTP provider, use its host, port, username/password and verified sender. Port 587 normally uses STARTTLS (`STARTTLS=true`, `SSL=false`); implicit TLS on 465 uses `STARTTLS=false`, `SSL=true`, and is blocked on Render Free. Never disable TLS certificate checks to resolve a delivery problem.
+
+To edit email appearance, change `backend/src/main/resources/mail/identity.html`; localized email copy lives in `IdentityEmailTemplate.java`. After compiling the backend, generate synthetic previews without sending email: from the repository root run `java -cp backend/target/classes backend/scripts/preview-emails.java artifacts/email-previews`, then open `artifacts/email-previews/index.html`. Redeploy the backend to apply template changes; an Android rebuild is not needed. Browser previews do not replace checking a delivered message in the email clients you support.
+
+### Persistent sign-in deployment and checks
+
+Deploy the backend before rebuilding/installing the mobile app: the frontend uses the new `/api/identity/end-session` endpoint and browser cookie transport. Existing explicit-token clients remain supported. Build with Node 24, then run `npm run build` and `npx cap sync android` in `mobile`. The local `SessionVault` Capacitor plugin must be compiled into a new APK/AAB; updating only the web assets of an older installed APK cannot add it. Only Android has a native vault implementation; another native platform needs its own secure adapter.
+
+The browser uses `HttpOnly`, `SameSite=Strict` cookies, `Secure` on HTTPS deployments, and explicit allowed-origin/JSON checks on cookie session requests. Keep the web app and API on the same origin (the current Docker deployment does this), or the same site with exact CORS origins; unrelated frontend/API sites are not supported by these cookies. Set `CORS_ALLOWED_ORIGINS` to explicit origins, never `*`. Browser tabs coordinate rotations with Web Locks where available. Browser storage contains only a non-secret sign-out marker, not credentials. A connection failure during restoration shows a retry screen and preserves the saved session; it does not expose cached account content.
+
+Before launch, sign in on Android, force-stop and reopen, then reboot and reopen. Repeat in a browser after reload/restart. Wait beyond the 15-minute access-token lifetime and confirm automatic renewal. Test logout/reopen, revocation from another device, password reset, offline startup/retry and account switching. Logout removes the saved login even if the backend is offline; server-side revocation requires connectivity. Sessions expire 30 days after the original login, without extending on refresh. Device-specific Keystore behavior and the full signed-release flow still require testing on a real device.
 
 ## Play Store assets
 
