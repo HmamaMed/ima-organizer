@@ -1,7 +1,7 @@
 import { t, useI18n, getLanguage } from '../shared/i18n';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { IonIcon, IonPage, IonToast } from '@ionic/react';
 import { chevronForwardOutline, downloadOutline, heartOutline, helpCircleOutline, languageOutline, logOutOutline, notificationsOutline, personOutline, shieldCheckmarkOutline } from 'ionicons/icons';
 import BrandHeader from '../shared/ui/BrandHeader';
@@ -21,6 +21,7 @@ function AccountSection({ title, description, icon, children, initiallyOpen = fa
 }
 export default function CoupleAccountPage() {
   useI18n();
+  const history = useHistory();
   const { token, user, space, refreshState, logout } = useCouplesSession();
   const [name, setName] = useState(user?.name ?? '');
   const [zone, setZone] = useState(user?.timeZone ?? 'UTC');
@@ -112,7 +113,9 @@ export default function CoupleAccountPage() {
         {!deletion && <button className="account-text-button account-text-button--danger" type="button" disabled={busy} onClick={() => setDeletion(true)}>{t('Supprimer mon compte')}</button>}
         {deletion && <form className="couple-form account-danger" onSubmit={event => { event.preventDefault(); void perform('delete', async () => {
           await apiRequest('/api/identity/reauthenticate', { token, method: 'POST', body: { password } });
-          await apiRequest('/api/privacy/deletion', { token, method: 'POST' }); await logout(); window.location.assign('/delete-account?requested=1');
+          await apiRequest('/api/privacy/deletion', { token, method: 'POST' });
+          history.replace('/home', { accountDeletionRequested: true });
+          await logout();
         }); }}>
           <p>{t('Votre couple sera déconnecté et vos connexions révoquées immédiatement. Votre compte, vos propres contributions et vos fichiers seront supprimés par un traitement avec reprise en cas d’erreur. Les notes échangées avec votre compte seront supprimées. Les contributions de votre partenaire à l’espace fermé resteront séparées de tout futur couple.')}</p>
           <AppButton type="submit" variant="danger" disabled={busy || !password} busy={working === 'delete'}>{t('Confirmer la suppression de mon compte')}</AppButton>

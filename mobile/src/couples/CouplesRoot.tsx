@@ -50,7 +50,7 @@ function Home() {
 function Routes() {
   useI18n();
   const history = useHistory();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const { user, space, loading, error, refreshState, restoring, restoreFailed, retryRestore, logout } = useCouplesSession();
   const [link, setLink] = useState(() => {
     const params = new URLSearchParams(window.location.hash.slice(1));
@@ -61,6 +61,8 @@ function Routes() {
     return { action, actionToken } as { action: 'verify' | 'reset' | null; actionToken: string };
   });
   const accountReady = !!user && (user.emailVerified || user.emailVerificationRequired === false);
+  // An old deletion receipt must never reopen deletion for a newly signed-in account.
+  if (accountReady && pathname === '/delete-account' && new URLSearchParams(search).get('requested') === '1') return <Redirect to="/home" />;
   if (pathname === '/privacy' && (!accountReady || !space || link.action)) return <CouplesPrivacyPage />;
   if ((restoring || restoreFailed) && !link.action) return <IonPage><AppScreen>
     <FeedbackState kind={restoreFailed ? 'failure' : 'loading'} heading={restoreFailed ? t("Connexion impossible. Réessayez.") : t("On retrouve votre espace…")} onRetry={restoreFailed ? () => { void retryRestore(); } : undefined} />

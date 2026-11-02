@@ -18,6 +18,8 @@
 .couple-access__signup { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; margin: 0; color: var(--lo-muted); font-size: .875rem; line-height: 1.5; }
 .couple-access__text-button { min-height: 48px; padding: 8px 4px; border: 0; background: transparent; color: var(--lo-plum); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .couple-access__description { margin: 0; color: var(--lo-muted); line-height: 1.6; }
+.couple-access__signup-hint { margin: 0; color: var(--lo-muted); font-size: .875rem; line-height: 1.6; }
+.couple-access__signup-hint strong { color: var(--lo-ink); font-weight: 600; }
 .couple-access__notice { margin: 0; padding: 14px 16px; border: 1px solid var(--lo-line); border-radius: 12px; background: var(--lo-plum-soft); color: var(--lo-ink); font-size: .875rem; line-height: 1.6; }
 .couple-access .couple-error, .couple-access .couple-message { margin: 0; }
 .couple-privacy-link { display: flex; align-items: center; justify-content: center; min-height: 48px; margin-top: 20px; padding: 8px; color: var(--lo-muted); font-size: .875rem; line-height: 1.5; text-align: center; text-underline-offset: 4px; }

@@ -1,6 +1,6 @@
 import { t, useI18n, getLanguage } from "../shared/i18n";
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { IonIcon, IonPage } from '@ionic/react';
 import { eyeOffOutline, eyeOutline, lockClosedOutline, mailOutline, personOutline } from 'ionicons/icons';
 import { apiRequest, ApiError } from '../shared/api/client';
@@ -19,6 +19,10 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
   onActionDone: () => void;
 }) {
   useI18n();
+  const history = useHistory();
+  const location = useLocation<{ accountDeletionRequested?: boolean }>();
+  const deletionRequested = location.state?.accountDeletionRequested === true
+    || (location.pathname === '/delete-account' && new URLSearchParams(location.search).get('requested') === '1');
   const { login, logout, user, refreshState, access } = useCouplesSession();
   const [mode, setMode] = useState<AccessMode>('login');
   const [email, setEmail] = useState('');
@@ -27,12 +31,19 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [message, setMessage] = useState(() => new URLSearchParams(window.location.search).get('requested') === '1'
-    ? t("Demande de suppression enregistrée. Vos connexions ont été révoquées. La suppression de vos données se poursuivra automatiquement.")
-    : '');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!deletionRequested) return;
+    setMessage(t("Demande de suppression enregistrée. Vos connexions ont été révoquées. La suppression de vos données se poursuivra automatiquement."));
+    // Consume the receipt so reload, registration and subsequent sign-ins start normally.
+    history.replace('/home');
+  }, [deletionRequested, history]);
 
   function changeMode(next: AccessMode) {
     if (busy) return;
+    // Creating another account is an explicit exit from the external deletion flow.
+    if (next === 'register' && location.pathname === '/delete-account') history.replace('/home');
     setMode(next);
     setPassword('');
     setShowPassword(false);
@@ -111,6 +122,7 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
     ? t("La création de compte n’est pas encore ouverte. Vous pouvez découvrir le formulaire, mais aucun compte ne sera créé pour le moment.")
     : !action && mode === 'forgot' && !access.emailEnabled
       ? t("Vous pouvez découvrir ce formulaire. La récupération par e-mail sera disponible prochainement.") : '';
+  const showSignupHint = !action && mode === 'register' && access.registrationEnabled;
 
   return (
     <IonPage lang={getLanguage()}>
@@ -121,7 +133,7 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
             <h1 className="login-title">{t("Votre espace à deux.")}</h1>
             <p className="login-subtitle">{t('Nos mots, nos moments, notre quotidien.')}</p>
           </header>
-          {window.location.pathname === '/delete-account' && <p>{t("Pour supprimer votre compte sans l’application, connectez-vous ici puis confirmez la suppression dans « Mes données ».")}</p>}
+          {location.pathname === '/delete-account' && !deletionRequested && !action && !verificationNeeded && mode === 'login' && <p>{t("Pour supprimer votre compte sans l’application, connectez-vous ici puis confirmez la suppression dans « Mes données ».")}</p>}
           {action && !access.emailEnabled ? (
             <section className="couple-card">
               <p>{t("Ce lien n’est pas disponible pour le moment.")}</p>
@@ -139,8 +151,12 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
               <AppButton variant="quiet" onClick={() => { void logout(); }}>{t("Changer de compte")}</AppButton>
             </section>
           ) : (
-            <form onSubmit={submit} className="couple-form login-form" aria-labelledby="access-form-title">
+            <form onSubmit={submit} className="couple-form login-form" aria-labelledby="access-form-title" aria-describedby={showSignupHint ? 'access-signup-hint' : undefined}>
               <h2 id="access-form-title" className={!action && mode === 'login' ? 'couple-access__sr-only' : 'couple-access__form-title'}>{formTitle}</h2>
+              {showSignupHint && <p className="couple-access__signup-hint" id="access-signup-hint">
+                <strong>{t("Chacun son compte, un espace à deux.")}</strong>{' '}
+                {t("Confirmez votre e-mail, puis créez votre espace ou rejoignez celui de votre partenaire.")}
+              </p>}
               {mode === 'forgot' && !action && <p className="couple-access__description">{t("Indiquez l’adresse e-mail de votre compte pour recevoir un lien de réinitialisation.")}</p>}
               {unavailable && <p className="couple-access__notice" id="access-availability">{unavailable}</p>}
               {!action && mode === 'register' && (
@@ -190,7 +206,7 @@ export default function CouplesAccessPage({ action, actionToken, onActionDone }:
           {(verificationNeeded || action && !access.emailEnabled) && <>{error && <p className="couple-error" role="alert">{error}</p>}{message && <p className="couple-message" role="status">{message}</p>}</>}
           <footer className="couple-access__footer">
             <LanguageSwitcher compact />
-            <Link className="couple-privacy-link" to={{ pathname: '/privacy', state: { privacyReturnTo: window.location.pathname === '/delete-account' ? '/delete-account' : '/' } }}>{t("Votre espace et vos données")}</Link>
+            <Link className="couple-privacy-link" to={{ pathname: '/privacy', state: { privacyReturnTo: location.pathname === '/delete-account' && !deletionRequested ? '/delete-account' : '/' } }}>{t("Votre espace et vos données")}</Link>
           </footer>
         </div>
       </AppScreen>
