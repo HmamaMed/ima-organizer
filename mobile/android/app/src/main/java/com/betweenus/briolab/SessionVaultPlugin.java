@@ -1,4 +1,4 @@
-package com.betweenus.app;
+package com.betweenus.briolab;
 
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;

@@ -120,7 +120,7 @@ cd backend
 
 PostgreSQL integration tests require Docker/Testcontainers. With the isolated local stack running, execute `python3 backend/scripts/couples-smoke.py` from the root to exercise accounts, pairing, notes, media, notebooks and deletion with synthetic accounts.
 
-For Android, run `npm run build` and `npx cap sync android` in `mobile`, then build/sign/install through the existing Android project. The Android application ID and Java namespace are `com.betweenus.app`. This is a new installation identity relative to the former package; use a matching Firebase Android registration and download its `google-services.json` into `mobile/android/app/`. Do not hand-edit an old Firebase client config to pretend it is registered for the new package. Native builds require the Android SDK and local Firebase client configuration. A backend deployment does not update an installed APK. Run `npm run assets` to synchronize the checked-in SVG logo exports.
+For Android, run `npm run build` and `npx cap sync android` in `mobile`, then build/sign/install through the existing Android project. The Android application ID and Java namespace are `com.betweenus.briolab`. This is a new installation identity relative to the former package; use a matching Firebase Android registration and download its `google-services.json` into `mobile/android/app/`. Do not hand-edit an old Firebase client config to pretend it is registered for the new package. Native builds require the Android SDK and local Firebase client configuration. A backend deployment does not update an installed APK. Run `npm run assets` to synchronize the checked-in SVG logo exports.
 
 ## Deployment and configuration
 

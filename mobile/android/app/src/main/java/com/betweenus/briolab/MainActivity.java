@@ -1,4 +1,4 @@
-package com.betweenus.app;
+package com.betweenus.briolab;
 
 import com.getcapacitor.BridgeActivity;
 import android.os.Bundle;

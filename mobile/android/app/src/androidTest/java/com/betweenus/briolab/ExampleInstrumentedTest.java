@@ -1,4 +1,4 @@
-package com.betweenus.app;
+package com.betweenus.briolab;
 
 import static org.junit.Assert.*;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.betweenus.app", appContext.getPackageName());
+        assertEquals("com.betweenus.briolab", appContext.getPackageName());
     }
 }

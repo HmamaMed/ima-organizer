@@ -1,4 +1,4 @@
-package com.betweenus.app;
+package com.betweenus.briolab;
 
 import static org.junit.Assert.*;
 

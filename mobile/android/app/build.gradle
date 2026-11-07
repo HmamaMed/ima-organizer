@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.betweenus.app"
+    namespace = "com.betweenus.briolab"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.betweenus.app"
+        applicationId "com.betweenus.briolab"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
