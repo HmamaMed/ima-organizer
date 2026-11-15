@@ -122,6 +122,8 @@ PostgreSQL integration tests require Docker/Testcontainers. With the isolated lo
 
 For Android, run `npm run build` and `npx cap sync android` in `mobile`, then build/sign/install through the existing Android project. The Android application ID and Java namespace are `com.betweenus.briolab`. This is a new installation identity relative to the former package; use a matching Firebase Android registration and download its `google-services.json` into `mobile/android/app/`. Do not hand-edit an old Firebase client config to pretend it is registered for the new package. Native builds require the Android SDK and local Firebase client configuration. A backend deployment does not update an installed APK. Run `npm run assets` to synchronize the checked-in SVG logo exports.
 
+The Android app automatically asks for notification permission once on opening when Android permits a prompt, including before sign-in. Device registration happens after sign-in. After a denial, use Profile → My notifications → Enable notifications on this device or Android settings to enable notifications. Browser push is not implemented.
+
 ## Deployment and configuration
 
 The root Docker image builds the frontend and serves it with the backend. Render uses the repository root, `./Dockerfile` and `/api/privacy/policy` as the health check. The image includes FFmpeg.

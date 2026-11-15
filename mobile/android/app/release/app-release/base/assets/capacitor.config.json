@@ -1,0 +1,17 @@
+{
+	"appId": "com.betweenus.briolab",
+	"appName": "Between Us",
+	"webDir": "dist",
+	"plugins": {
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		},
+		"Keyboard": {
+			"resize": "body"
+		}
+	}
+}

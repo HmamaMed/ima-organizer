@@ -1,30 +1,56 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { IonToast } from '@ionic/react';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { App } from '@capacitor/app';
 import { useHistory } from 'react-router-dom';
 import { apiRequest } from '../shared/api/client';
 import { useCouplesSession } from './sessionContext';
+import { t, useI18n } from '../shared/i18n';
 
 const ROUTES = new Set(['/notes', '/memories', '/notifications', '/inbox']);
+const PERMISSION_REQUESTED = 'between-us.push-permission-requested';
 export default function CouplesPushRegistration() {
+  useI18n();
+  const [message, setMessage] = useState('');
   const session = useCouplesSession(); const latest = useRef(session); latest.current = session;
+  const registerDevice = useRef<(() => void) | null>(null);
   const history = useHistory();
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    let disposed = false; const handles: PluginListenerHandle[] = [];
+    let disposed = false; let requested = false; const handles: PluginListenerHandle[] = [];
+    function failed() {
+      if (!disposed && requested) setMessage('Impossible d’activer les notifications. Vérifiez votre connexion et réessayez.');
+      requested = false;
+    }
     async function keep(listener: Promise<PluginListenerHandle>) { const handle = await listener; if (disposed) await handle.remove(); else handles.push(handle); }
-    async function register(request: boolean) {
-      if (!latest.current.token) return;
+    async function register(request: boolean, automatic = false) {
+      if (disposed) return;
+      if (request) { requested = true; setMessage('Activation des notifications…'); }
       let permission = await PushNotifications.checkPermissions();
-      if (request && (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale')) permission = await PushNotifications.requestPermissions();
-      if (!disposed && permission.receive === 'granted') await PushNotifications.register();
+      if (disposed) return;
+      // Ask once on opening, including before sign-in. Manual retries remain available in Profile.
+      let asked = true;
+      try { asked = localStorage.getItem(PERMISSION_REQUESTED) === '1'; } catch { /* Manual requests still work if storage is unavailable. */ }
+      if ((request && (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale')) || (automatic && !asked && permission.receive === 'prompt')) {
+        try { localStorage.setItem(PERMISSION_REQUESTED, '1'); } catch { /* Android still controls whether another prompt is allowed. */ }
+        permission = await PushNotifications.requestPermissions();
+      }
+      if (!disposed && permission.receive === 'granted' && latest.current.token) await PushNotifications.register();
+      else if (!disposed && requested) {
+        setMessage('Autorisez les notifications dans les paramètres Android de Between Us, puis réessayez.');
+        requested = false;
+      }
     }
     async function setup() {
       await keep(PushNotifications.addListener('registration', result => {
         const token = latest.current.token;
-        if (token) void apiRequest('/api/identity/devices', { token, method: 'POST', body: { token: result.value, platform: 'ANDROID' } }).catch(() => {});
+        if (!disposed && token) void apiRequest('/api/identity/devices', { token, method: 'POST', body: { token: result.value, platform: 'ANDROID' } }).then(() => {
+          if (!disposed && requested && latest.current.token === token) setMessage('Cet appareil est enregistré pour les notifications.');
+          requested = false;
+        }).catch(failed);
       }));
+      await keep(PushNotifications.addListener('registrationError', failed));
       await keep(PushNotifications.addListener('pushNotificationActionPerformed', action => {
         const data = action.notification.data as { route?: string; coupleId?: string } | undefined;
         if (!data?.route || !ROUTES.has(data.route)) return;
@@ -39,19 +65,27 @@ export default function CouplesPushRegistration() {
           window.location.assign(url.pathname + url.hash);
         } catch { /* Ignore unrelated deep links. */ }
       }));
-      await register(false);
+      // Retry registration after returning from Android settings or an offline start.
+      await keep(App.addListener('appStateChange', state => {
+        if (state.isActive) void register(false).catch(failed);
+      }));
+      if (disposed) return;
+      registerDevice.current = () => { void register(false).catch(failed); };
+      await register(false, true);
     }
-    const enable = () => { void register(true).catch(() => {}); };
+    const enable = () => { void register(true).catch(failed); };
+    const online = () => { void register(false).catch(failed); };
     window.addEventListener('couples:enable-push', enable);
-    void setup().catch(() => {});
-    return () => { disposed = true; window.removeEventListener('couples:enable-push', enable); handles.forEach(handle => { void handle.remove(); }); };
+    window.addEventListener('online', online);
+    void setup().catch(failed);
+    return () => { disposed = true; registerDevice.current = null; window.removeEventListener('couples:enable-push', enable); window.removeEventListener('online', online); handles.forEach(handle => { void handle.remove(); }); };
   }, [history]);
   const activeCouple = session.space?.coupleId;
   const hasSpace = !!session.space;
   useEffect(() => {
     const active = latest.current;
     if (!active.token || !active.space) return;
-    if (Capacitor.isNativePlatform()) void PushNotifications.checkPermissions().then(permission => { if (permission.receive === 'granted') return PushNotifications.register(); }).catch(() => {});
+    registerDevice.current?.();
     try {
       const pending = JSON.parse(sessionStorage.getItem('life-organizer.pending-push') ?? 'null') as { route: string; coupleId?: string } | null;
       if (!pending) return;
@@ -59,5 +93,5 @@ export default function CouplesPushRegistration() {
       if (ROUTES.has(pending.route) && (!pending.coupleId || pending.coupleId === active.space.coupleId)) history.push(pending.route);
     } catch { sessionStorage.removeItem('life-organizer.pending-push'); }
   }, [session.token, activeCouple, hasSpace, history]);
-  return null;
+  return <IonToast isOpen={!!message} message={t(message)} duration={0} buttons={[{ text: t('Fermer'), role: 'cancel' }]} onDidDismiss={() => setMessage('')} />;
 }
